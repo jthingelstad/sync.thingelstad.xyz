@@ -12,5 +12,15 @@
     "Repository": "jthingelstad/sync.thingelstad.xyz",
     "ManagedBy": "cloudformation",
     "Environment": "production"
+  },
+  "live": {
+    "codeKey": "code/fc8c34999a07ecde89e1390d5a3a17c14abe58f1f97d42cadde0909757831ee2.zip",
+    "codeBucket": "sync-code-999153317627",
+    "siteBucket": "sync-site-999153317627",
+    "functionName": "sync",
+    "distributionId": "E2ZZ51SVR4J4JL",
+    "distributionDomain": "d3dqlhrbtdu6s0.cloudfront.net",
+    "certificateArn": "",
+    "deployedAt": "2026-10-26T22:04:40.487Z"
   }
 }
