@@ -1,0 +1,662 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Data flows</title>
+<meta name="description" content="Every hop content takes between Jamie's systems, who owns each field, and what watches each hop. Rendered from shared/flows.json.">
+<style>
+:root {
+  --bg: #ffffff; --ink: #16161a; --muted: #5a5a66; --line: #e2e2e8; --soft: #f3f3f5;
+  --ok: #1d7348; --gap: #b3123f; --unverified: #b5461a; --mac: #fff3c4;
+  --source: #e8eefc; --publisher: #fde8ef; --agent: #fbe9df; --site: #e6f4ec; --archive: #efe8fb; --answers: #fff1d6;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1e1e23; --ink: #ececf0; --muted: #9d9daa; --line: #34343c; --soft: #26262c;
+    --ok: #74d3a0; --gap: #f58aa3; --unverified: #f3a274; --mac: #4a4020;
+    --source: #27324a; --publisher: #4a2836; --agent: #4a3328; --site: #27402f; --archive: #3a2f4a; --answers: #4a3d22;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1e1e23; --ink: #ececf0; --muted: #9d9daa; --line: #34343c; --soft: #26262c;
+  --ok: #74d3a0; --gap: #f58aa3; --unverified: #f3a274; --mac: #4a4020;
+  --source: #27324a; --publisher: #4a2836; --agent: #4a3328; --site: #27402f; --archive: #3a2f4a; --answers: #4a3d22;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--ink); font: 16px/1.55 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+main { max-width: 1240px; margin: 0 auto; padding: 32px 16px 64px; }
+h1 { font-size: 1.9rem; line-height: 1.15; margin: 0 0 4px; letter-spacing: -0.01em; }
+h2 { font-size: 1.25rem; margin: 48px 0 12px; }
+p { margin: 0 0 12px; }
+.muted { color: var(--muted); }
+.lede { color: var(--muted); max-width: 70ch; }
+.scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; border: 1px solid var(--line); border-radius: 10px; background: var(--bg); }
+svg.map { display: block; min-width: 1208px; }
+svg .col { font-size: 13px; font-weight: 600; fill: var(--muted); letter-spacing: 0.02em; text-transform: uppercase; }
+svg .node rect { stroke: var(--line); stroke-width: 1; }
+svg .node--source rect { fill: var(--source); }
+svg .node--publisher rect { fill: var(--publisher); }
+svg .node--agent rect { fill: var(--agent); }
+svg .node--site rect { fill: var(--site); }
+svg .node--archive rect { fill: var(--archive); }
+svg .node--answers rect { fill: var(--answers); }
+svg .node--mac rect { stroke: #c9a227; stroke-width: 2; }
+svg .node .name { font-size: 14px; font-weight: 600; fill: var(--ink); }
+svg .node .runs { font-size: 11px; fill: var(--muted); }
+svg .edge { fill: none; stroke-width: 1.6; stroke: var(--muted); opacity: 0.85; }
+svg .edge--gap { stroke: var(--gap); stroke-width: 2.4; opacity: 1; }
+svg .edge--unverified { stroke: var(--unverified); }
+svg .badge circle { fill: var(--bg); stroke: var(--muted); stroke-width: 1.4; }
+svg .badge--gap circle { stroke: var(--gap); stroke-width: 2; }
+svg .badge--unverified circle { stroke: var(--unverified); }
+svg .badge--mac circle { fill: var(--mac); }
+svg .badge text { font-size: 11px; font-weight: 700; fill: var(--ink); }
+svg .badge a { cursor: pointer; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 22px; margin: 12px 0 0; padding: 0; list-style: none; font-size: 14px; color: var(--muted); }
+.legend li { display: flex; align-items: center; gap: 8px; }
+.legend svg { width: 36px; height: 14px; }
+.legend .edge { stroke: var(--muted); }
+.swatch { display: inline-block; width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--line); }
+table { width: 100%; border-collapse: collapse; font-size: 14.5px; }
+th, td { text-align: left; vertical-align: top; padding: 10px 10px; border-top: 1px solid var(--line); overflow-wrap: anywhere; }
+td:nth-child(3) { min-width: 18rem; }
+td:last-child { min-width: 16rem; }
+th { font-size: 12.5px; letter-spacing: 0.03em; text-transform: uppercase; color: var(--muted); border-top: 0; }
+td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
+tr.status--gap td:first-child { box-shadow: inset 4px 0 0 var(--gap); }
+tr.status--unverified td:first-child { box-shadow: inset 4px 0 0 var(--unverified); }
+.pill { display: inline-block; font-size: 12px; font-weight: 700; letter-spacing: 0.02em; padding: 1px 8px; border-radius: 999px; color: var(--bg); background: var(--ok); }
+.pill--gap { background: var(--gap); }
+.pill--unverified { background: var(--unverified); }
+.open { padding-left: 20px; }
+.open li { margin: 0 0 8px; }
+a { color: inherit; }
+tr:target { background: var(--soft); }
+code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
+@media (max-width: 40rem) { body { font-size: 15px; } table { font-size: 13.5px; } th, td { padding: 8px 6px; } }
+</style>
+</head>
+<body>
+<main>
+<h1>Data flows</h1>
+<p class="lede">Every hop content takes between Jamie's systems, who owns each field, and what watches each hop today. Rendered from <code>shared/flows.json</code>, updated 2026-10-26. A hop is a row in that file before it is code anywhere.</p>
+
+<h2>Open</h2>
+<ul class="open"><li><a href="#hop-6"><span class="pill pill--gap">gap</span> 6. Weekly Thing (web) → Linking Things</a>: Broken on 2026-10-26: WT354 was sent 2026-10-24, the nightly ran green, and Linking Things still reports 353. The sibling checkout was on a feature branch without 354.md. Fix: read weekly's published archive over HTTPS, or origin main, never a working checkout; and nudge the join from the send (hop 10).</li>
+<li><a href="#hop-19"><span class="pill pill--gap">gap</span> 19. Library Agent → micro.blog</a>: First write round, 2026-10-22: 20 edits accepted by Micropub, 4 missing from the rendered pages after the rebuild. The read-back checks Micropub, not the page, so the round was green. A write needs a receipt: written, rendered, pulled back (hop 11).</li>
+<li><a href="#hop-21"><span class="pill pill--unverified">unverified</span> 21. WT Builder → Another Thing</a>: Never run. Episodes so far were committed by hand. Needs ANOTHER_GITHUB_PAT_TOKEN.</li>
+<li><a href="#hop-22"><span class="pill pill--unverified">unverified</span> 22. Otto (OpenClaw) → Pinboard</a>: 68 agent-voice notes exist on Linking Things. No OpenClaw cron job carries this name on 2026-10-26; whether it still runs is unconfirmed.</li></ul>
+
+<h2>Map</h2>
+<div class="scroll">
+<svg class="map" viewBox="0 0 1208 650" width="1208" height="650" role="img" aria-labelledby="map-title">
+<title id="map-title">Data flows between Jamie's systems, 2026-10-26</title>
+<defs>
+  <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker>
+</defs>
+<text class="col" x="108" y="20" text-anchor="middle">Sources</text>
+<text class="col" x="356" y="20" text-anchor="middle">Publisher and agents</text>
+<text class="col" x="604" y="20" text-anchor="middle">Published sites</text>
+<text class="col" x="852" y="20" text-anchor="middle">Archive</text>
+<text class="col" x="1100" y="20" text-anchor="middle">Answers</text>
+<path class="edge edge--ok edge--live" d="M 192 261.5 C 232 261.5, 232 261.5, 272 261.5" stroke-dasharray="" marker-end="url(#arrow)"><title>1. Pinboard → WT Builder: Every bookmark saved inside the issue's window.</title></path>
+<path class="edge edge--ok edge--live" d="M 272 270.5 C 232 270.5, 232 270.5, 192 270.5" stroke-dasharray="" marker-end="url(#arrow)"><title>2. WT Builder → Pinboard: Jamie's commentary edits, mirrored back as his note.</title></path>
+<path class="edge edge--ok edge--live" d="M 192 338.6 C 232 338.6, 232 279.5, 272 279.5" stroke-dasharray="" marker-end="url(#arrow)"><title>3. micro.blog → WT Builder: Posts in the window, for the Journal; later edits to posts not edited in WT Builder.</title></path>
+<path class="edge edge--ok edge--live" d="M 272 288.5 C 232 288.5, 232 345.8, 192 345.8" stroke-dasharray="" marker-end="url(#arrow)"><title>4. WT Builder → micro.blog: Edits to a Journal item, and the Weekly Thing category on reprinted posts.</title></path>
+<path class="edge edge--ok edge--clock" d="M 192 279.5 L 216 279.5 Q 224 279.5 224 271.5 L 224 44 Q 224 36 232 36 L 480 36 Q 488 36 488 44 L 488 462 Q 488 470 496 470 L 520 470" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>5. Pinboard → Linking Things: Every public bookmark, as the year shards under data/links/.</title></path>
+<path class="edge edge--gap edge--clock" d="M 644 182 C 764 212, 764 416, 644 446" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>6. Weekly Thing (web) → Linking Things: Which issue carried each link (the /issues/&lt;n&gt;/ pages and wt: search).</title></path>
+<path class="edge edge--ok edge--nudge" d="M 440 260 C 480 260, 480 158, 520 158" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>7. WT Builder → Weekly Thing (web): The issue's generated 11ty inputs (apps/site/archive/&lt;n&gt;.md and its assets).</title></path>
+<path class="edge edge--ok edge--nudge" d="M 440 266 C 480 266, 480 236, 520 236" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>8. WT Builder → Buttondown: The email edition, as a draft.</title></path>
+<path class="edge edge--ok edge--nudge" d="M 440 272 C 480 272, 480 314, 520 314" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>9. WT Builder → files.thingelstad.com: The issue's audio edition (with chapters and VTT) and every rehosted image.</title></path>
+<path class="edge edge--ok edge--nudge" d="M 440 278 L 472 278 Q 480 278 480 270 L 480 60 Q 480 52 488 52 L 720 52 Q 728 52 728 60 L 728 329.25 Q 728 337.25 736 337.25 L 768 337.25" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>10. WT Builder → Librarian: The news that an issue is out (its number), not the text.</title></path>
+<path class="edge edge--ok edge--clock" d="M 192 353 L 232 353 Q 240 353 240 345 L 240 76 Q 240 68 248 68 L 712 68 Q 720 68 720 76 L 720 333.75 Q 720 341.75 728 341.75 L 768 341.75" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>11. micro.blog → Librarian: Every post and page, with categories and alt as micro.blog holds them.</title></path>
+<path class="edge edge--ok edge--clock" d="M 688 392 C 728 392, 728 346.25, 768 346.25" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>12. Another Thing → Librarian: Each episode and its transcript, into the podcast corpus.</title></path>
+<path class="edge edge--ok edge--clock" d="M 688 548 C 728 548, 728 350.75, 768 350.75" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>13. Things I've built → Librarian: The registry of things, into the reference base.</title></path>
+<path class="edge edge--ok edge--clock" d="M 688 470 C 728 470, 728 355.25, 768 355.25" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>14. Linking Things → Librarian: Every public link, one passage each, into the links corpus.</title></path>
+<path class="edge edge--ok edge--clock" d="M 192 431 L 216 431 Q 224 431 224 423 L 224 92 Q 224 84 232 84 L 728 84 Q 736 84 736 92 L 736 351.75 Q 736 359.75 744 359.75 L 768 359.75" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>15. Tinylytics → Librarian: View counts per post, page and issue.</title></path>
+<path class="edge edge--ok edge--nudge" d="M 936 353 C 976 353, 976 314, 1016 314" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>16. Librarian → Thingy: The embedded corpora the API answers from (Weekly Thing, blog, podcast, reference, links).</title></path>
+<path class="edge edge--ok edge--nudge" d="M 768 364.25 C 728 364.25, 728 158, 688 158" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>17. Librarian → Weekly Thing (web): The topic graph (graph.json) that renders the topic pages.</title></path>
+<path class="edge edge--ok edge--live" d="M 768 368.75 C 718 498.75, 490 414, 440 284" stroke-dasharray="" marker-end="url(#arrow)"><title>18. Librarian → WT Builder: Retrieval for Thingy drafts, Echoes and the earlier issues that carried a link.</title></path>
+<path class="edge edge--gap edge--clock" d="M 272 353 C 232 353, 232 360.2, 192 360.2" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>19. Library Agent → micro.blog: Categories for unfiled posts, alt for photos without it, and the Featured choice (proposed to Jamie first).</title></path>
+<path class="edge edge--ok edge--live" d="M 192 367.4 L 224 367.4 Q 232 367.4 232 359.4 L 232 108 Q 232 100 240 100 L 968 100 Q 976 100 976 108 L 976 384 Q 976 392 984 392 L 1016 392" stroke-dasharray="" marker-end="url(#arrow)"><title>20. micro.blog → cards.thingelstad.com: The post's title, date, categories and text, for its social card.</title></path>
+<path class="edge edge--unverified edge--nudge" d="M 440 290 C 480 290, 480 392, 520 392" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>21. WT Builder → Another Thing: An episode: outline, mastered audio, transcript, one commit.</title></path>
+<path class="edge edge--unverified edge--clock" d="M 272 431 C 232 431, 232 288.5, 192 288.5" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>22. Otto (OpenClaw) → Pinboard: An agent-written summary on a link in the reading queue, tagged _agent.</title></path>
+<g class="node node--source">
+  <rect x="24" y="251" width="168" height="48" rx="8"/>
+  <text class="name" x="36" y="271">Pinboard</text>
+  <text class="runs" x="36" y="288">pinboard.in</text>
+</g>
+<g class="node node--source">
+  <rect x="24" y="329" width="168" height="48" rx="8"/>
+  <text class="name" x="36" y="349">micro.blog</text>
+  <text class="runs" x="36" y="366">micro.blog</text>
+</g>
+<g class="node node--source">
+  <rect x="24" y="407" width="168" height="48" rx="8"/>
+  <text class="name" x="36" y="427">Tinylytics</text>
+  <text class="runs" x="36" y="444">tinylytics.app</text>
+</g>
+<g class="node node--publisher node--mac">
+  <rect x="272" y="251" width="168" height="48" rx="8"/>
+  <text class="name" x="284" y="271">WT Builder</text>
+  <text class="runs" x="284" y="288">mac</text>
+</g>
+<g class="node node--agent node--mac">
+  <rect x="272" y="329" width="168" height="48" rx="8"/>
+  <text class="name" x="284" y="349">Library Agent</text>
+  <text class="runs" x="284" y="366">mac</text>
+</g>
+<g class="node node--agent node--mac">
+  <rect x="272" y="407" width="168" height="48" rx="8"/>
+  <text class="name" x="284" y="427">Otto (OpenClaw)</text>
+  <text class="runs" x="284" y="444">mac</text>
+</g>
+<g class="node node--site">
+  <rect x="520" y="134" width="168" height="48" rx="8"/>
+  <text class="name" x="532" y="154">Weekly Thing (web)</text>
+  <text class="runs" x="532" y="171">github-actions</text>
+</g>
+<g class="node node--site">
+  <rect x="520" y="212" width="168" height="48" rx="8"/>
+  <text class="name" x="532" y="232">Buttondown</text>
+  <text class="runs" x="532" y="249">buttondown.com</text>
+</g>
+<g class="node node--site">
+  <rect x="520" y="290" width="168" height="48" rx="8"/>
+  <text class="name" x="532" y="310">files.thingelstad.com</text>
+  <text class="runs" x="532" y="327">aws</text>
+</g>
+<g class="node node--site">
+  <rect x="520" y="368" width="168" height="48" rx="8"/>
+  <text class="name" x="532" y="388">Another Thing</text>
+  <text class="runs" x="532" y="405">github-actions</text>
+</g>
+<g class="node node--site node--mac">
+  <rect x="520" y="446" width="168" height="48" rx="8"/>
+  <text class="name" x="532" y="466">Linking Things</text>
+  <text class="runs" x="532" y="483">mac+github-actions</text>
+</g>
+<g class="node node--site">
+  <rect x="520" y="524" width="168" height="48" rx="8"/>
+  <text class="name" x="532" y="544">Things I've built</text>
+  <text class="runs" x="532" y="561">github-actions</text>
+</g>
+<g class="node node--archive">
+  <rect x="768" y="329" width="168" height="48" rx="8"/>
+  <text class="name" x="780" y="349">Librarian</text>
+  <text class="runs" x="780" y="366">github-actions+aws</text>
+</g>
+<g class="node node--answers">
+  <rect x="1016" y="290" width="168" height="48" rx="8"/>
+  <text class="name" x="1028" y="310">Thingy</text>
+  <text class="runs" x="1028" y="327">aws</text>
+</g>
+<g class="node node--answers">
+  <rect x="1016" y="368" width="168" height="48" rx="8"/>
+  <text class="name" x="1028" y="388">cards.thingelstad.com</text>
+  <text class="runs" x="1028" y="405">aws</text>
+</g>
+<g class="badge badge--ok badge--mac"><a href="#hop-1"><circle cx="232" cy="261.5" r="11"/><text x="232" y="265.5" text-anchor="middle">1</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-2"><circle cx="252.16000000000008" cy="270.50000000000006" r="11"/><text x="252.16000000000008" y="274.50000000000006" text-anchor="middle">2</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-3"><circle cx="232" cy="309.05" r="11"/><text x="232" y="313.05" text-anchor="middle">3</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-4"><circle cx="252.16000000000008" cy="294.45920000000007" r="11"/><text x="252.16000000000008" y="298.45920000000007" text-anchor="middle">4</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-5"><circle cx="356" cy="36" r="11"/><text x="356" y="40" text-anchor="middle">5</text></a></g>
+<g class="badge badge--gap badge--mac"><a href="#hop-6"><circle cx="719.5999999999998" cy="246.58399999999995" r="11"/><text x="719.5999999999998" y="250.58399999999995" text-anchor="middle">6</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-7"><circle cx="480" cy="209" r="11"/><text x="480" y="213" text-anchor="middle">7</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-8"><circle cx="480" cy="251" r="11"/><text x="480" y="255" text-anchor="middle">8</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-9"><circle cx="480" cy="293" r="11"/><text x="480" y="297" text-anchor="middle">9</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-10"><circle cx="604" cy="52" r="11"/><text x="604" y="56" text-anchor="middle">10</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-11"><circle cx="480" cy="68" r="11"/><text x="480" y="72" text-anchor="middle">11</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-12"><circle cx="728" cy="369.125" r="11"/><text x="728" y="373.125" text-anchor="middle">12</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-13"><circle cx="728" cy="449.375" r="11"/><text x="728" y="453.375" text-anchor="middle">13</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-14"><circle cx="728" cy="412.625" r="11"/><text x="728" y="416.625" text-anchor="middle">14</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-15"><circle cx="480" cy="84" r="11"/><text x="480" y="88" text-anchor="middle">15</text></a></g>
+<g class="badge badge--ok"><a href="#hop-16"><circle cx="976" cy="333.5" r="11"/><text x="976" y="337.5" text-anchor="middle">16</text></a></g>
+<g class="badge badge--ok"><a href="#hop-17"><circle cx="748.1600000000003" cy="342.80000000000007" r="11"/><text x="748.1600000000003" y="346.80000000000007" text-anchor="middle">17</text></a></g>
+<g class="badge badge--ok"><a href="#hop-18"><circle cx="604" cy="423.875" r="11"/><text x="604" y="427.875" text-anchor="middle">18</text></a></g>
+<g class="badge badge--gap badge--mac"><a href="#hop-19"><circle cx="252.16000000000008" cy="353.74880000000013" r="11"/><text x="252.16000000000008" y="357.74880000000013" text-anchor="middle">19</text></a></g>
+<g class="badge badge--ok"><a href="#hop-20"><circle cx="604" cy="100" r="11"/><text x="604" y="104" text-anchor="middle">20</text></a></g>
+<g class="badge badge--unverified badge--mac"><a href="#hop-21"><circle cx="480" cy="341" r="11"/><text x="480" y="345" text-anchor="middle">21</text></a></g>
+<g class="badge badge--unverified badge--mac"><a href="#hop-22"><circle cx="252.16000000000008" cy="416.1800000000001" r="11"/><text x="252.16000000000008" y="420.1800000000001" text-anchor="middle">22</text></a></g>
+</svg>
+</div>
+<ul class="legend">
+  <li><svg viewBox="0 0 36 14"><path class="edge" d="M2 7 H34" stroke-width="1.6"/></svg> live read or write</li>
+  <li><svg viewBox="0 0 36 14"><path class="edge" d="M2 7 H34" stroke-width="1.6" stroke-dasharray="8 4"/></svg> nudge (an event starts it)</li>
+  <li><svg viewBox="0 0 36 14"><path class="edge" d="M2 7 H34" stroke-width="1.6" stroke-dasharray="2 4"/></svg> clock (a schedule starts it)</li>
+  <li><span class="swatch" style="background: var(--mac); border-color: #c9a227"></span> runs on the Mac</li>
+  <li><span class="swatch" style="background: var(--gap)"></span> gap</li>
+  <li><span class="swatch" style="background: var(--unverified)"></span> unverified</li>
+</ul>
+<p class="muted">A hop that spans two or more columns runs along a lane above the map. A write-back leaves from the left of its source. The number on each hop is its row below.</p>
+
+<h2>Hops</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>#</th><th>From → to</th><th>What moves, and how</th><th>Trigger</th><th>Expected lag</th><th>How to verify</th><th>Status</th></tr></thead>
+<tbody>
+<tr id="hop-1" class="status--ok">
+  <td class="num">1</td>
+  <td><strong>Pinboard</strong> → <strong>WT Builder</strong><br><span class="muted">link, note</span></td>
+  <td>Every bookmark saved inside the issue's window.<br><span class="muted">Pinboard API read on open and on sweep.</span></td>
+  <td>live<br><span class="muted">mac</span></td>
+  <td class="num">none</td>
+  <td>The link is an item in the issue (get_item).</td>
+  <td><span class="pill pill--ok">ok</span></td>
+</tr>
+<tr id="hop-2" class="status--ok">
+  <td class="num">2</td>
+  <td><strong>WT Builder</strong> → <strong>Pinboard</strong><br><span class="muted">note</span></td>
+  <td>Jamie's commentary edits, mirrored back as his note.<br><span class="muted">Compare-and-set write-back; a bookmark changed at Pinboard since the last scan is marked conflict, not written.</span></td>
+  <td>live<br><span class="muted">mac</span></td>
+  <td class="num">none</td>
+  <td>The bookmark's note at Pinboard matches the item.</td>
+  <td><span class="pill pill--ok">ok</span></td>
+</tr>
+<tr id="hop-3" class="status--ok">
+  <td class="num">3</td>
+  <td><strong>micro.blog</strong> → <strong>WT Builder</strong><br><span class="muted">post</span></td>
+  <td>Posts in the window, for the Journal; later edits to posts not edited in WT Builder.<br><span class="muted">Micropub q=source read on open; reconcile adopts micro.blog edits, conflict only when both sides edited.</span></td>
+  <td>live<br><span class="muted">mac</span></td>
+  <td class="num">none</td>
+  <td>The post is a Journal item with the current text.</td>
+  <td><span class="pill pill--ok">ok</span></td>
+</tr>
+<tr id="hop-4" class="status--ok">
+  <td class="num">4</td>
+  <td><strong>WT Builder</strong> → <strong>micro.blog</strong><br><span class="muted">post, category</span></td>
+  <td>Edits to a Journal item, and the Weekly Thing category on reprinted posts.<br><span class="muted">Micropub update, compare-and-set.</span></td>
+  <td>live<br><span class="muted">mac</span></td>
+  <td class="num">none</td>
+  <td>q=source for the post shows the edit.</td>
+  <td><span class="pill pill--ok">ok</span></td>
+</tr>
+<tr id="hop-5" class="status--ok">
+  <td class="num">5</td>
+  <td><strong>Pinboard</strong> → <strong>Linking Things</strong><br><span class="muted">link, note</span></td>
+  <td>Every public bookmark, as the year shards under data/links/.<br><span class="muted">tools/nightly.sh: sync.py (posts/update, then posts/all if the stamp moved), join, enrichment, validate, commit, push; the push deploys.</span></td>
+  <td>clock, 00:30 daily<br><span class="muted">mac · launchd com.thingelstad.links-nightly</span></td>
+  <td class="num">28 h</td>
+  <td>links_stats last_saved is after the bookmark's save time; data/sync.json updated matches Pinboard's posts/update.</td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">The run took about three hours on 2026-10-26 (Wayback lookups). A link saved at 01:00 waits until the next night's run, then the run time: about 28 hours at worst.</span></td>
+</tr>
+<tr id="hop-6" class="status--gap">
+  <td class="num">6</td>
+  <td><strong>Weekly Thing (web)</strong> → <strong>Linking Things</strong><br><span class="muted">issue</span></td>
+  <td>Which issue carried each link (the /issues/&lt;n&gt;/ pages and wt: search).<br><span class="muted">join_issues.py reads the issue pages' front matter from the sibling checkout ../thingelstad.com/weekly.thingelstad.com/apps/site/archive on the Mac, inside the nightly run.</span></td>
+  <td>clock, 00:30 daily, inside hop 5<br><span class="muted">mac</span></td>
+  <td class="num">28 h</td>
+  <td>links_stats latest_issue equals the newest issue on weekly.thingelstad.com.</td>
+  <td><span class="pill pill--gap">gap</span><br><span class="muted">Broken on 2026-10-26: WT354 was sent 2026-10-24, the nightly ran green, and Linking Things still reports 353. The sibling checkout was on a feature branch without 354.md. Fix: read weekly's published archive over HTTPS, or origin main, never a working checkout; and nudge the join from the send (hop 10).</span></td>
+</tr>
+<tr id="hop-7" class="status--ok">
+  <td class="num">7</td>
+  <td><strong>WT Builder</strong> → <strong>Weekly Thing (web)</strong><br><span class="muted">issue</span></td>
+  <td>The issue's generated 11ty inputs (apps/site/archive/&lt;n&gt;.md and its assets).<br><span class="muted">The website leg commits to main; the deploy workflow builds and publishes on push.</span></td>
+  <td>nudge, on send<br><span class="muted">mac</span></td>
+  <td class="num">15 min</td>
+  <td>feed.xml carries the issue; /archive/&lt;n&gt;/ renders.</td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Sent for every issue since WT350.</span></td>
+</tr>
+<tr id="hop-8" class="status--ok">
+  <td class="num">8</td>
+  <td><strong>WT Builder</strong> → <strong>Buttondown</strong><br><span class="muted">issue</span></td>
+  <td>The email edition, as a draft.<br><span class="muted">Buttondown API: creates and updates a draft. Never schedules, never sends; Jamie sends.</span></td>
+  <td>nudge, on send<br><span class="muted">mac</span></td>
+  <td class="num">15 min</td>
+  <td>The draft exists with the issue's subject; the email goes out when Jamie sends it.</td>
+  <td><span class="pill pill--ok">ok</span></td>
+</tr>
+<tr id="hop-9" class="status--ok">
+  <td class="num">9</td>
+  <td><strong>WT Builder</strong> → <strong>files.thingelstad.com</strong><br><span class="muted">audio, image</span></td>
+  <td>The issue's audio edition (with chapters and VTT) and every rehosted image.<br><span class="muted">Upload to files.thingelstad.com before the website and email legs; content-named files, so a re-render re-sends the website leg.</span></td>
+  <td>nudge, on send<br><span class="muted">mac</span></td>
+  <td class="num">15 min</td>
+  <td>The URL the issue names returns the object.</td>
+  <td><span class="pill pill--ok">ok</span></td>
+</tr>
+<tr id="hop-10" class="status--ok">
+  <td class="num">10</td>
+  <td><strong>WT Builder</strong> → <strong>Librarian</strong><br><span class="muted">issue</span></td>
+  <td>The news that an issue is out (its number), not the text.<br><span class="muted">repository_dispatch issue-sent to librarian-thing after the website leg; the library round pulls the issue page from weekly.thingelstad.com and ends the weekend hold.</span></td>
+  <td>nudge, on send<br><span class="muted">mac</span></td>
+  <td class="num">30 min</td>
+  <td>The round's 'The sent issue arrived' step passed; latest_content lists the issue.</td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Sent for every issue since WT350. Linking Things gets no such nudge (hop 6).</span></td>
+</tr>
+<tr id="hop-11" class="status--ok">
+  <td class="num">11</td>
+  <td><strong>micro.blog</strong> → <strong>Librarian</strong><br><span class="muted">post, category, alt</span></td>
+  <td>Every post and page, with categories and alt as micro.blog holds them.<br><span class="muted">library.py round --only blog, on the Mac (Library Agent, 05:00) and on GitHub (07:17) as the backstop. The round declares a blog-published dispatch, but nothing sends it.</span></td>
+  <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
+  <td class="num">26 h</td>
+  <td>latest_content source_kind blog lists the post; the library's blog fingerprint moved.</td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Two runners for one round means two answers to 'when did it last run'. blog-published, podcast-published and things-published are declared in library-round.yml and sent by no one (checked 2026-10-26).</span></td>
+</tr>
+<tr id="hop-12" class="status--ok">
+  <td class="num">12</td>
+  <td><strong>Another Thing</strong> → <strong>Librarian</strong><br><span class="muted">episode</span></td>
+  <td>Each episode and its transcript, into the podcast corpus.<br><span class="muted">library.py round --only another, from the published site. podcast-published is declared but never sent.</span></td>
+  <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
+  <td class="num">26 h</td>
+  <td>latest_content source_kind podcast lists the episode.</td>
+  <td><span class="pill pill--ok">ok</span></td>
+</tr>
+<tr id="hop-13" class="status--ok">
+  <td class="num">13</td>
+  <td><strong>Things I've built</strong> → <strong>Librarian</strong><br><span class="muted">thing</span></td>
+  <td>The registry of things, into the reference base.<br><span class="muted">library.py round --only things, from the published site. things-published is declared but never sent.</span></td>
+  <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
+  <td class="num">26 h</td>
+  <td>get_source thing-&lt;id&gt; returns the current page.</td>
+  <td><span class="pill pill--ok">ok</span></td>
+</tr>
+<tr id="hop-14" class="status--ok">
+  <td class="num">14</td>
+  <td><strong>Linking Things</strong> → <strong>Librarian</strong><br><span class="muted">link, note</span></td>
+  <td>Every public link, one passage each, into the links corpus.<br><span class="muted">library.py round --only links reads Linking Things' published JSON (its nightly snapshot).</span></td>
+  <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
+  <td class="num">24 h</td>
+  <td>latest_content source_kind link lists the link.</td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Stacks on hop 5: a link saved at 01:00 reaches the Librarian the morning after next, about 52 hours at worst.</span></td>
+</tr>
+<tr id="hop-15" class="status--ok">
+  <td class="num">15</td>
+  <td><strong>Tinylytics</strong> → <strong>Librarian</strong><br><span class="muted">readers</span></td>
+  <td>View counts per post, page and issue.<br><span class="muted">library.py round --only readers, Mac only (the GitHub round has no Tinylytics key).</span></td>
+  <td>clock, 05:00 daily<br><span class="muted">mac</span></td>
+  <td class="num">26 h</td>
+  <td>The library's readers table has yesterday's counts.</td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Stops when the Mac does.</span></td>
+</tr>
+<tr id="hop-16" class="status--ok">
+  <td class="num">16</td>
+  <td><strong>Librarian</strong> → <strong>Thingy</strong><br><span class="muted">issue, post, episode, thing, link, topics</span></td>
+  <td>The embedded corpora the API answers from (Weekly Thing, blog, podcast, reference, links).<br><span class="muted">deploy.yml rebuilds each corpus the library moved past, uploads to S3, redeploys the Lambda; Thingy and MCP clients answer from it at once.</span></td>
+  <td>nudge, on a round that moved the library, or a push to the pipeline<br><span class="muted">github-actions</span></td>
+  <td class="num">1 h</td>
+  <td>latest_content and corpus_stats show the item.</td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted"><strong>Hold.</strong> From Friday 00:00 until the send (Friday and Saturday, US Central) no automatic build changes the corpus; the round still updates the library. Read 'held', not 'stale'.</span><br><span class="muted">Thingy's drift check (06:17 daily) compares its vendored contract with the Librarian's main and files a GitHub issue on drift.</span></td>
+</tr>
+<tr id="hop-17" class="status--ok">
+  <td class="num">17</td>
+  <td><strong>Librarian</strong> → <strong>Weekly Thing (web)</strong><br><span class="muted">topics</span></td>
+  <td>The topic graph (graph.json) that renders the topic pages.<br><span class="muted">deploy.yml commits data/librarian/graph.json to weekly.thingelstad.com with a PAT; the push deploys.</span></td>
+  <td>nudge, on a corpus build that changed the graph<br><span class="muted">github-actions</span></td>
+  <td class="num">1 h</td>
+  <td>weekly's topic pages list the new issue.</td>
+  <td><span class="pill pill--ok">ok</span></td>
+</tr>
+<tr id="hop-18" class="status--ok">
+  <td class="num">18</td>
+  <td><strong>Librarian</strong> → <strong>WT Builder</strong><br><span class="muted">issue, post, link</span></td>
+  <td>Retrieval for Thingy drafts, Echoes and the earlier issues that carried a link.<br><span class="muted">The versioned /retrieve contract, read live.</span></td>
+  <td>live<br><span class="muted">aws</span></td>
+  <td class="num">none</td>
+  <td>get_item shows the earlier issues that carried the link.</td>
+  <td><span class="pill pill--ok">ok</span></td>
+</tr>
+<tr id="hop-19" class="status--gap">
+  <td class="num">19</td>
+  <td><strong>Library Agent</strong> → <strong>micro.blog</strong><br><span class="muted">category, alt, featured</span></td>
+  <td>Categories for unfiled posts, alt for photos without it, and the Featured choice (proposed to Jamie first).<br><span class="muted">make blog-round --write: Micropub update by URL, id-checked (q=source, trust only uid, write, read back). Guards: fill blanks only, 50 category and 20 alt writes a day, never an &lt;img&gt; turned into markdown, WRITES_ON flag.</span></td>
+  <td>clock, 05:00 daily<br><span class="muted">mac · Codex automation library-agent</span></td>
+  <td class="num">26 h</td>
+  <td>q=source shows the edit, and the rendered page shows it after micro.blog rebuilds.</td>
+  <td><span class="pill pill--gap">gap</span><br><span class="muted">First write round, 2026-10-22: 20 edits accepted by Micropub, 4 missing from the rendered pages after the rebuild. The read-back checks Micropub, not the page, so the round was green. A write needs a receipt: written, rendered, pulled back (hop 11).</span></td>
+</tr>
+<tr id="hop-20" class="status--ok">
+  <td class="num">20</td>
+  <td><strong>micro.blog</strong> → <strong>cards.thingelstad.com</strong><br><span class="muted">post, image</span></td>
+  <td>The post's title, date, categories and text, for its social card.<br><span class="muted">The card Lambda reads the post's h-entry on request; CloudFront caches the image. A drawing change needs /www/* invalidated.</span></td>
+  <td>live<br><span class="muted">aws</span></td>
+  <td class="num">none</td>
+  <td>The card URL draws the post as it is now.</td>
+  <td><span class="pill pill--ok">ok</span></td>
+</tr>
+<tr id="hop-21" class="status--unverified">
+  <td class="num">21</td>
+  <td><strong>WT Builder</strong> → <strong>Another Thing</strong><br><span class="muted">episode, audio</span></td>
+  <td>An episode: outline, mastered audio, transcript, one commit.<br><span class="muted">The Another Thing send (/another), built 2026-10-11.</span></td>
+  <td>nudge, on send<br><span class="muted">mac</span></td>
+  <td class="num">15 min</td>
+  <td>podcast.xml carries the episode.</td>
+  <td><span class="pill pill--unverified">unverified</span><br><span class="muted">Never run. Episodes so far were committed by hand. Needs ANOTHER_GITHUB_PAT_TOKEN.</span></td>
+</tr>
+<tr id="hop-22" class="status--unverified">
+  <td class="num">22</td>
+  <td><strong>Otto (OpenClaw)</strong> → <strong>Pinboard</strong><br><span class="muted">note</span></td>
+  <td>An agent-written summary on a link in the reading queue, tagged _agent.<br><span class="muted">The OpenClaw pinboard-enrichment skill, writing through the Pinboard API.</span></td>
+  <td>clock, unknown (no cron job carries the name today)<br><span class="muted">mac</span></td>
+  <td class="num">24 h</td>
+  <td>The note carries the _agent tag; Linking Things shows the voice as agent.</td>
+  <td><span class="pill pill--unverified">unverified</span><br><span class="muted">68 agent-voice notes exist on Linking Things. No OpenClaw cron job carries this name on 2026-10-26; whether it still runs is unconfirmed.</span></td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h2>Who owns each field</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>Field</th><th>Owner</th><th>Others may</th><th>Never</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>Post text and photos</strong></td>
+  <td>Jamie</td>
+  <td>WT Builder reprints a post in the Journal and mirrors Jamie's edits back (hop 4).</td>
+  <td>The Library Agent edits a post's words.</td>
+</tr>
+<tr>
+  <td><strong>Blog categories and their descriptions</strong></td>
+  <td>Librarian</td>
+  <td>Jamie edits freely in micro.blog; WT Builder sets the Weekly Thing category on reprinted posts.</td>
+  <td>The Library Agent overwrites a category a person chose. It files unfiled posts and proposes changes in its report. Descriptions are micro.blog's Intro field, set by hand.</td>
+</tr>
+<tr>
+  <td><strong>Alt text on blog photos</strong></td>
+  <td>Librarian</td>
+  <td>Jamie writes alt when posting.</td>
+  <td>The Library Agent changes alt that is already there, or turns an &lt;img&gt; into markdown.</td>
+</tr>
+<tr>
+  <td><strong>Featured</strong></td>
+  <td>Librarian</td>
+  <td>Jamie decides on the first list before anything is written.</td>
+  <td>A Featured write without Jamie having seen the list.</td>
+</tr>
+<tr>
+  <td><strong>Issue content</strong></td>
+  <td>WT Builder</td>
+  <td>The Librarian copies it and adapts the copy for the corpus; weekly.thingelstad.com renders it and is the source of authority once sent.</td>
+  <td>A surface edits an issue.</td>
+</tr>
+<tr>
+  <td><strong>Saved link and its note</strong></td>
+  <td>Jamie</td>
+  <td>WT Builder mirrors Jamie's commentary back (hop 2); Otto adds agent-voice summaries tagged _agent (hop 22); Linking Things and the Librarian read.</td>
+  <td>A note rewritten by a system without the _agent tag.</td>
+</tr>
+<tr>
+  <td><strong>Read/unread on a bookmark</strong></td>
+  <td>Jamie</td>
+  <td>Nothing. WT Builder neither selects on it nor writes it.</td>
+  <td>A system flips it.</td>
+</tr>
+<tr>
+  <td><strong>Topic graph</strong></td>
+  <td>Librarian</td>
+  <td>weekly.thingelstad.com renders it (hop 17).</td>
+  <td>A topic edited on the site.</td>
+</tr>
+<tr>
+  <td><strong>Episode content and audio</strong></td>
+  <td>WT Builder</td>
+  <td>another.thingelstad.com publishes it; the Librarian imports the transcript (hop 12).</td>
+  <td>A hand edit on the site once the send runs (today, every episode was a hand commit; see hop 21).</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h2>What watches the hops today</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>Watcher</th><th>Hops</th><th>Sees</th><th>Misses</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong>weekly-thing-feed-publication-monitor</strong><br><span class="muted">OpenClaw cron on the Mac, 12:00 daily, posts to Discord</span></td>
+  <td class="num"><a href="#hop-7">7</a></td>
+  <td>A new item in weekly's feed.xml or podcast.xml.</td>
+  <td>Everything downstream of the site.</td>
+</tr>
+<tr>
+  <td><strong>another-thing-podcast-feed-monitor</strong><br><span class="muted">OpenClaw cron on the Mac, 08:15 daily, posts to Discord</span></td>
+  <td class="num"><a href="#hop-21">21</a></td>
+  <td>A new GUID in another.thingelstad.com/podcast.xml.</td>
+  <td></td>
+</tr>
+<tr>
+  <td><strong>weekly-automation-health-check</strong><br><span class="muted">OpenClaw cron on the Mac, Mondays 08:30, posts to Discord only on failure</span></td>
+  <td class="num">—</td>
+  <td>Failed, disabled or stale OpenClaw jobs.</td>
+  <td>Jobs outside OpenClaw: launchd, GitHub Actions, Codex automations.</td>
+</tr>
+<tr>
+  <td><strong>Thingy drift check</strong><br><span class="muted">GitHub Actions in thingy.thingelstad.com, 06:17 daily, files or closes a GitHub issue</span></td>
+  <td class="num"><a href="#hop-16">16</a></td>
+  <td>The vendored Librarian contract and MCP surface drifting from librarian-thing main; npm advisories.</td>
+  <td>Freshness of the corpus.</td>
+</tr>
+<tr>
+  <td><strong>CloudWatch alarms (Thingy, Librarian API, Linking Things MCP)</strong><br><span class="muted">AWS, into the projects-ops-alerts queue the Operator drains at 06:30</span></td>
+  <td class="num"><a href="#hop-16">16</a>, <a href="#hop-18">18</a></td>
+  <td>5xx rates, auth bursts, throttling, dead letters, the subscribe path.</td>
+  <td>Whether the data is current. No alarm anywhere measures lag.</td>
+</tr>
+<tr>
+  <td><strong>Library round run status</strong><br><span class="muted">GitHub Actions in librarian-thing</span></td>
+  <td class="num"><a href="#hop-10">10</a>, <a href="#hop-11">11</a>, <a href="#hop-12">12</a>, <a href="#hop-13">13</a>, <a href="#hop-14">14</a></td>
+  <td>A red run, including a blog pull skipped for a missing key.</td>
+  <td>Nobody is notified of a red scheduled run.</td>
+</tr>
+<tr>
+  <td><strong>nightly.log</strong><br><span class="muted">~/Library/Logs/links/nightly.log on the Mac</span></td>
+  <td class="num"><a href="#hop-5">5</a>, <a href="#hop-6">6</a></td>
+  <td>Each step's exit and counts.</td>
+  <td>A green run that joined a stale checkout (hop 6, 2026-10-26).</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h2>Systems</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>System</th><th>The fact that shows what it holds</th><th>Notes</th></tr></thead>
+<tbody>
+<tr>
+  <td><strong><a href="https://pinboard.in/">Pinboard</a></strong><br><span class="muted">source · pinboard.in</span></td>
+  <td>posts/update gives the time of the last change (token needed).</td>
+  <td>Jamie's capture tool for links. No webhooks.</td>
+</tr>
+<tr>
+  <td><strong><a href="https://www.thingelstad.com/">micro.blog</a></strong><br><span class="muted">source · micro.blog</span></td>
+  <td>The blog's feed shows the newest post; Micropub q=source shows a post's stored source. The rendered page can lag a Micropub write until micro.blog rebuilds.</td>
+  <td>Source of authority for the blog. Three writers: Jamie, WT Builder's mirror, the Library Agent.</td>
+</tr>
+<tr>
+  <td><strong><a href="https://tinylytics.app/">Tinylytics</a></strong><br><span class="muted">source · tinylytics.app</span></td>
+  <td>Site and page view counts over its API (key needed).</td>
+  <td>Reader counts only; never content.</td>
+</tr>
+<tr>
+  <td><strong><a href="http://127.0.0.1:10001/">WT Builder</a></strong><br><span class="muted">publisher · mac · jthingelstad/wt-builder</span></td>
+  <td>get_status (MCP) shows each issue's send legs; list_events shows what was sent when.</td>
+  <td>Authors and publishes each issue, and makes Another Thing since 2026-10-11 (that send has not run yet).</td>
+</tr>
+<tr>
+  <td><strong>Library Agent</strong><br><span class="muted">agent · mac · jthingelstad/librarian-thing</span></td>
+  <td>Its run report under tmp/blog-round/&lt;day&gt;.md, and the blog_round events in the library.</td>
+  <td>Codex automation, daily 05:00. Runs the library round on the Mac (the one runner with the Tinylytics key), then files categories, fills alt and proposes Featured.</td>
+</tr>
+<tr>
+  <td><strong>Otto (OpenClaw)</strong><br><span class="muted">agent · mac</span></td>
+  <td>openclaw cron list; state files under ~/.openclaw/workspace/memory/.</td>
+  <td>Scheduled monitors that post to Discord, and the pinboard-enrichment skill that writes agent notes to Pinboard.</td>
+</tr>
+<tr>
+  <td><strong><a href="https://weekly.thingelstad.com/">Weekly Thing (web)</a></strong><br><span class="muted">site · github-actions · jthingelstad/weekly.thingelstad.com</span></td>
+  <td>feed.xml and /archive/ show the newest issue; apps/site/archive/&lt;n&gt;.md on main is the issue's source.</td>
+  <td>Render surface. Source of authority for issues once sent.</td>
+</tr>
+<tr>
+  <td><strong><a href="https://buttondown.com/">Buttondown</a></strong><br><span class="muted">site · buttondown.com</span></td>
+  <td>The newest email in the account.</td>
+  <td>The email edition. WT Builder makes a draft; Jamie sends it.</td>
+</tr>
+<tr>
+  <td><strong><a href="https://files.thingelstad.com/">files.thingelstad.com</a></strong><br><span class="muted">site · aws</span></td>
+  <td>An object exists at the URL the issue or episode names.</td>
+  <td>Audio editions and rehosted images.</td>
+</tr>
+<tr>
+  <td><strong><a href="https://another.thingelstad.com/">Another Thing</a></strong><br><span class="muted">site · github-actions · jthingelstad/another.thingelstad.com</span></td>
+  <td>podcast.xml shows the newest episode.</td>
+  <td>Podcast publish surface. Episodes so far were committed by hand.</td>
+</tr>
+<tr>
+  <td><strong><a href="https://links.thingelstad.xyz/">Linking Things</a></strong><br><span class="muted">site · mac+github-actions · jthingelstad/links.thingelstad.xyz</span></td>
+  <td>/links.json and /issues.json; links_stats (MCP) gives last_saved and latest_issue; data/sync.json holds Pinboard's stamp and the fetch time.</td>
+  <td>Every public link since 2005, built from a nightly commit.</td>
+</tr>
+<tr>
+  <td><strong><a href="https://thingelstad.xyz/">Things I've built</a></strong><br><span class="muted">site · github-actions · jthingelstad/thingelstad.xyz</span></td>
+  <td>The registry on the site; activity.xml carries each day's collected observations.</td>
+  <td>Content changes by pull request; a daily collector refreshes observations.</td>
+</tr>
+<tr>
+  <td><strong><a href="https://librarian.thingelstad.com/">Librarian</a></strong><br><span class="muted">archive · github-actions+aws · jthingelstad/librarian-thing</span></td>
+  <td>latest_content and corpus_stats (MCP) show the newest item of each kind the deployed corpus holds; library.db in S3 holds what the library pulled.</td>
+  <td>The library (library.db in S3), the five corpora, and the API Thingy and MCP clients answer from.</td>
+</tr>
+<tr>
+  <td><strong><a href="https://thingy.thingelstad.com/">Thingy</a></strong><br><span class="muted">answers · aws · jthingelstad/thingy.thingelstad.com</span></td>
+  <td>Answers from whatever corpus the Librarian API serves; no fact of its own yet.</td>
+  <td>Chat client of the Librarian API. MCP clients (Claude, ChatGPT, Codex) read the same corpus through librarian.thingelstad.com/mcp.</td>
+</tr>
+<tr>
+  <td><strong><a href="https://cards.thingelstad.com/">cards.thingelstad.com</a></strong><br><span class="muted">answers · aws · jthingelstad/cards.thingelstad.com</span></td>
+  <td>A card URL returns an image drawn from the post as it is now.</td>
+  <td>Draws each post's social card from its h-entry on request; CloudFront caches it.</td>
+</tr>
+</tbody>
+</table>
+</div>
+
+<h2>Kinds</h2>
+<div class="scroll">
+<table>
+<thead><tr><th>Kind</th><th>Meaning</th></tr></thead>
+<tbody>
+<tr><td><code>issue</code></td><td>a Weekly Thing issue</td></tr>
+<tr><td><code>post</code></td><td>a blog post on www.thingelstad.com</td></tr>
+<tr><td><code>link</code></td><td>a link saved to Pinboard</td></tr>
+<tr><td><code>episode</code></td><td>an Another Thing episode</td></tr>
+<tr><td><code>thing</code></td><td>an entry in Things I've built</td></tr>
+<tr><td><code>audio</code></td><td>an issue's audio edition or an episode's MP3</td></tr>
+<tr><td><code>image</code></td><td>a rehosted photo or image</td></tr>
+<tr><td><code>topics</code></td><td>the Weekly Thing topic graph</td></tr>
+<tr><td><code>category</code></td><td>a blog post's categories, and a category's description</td></tr>
+<tr><td><code>alt</code></td><td>a blog photo's alt text</td></tr>
+<tr><td><code>featured</code></td><td>the blog's Featured choice</td></tr>
+<tr><td><code>note</code></td><td>the note on a saved link</td></tr>
+<tr><td><code>readers</code></td><td>Tinylytics view counts</td></tr>
+</tbody>
+</table>
+</div>
+</main>
+</body>
+</html>

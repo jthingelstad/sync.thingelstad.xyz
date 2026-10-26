@@ -1,0 +1,30 @@
+{
+  "name": "sync.thingelstad.xyz",
+  "version": "0.1.0",
+  "private": true,
+  "description": "The sync page: what each of Jamie's systems holds, how far behind each hop runs, and a receipt for the newest item of each kind.",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "test": "npm run flows:check && npm run test:unit",
+    "test:unit": "node --test test/*.test.mjs",
+    "flows:sync": "node scripts/sync-flows.mjs",
+    "flows:check": "node scripts/sync-flows.mjs --check",
+    "probe": "node tools/probe.mjs",
+    "probe:fixtures": "node tools/probe.mjs --fixtures",
+    "package": "node tools/package.mjs",
+    "plan": "node tools/deploy.mjs plan",
+    "deploy": "node tools/deploy.mjs apply",
+    "certificate": "node tools/deploy.mjs certificate"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-acm": "^3.1156.0",
+    "@aws-sdk/client-cloudformation": "^3.1156.0",
+    "@aws-sdk/client-cloudfront": "^3.1156.0",
+    "@aws-sdk/client-lambda": "^3.1156.0",
+    "@aws-sdk/client-s3": "^3.1156.0",
+    "@aws-sdk/client-sts": "^3.1156.0"
+  }
+}

@@ -1,0 +1,16 @@
+{
+  "account": "999153317627",
+  "region": "us-east-1",
+  "stacks": {
+    "sync": "sync",
+    "certificate": "sync-certificate"
+  },
+  "domain": "sync.thingelstad.xyz",
+  "stackTags": {
+    "Application": "Thingelstad",
+    "Project": "sync",
+    "Repository": "jthingelstad/sync.thingelstad.xyz",
+    "ManagedBy": "cloudformation",
+    "Environment": "production"
+  }
+}

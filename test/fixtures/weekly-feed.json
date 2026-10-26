@@ -1,0 +1,45 @@
+{
+ "version": "https://jsonfeed.org/version/1.1",
+ "title": "Weekly Thing",
+ "description": "A weekly collection of interesting links, ideas, and observations from across the internet, curated by Jamie Thingelstad.",
+ "home_page_url": "https://weekly.thingelstad.com/",
+ "feed_url": "https://weekly.thingelstad.com/feed.json",
+ "icon": "https://weekly.thingelstad.com/img/podcast-cover.png",
+ "favicon": "https://weekly.thingelstad.com/favicon.svg",
+ "language": "en",
+ "authors": [
+  {
+   "name": "Jamie Thingelstad",
+   "url": "https://www.thingelstad.com"
+  }
+ ],
+ "items": [
+  {
+   "id": "https://weekly.thingelstad.com/archive/354/",
+   "url": "https://weekly.thingelstad.com/archive/354/",
+   "title": "WT354 \u2014 A museum for nnxyz art",
+   "summary": "nnxyz rooms, 626 Nifty Ink works, stroke-by-stroke SVG replays, Linking Things, Claude Duet, AWS Lambda Web Functions, Margaret Hamilton.",
+   "image": "https://files.thingelstad.com/weekly-thing/354/cover.jpg",
+   "date_published": "2026-10-24T12:00:00.000Z",
+   "date_modified": "2026-10-24T12:00:00.000Z"
+  },
+  {
+   "id": "https://weekly.thingelstad.com/archive/353/",
+   "url": "https://weekly.thingelstad.com/archive/353/",
+   "title": "WT353 \u2014 Release Notes for Every Day",
+   "summary": "Your Version Number Release Notes, Claude Haiku 5.5, zkAPI, hard budget caps, Tufte's Razor, M8 Ultra servers, Twin Cities Marathon.",
+   "image": "https://files.thingelstad.com/weekly-thing/353/cover.jpg",
+   "date_published": "2026-10-10T12:00:00.000Z",
+   "date_modified": "2026-10-10T12:00:00.000Z"
+  },
+  {
+   "id": "https://weekly.thingelstad.com/archive/352/",
+   "url": "https://weekly.thingelstad.com/archive/352/",
+   "title": "WT352 \u2014 Interviewing Otto for the Job",
+   "summary": "OpenAI dots, Cloudflare cf CLI, Daring Fireball on Muse, Claude Max usage, Elixir Collector signed releases, MicroLLM lab, Gemini 4.",
+   "image": "https://files.thingelstad.com/weekly-thing/352/cover.jpg",
+   "date_published": "2026-10-03T12:00:00.000Z",
+   "date_modified": "2026-10-03T12:00:00.000Z"
+  }
+ ]
+}

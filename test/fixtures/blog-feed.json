@@ -1,0 +1,29 @@
+{
+ "version": "https://jsonfeed.org/version/1",
+ "title": "Jamie Thingelstad",
+ "icon": "https://avatars.micro.blog/avatars/2025/14/1545.jpg",
+ "home_page_url": "https://www.thingelstad.com/",
+ "feed_url": "https://www.thingelstad.com/feed.json",
+ "items": [
+  {
+   "id": "http://jthingelstad.micro.blog/2026/10/25/wt-a-museum-for-nnxyz.html",
+   "title": "WT354 \u2014 A museum for nnxyz art",
+   "date_published": "2026-10-25T15:08:12-05:00",
+   "url": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+   "tags": [
+    "Weekly Thing"
+   ]
+  },
+  {
+   "id": "http://jthingelstad.micro.blog/2026/10/24/making-candles-for-the-things.html",
+   "date_published": "2026-10-24T20:23:28-05:00",
+   "url": "https://www.thingelstad.com/2026/10/24/making-candles-for-the-things.html"
+  },
+  {
+   "id": "http://jthingelstad.micro.blog/2026/10/24/release-notes-on-a-map.html",
+   "title": "Release Notes on a map!",
+   "date_published": "2026-10-24T20:19:54-05:00",
+   "url": "https://www.thingelstad.com/2026/10/24/release-notes-on-a-map.html"
+  }
+ ]
+}

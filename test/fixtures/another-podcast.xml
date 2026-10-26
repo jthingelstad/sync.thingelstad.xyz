@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0"
+     xmlns:itunes="http://www.itunes.com/dtds/podcast-1.0.dtd"
+     xmlns:content="http://purl.org/rss/1.0/modules/content/"
+     xmlns:atom="http://www.w3.org/2005/Atom"
+     xmlns:podcast="https://podcastindex.org/namespace/1.0">
+  <channel>
+    <title>Another Thing</title>
+    <link>https://another.thingelstad.com</link>
+    <atom:link href="https://another.thingelstad.com/podcast.xml" rel="self" type="application/rss+xml" />
+    <description>From the author of the Weekly Thing, Another Thing is where ideas grow into conversations: reflections on technology, creativity, and the things that make life interesting.</description>
+    <language>en-us</language>
+    <copyright>© 2026 Jamie Thingelstad</copyright>
+    <lastBuildDate>Sun, 05 Oct 2025 23:48:44 GMT</lastBuildDate>
+    <generator>Eleventy</generator>
+
+    <itunes:author>Jamie Thingelstad</itunes:author>
+    <itunes:summary>From the author of the Weekly Thing, Another Thing is where ideas grow into conversations: reflections on technology, creativity, and the things that make life interesting.</itunes:summary>
+    <itunes:type>episodic</itunes:type>
+    <itunes:explicit>false</itunes:explicit>
+    <itunes:owner>
+      <itunes:name>Jamie Thingelstad</itunes:name>
+      <itunes:email>jamie@thingelstad.com</itunes:email>
+    </itunes:owner>
+    <itunes:image href="https://another.thingelstad.com/uploads/2025/another-thing-3000.png" />
+    <itunes:category text="Society &amp; Culture">
+      <itunes:category text="Personal Journals" />
+    </itunes:category>
+
+    
+    <podcast:guid>2A3763A6-C2B5-4C75-A33B-ABA14DAAA1FF</podcast:guid>
+    <podcast:locked owner="jamie@thingelstad.com">no</podcast:locked>
+
+    <image>
+      <url>https://another.thingelstad.com/uploads/2025/another-thing-3000.png</url>
+      <title>Another Thing</title>
+      <link>https://another.thingelstad.com</link>
+    </image>
+
+    
+    <item>
+      <title>How do you start a podcast?</title>
+      <link>https://another.thingelstad.com/2025/10/05/how-do-you-start-a.html</link>
+      <guid isPermaLink="true">https://another.thingelstad.com/2025/10/05/how-do-you-start-a.html</guid>
+      <pubDate>Sun, 05 Oct 2025 23:48:44 GMT</pubDate>
+      <description>Stepping into podcasting and trying my hand at something new.</description>
+      <content:encoded><![CDATA[<p>The first episode of Another Thing. After years of thinking about it, a chalkboard sign at an art fair finally pushed me over the edge: “be brave enough to suck at something new.”</p>
+<p>In this episode I talk about why I wanted to start a podcast, why it took so long, the detours along the way (including an attempt to turn the Weekly Thing into an AI-narrated show), and a story from Dr. John Carlis about being the dumbest kid in the class.</p>
+<h2>Mentioned in this episode</h2>
+<ul>
+<li><a href="https://www.thingelstad.com">thingelstad.com</a>: my blog, going on twenty plus years</li>
+<li><a href="https://weekly.thingelstad.com">Weekly Thing</a>: my newsletter, eight years and counting</li>
+<li>Dr. John Carlis, former Dean of Undergraduate Studies, University of Minnesota Computer Science</li>
+</ul>
+<h2>A note on the title</h2>
+<p>This show is the third “thing” in a small family. There is the blog. There is the Weekly Thing. And now there is Another Thing.</p>
+]]></content:encoded>
+      <enclosure url="https://another.thingelstad.com/uploads/2025/another-thing-1.mp3" length="13237856" type="audio/mpeg" />
+      <itunes:duration>00:10:35</itunes:duration>
+      <itunes:explicit>false</itunes:explicit>
+      <itunes:episode>1</itunes:episode>
+      <itunes:episodeType>full</itunes:episodeType>
+      <itunes:author>Jamie Thingelstad</itunes:author>
+      <itunes:summary>Stepping into podcasting and trying my hand at something new.</itunes:summary>
+      <itunes:image href="https://another.thingelstad.com/uploads/2025/another-thing-3000.png" />
+    </item>
+    
+  </channel>
+</rss>
