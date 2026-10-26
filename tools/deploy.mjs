@@ -128,8 +128,12 @@ async function uploadPackage(bucket, manifest) {
 }
 
 async function issuedCertificate() {
+  // The certificate stack stays CREATE_IN_PROGRESS, with no outputs, until
+  // the DNS record validates; read the certificate from its resources so an
+  // apply that runs in that window still finds an issued certificate.
   const stack = await describe(deployment.stacks.certificate);
-  const arn = output(stack, 'CertificateArn');
+  if (!stack) return '';
+  const arn = output(stack, 'CertificateArn') || (await certificateArnFromResources(deployment.stacks.certificate));
   if (!arn) return '';
   const { Certificate } = await acm.send(new DescribeCertificateCommand({ CertificateArn: arn }));
   return Certificate?.Status === 'ISSUED' ? arn : '';
