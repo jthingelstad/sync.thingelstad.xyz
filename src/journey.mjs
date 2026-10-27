@@ -57,7 +57,7 @@ export function advanceAll(journeys, status, history = null) {
   for (const r of status.receipts) {
     const known = r.item ? history?.kinds?.[r.kind]?.find((j) => String(j.item.id) === String(r.item.id)) : null;
     const prior = journeys?.[r.kind];
-    const base = known && String(prior?.item?.id) !== String(r.item?.id) ? remembered(known, known) : prior;
+    const base = known ? remembered(known, String(prior?.item?.id) === String(r.item?.id) ? prior : known) : prior;
     const j = advance(base ?? null, r, status.checked_at);
     if (j) next[r.kind] = j;
   }
@@ -72,13 +72,19 @@ function firstArrival(a, b) {
   return earlier || tied ? b : a;
 }
 
+function latestObservation(a, b) {
+  const latest = !a || (b && Date.parse(b.at) >= Date.parse(a.at)) ? b : a;
+  const missing = [a?.last_missing_at, b?.last_missing_at].filter(Boolean).sort((x, y) => Date.parse(y) - Date.parse(x))[0];
+  return { ...latest, ...(missing ? { last_missing_at: missing } : {}) };
+}
+
 // An id can become current again after a weaker origin stood in during a
 // reader failure. Resume its evidence instead of manufacturing a fresh watch.
 function remembered(known, current) {
   const arrivals = {};
   for (const system of new Set([...Object.keys(known.arrivals ?? {}), ...Object.keys(current.arrivals ?? {})])) arrivals[system] = { ...firstArrival(known.arrivals?.[system], current.arrivals?.[system]) };
   const observations = {};
-  for (const system of new Set([...Object.keys(known.observations ?? {}), ...Object.keys(current.observations ?? {})])) observations[system] = { ...known.observations?.[system], ...current.observations?.[system] };
+  for (const system of new Set([...Object.keys(known.observations ?? {}), ...Object.keys(current.observations ?? {})])) observations[system] = latestObservation(known.observations?.[system], current.observations?.[system]);
   return { kind: current.kind, item: pick(current.item), origin: known.origin ?? current.origin, started_at: known.started_at ?? current.started_at, updated_at: current.updated_at, arrivals, observations };
 }
 

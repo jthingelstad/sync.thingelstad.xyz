@@ -168,3 +168,17 @@ test('the current journey keeps a slot even when its restored start predates all
   const next = historyFor(kept.index, { issue: old }, { issue: arrived }, arrived.updated_at);
   assert.equal(next.index.kinds.issue[0].arrivals.weekly.observed, true);
 });
+
+test('same-item recovery restores a newer indexed absence before observing an arrival', () => {
+  const stale = advance(null, receipt([['weekly', 'unknown']]), '2026-10-31T12:00:13Z');
+  const missing = advance(stale, receipt([['weekly', 'behind']]), '2026-10-31T12:01:13Z');
+  const index = historyFor(null, { issue: stale }, { issue: missing }, missing.updated_at).index;
+  const status = { checked_at: '2026-10-31T12:02:13Z', receipts: [receipt([['weekly', 'has']])] };
+  const recovered = advanceAll({ issue: stale }, status, index).issue;
+  assert.deepEqual(recovered.arrivals.weekly, { at: status.checked_at, observed: true, resolution_seconds: 60 });
+  assert.equal(recovered.observations.weekly.last_missing_at, missing.updated_at);
+  // The inverse write ordering also keeps the latest confirmed absence.
+  const olderIndex = historyFor(null, {}, { issue: stale }, stale.updated_at).index;
+  const newer = advanceAll({ issue: missing }, status, olderIndex).issue;
+  assert.deepEqual(newer.arrivals.weekly, recovered.arrivals.weekly);
+});
