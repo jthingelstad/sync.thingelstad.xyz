@@ -5,7 +5,7 @@ on one bus, with a page that shows each item's journey as it happens. Written
 2026-10-26 (Jamie: "Approved: write docs/PLAN.md in sync.thingelstad.xyz"),
 after the first night: the bus, the WT Builder sender, the probe, the
 journeys, the runtime map, the Pinboard and micro.blog secrets, and the
-Discord activity stream are live. Steps 1, 2 and 3 below are now live; later steps
+Discord activity stream are live. Steps 1 through 4 below are now live; later steps
 remain the work ahead.
 
 Each step is one pull request, small enough for an evening. Any session,
@@ -131,7 +131,12 @@ strip (today it does not), and whether the story paragraph is the page's
 Acceptance: every step-1 scenario renders the new page; snapshot tests
 updated; Lighthouse-style checks by hand: no script, no external request.
 
-### 4. The event contract, written down, with a `received` event
+### 4. [x] The event contract, written down, with a `received` event
+
+Deployed 2026-10-27, [PR #4](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/4).
+All eight previews render; 56 tests pass; public health and the receipt
+journal serve the tested package (`5e6e9b5…`). A direct received rehearsal
+parsed successfully with no writes or follow-ups. Senders wait for step 5.
 
 `docs/EVENTS.md`: the bus, each `source`, each `detail-type`, each detail
 field, who may put it, and the rule that a new producer is a flows row
