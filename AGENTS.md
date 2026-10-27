@@ -172,6 +172,12 @@ Builder's credentials proves the permission without matching the rule.
   content-keyed zip, one stack, change set every time, two-step first apply,
   `deployment.json` rewritten with the live ids.
 
+Destination senders remain in their own repos. The five `*ReceiverRole`
+parameters default empty; they attach only `received`/`ping` on this bus
+from that destination's source. They do not change trust or bypass a
+permissions boundary. `docs/DESTINATIONS.md` names the overrides and the
+activation order. Unknown baselines never become measured arrivals.
+
 ## Deploying
 
 From the Mac as the cloud-engineer identity (the tool refuses any other):

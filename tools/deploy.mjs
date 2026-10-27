@@ -243,6 +243,9 @@ async function apply(execute_) {
     EnableGitHub: process.env.SYNC_ENABLE_GITHUB ?? (parameter(stack, 'EnableGitHub') || 'false'),
     EnableStrava: process.env.SYNC_ENABLE_STRAVA ?? (parameter(stack, 'EnableStrava') || 'false'),
     StravaOwnerId: process.env.SYNC_STRAVA_OWNER_ID ?? parameter(stack, 'StravaOwnerId'),
+    ...Object.fromEntries(['Weekly', 'Another', 'Librarian', 'Thingy', 'Links'].map((name) => [
+      `${name}ReceiverRole`, process.env[`SYNC_${name.toUpperCase()}_RECEIVER_ROLE`] ?? parameter(stack, `${name}ReceiverRole`),
+    ])),
   };
   log(`\nchange set for ${name}`);
   const set = await changeSet(name, template, parameters, true);

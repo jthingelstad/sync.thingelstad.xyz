@@ -68,6 +68,7 @@ export function queueReceived(stored, event, now) {
 /** A reported arrival supersedes polling's upper bound; earlier reports win. */
 export function reportArrival(journey, event, now) {
   if (journey.kind !== event.kind || String(journey.item.id) !== event.id) throw new Error('The receipt does not match the journey');
+  if (journey.origin === event.system) return null;
   if (journey.item.at && Date.parse(event.at) < Date.parse(journey.item.at)) return null;
   const record = structuredClone(journey);
   delete record.active; delete record.archive; delete record.lags;
@@ -92,6 +93,7 @@ export function foldReceived(journeys, history, stored, now) {
     const row = rows.findIndex((j) => String(j.item.id) === event.id);
     const journey = active ? current : rows[row];
     if (!journey) { pending.push(event); continue; }
+    if (journey.origin === event.system) { rejected.push({ system: event.system, kind: event.kind, why: 'reported destination is the journey origin' }); continue; }
     const reported = reportArrival(journey, event, now);
     if (!reported) { rejected.push({ system: event.system, kind: event.kind, why: 'reported arrival predates publication' }); continue; }
     if (active) next[event.kind] = reported;
