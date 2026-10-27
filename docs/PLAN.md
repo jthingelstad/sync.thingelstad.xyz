@@ -5,7 +5,8 @@ on one bus, with a page that shows each item's journey as it happens. Written
 2026-10-26 (Jamie: "Approved: write docs/PLAN.md in sync.thingelstad.xyz"),
 after the first night: the bus, the WT Builder sender, the probe, the
 journeys, the runtime map, the Pinboard and micro.blog secrets, and the
-Discord activity stream are live. Nothing in this file is live yet.
+Discord activity stream are live. Step 1 below is now live; later steps
+remain the work ahead.
 
 Each step is one pull request, small enough for an evening. Any session,
 Claude's or Codex's, picks up the lowest unchecked step cold: this file,
@@ -63,7 +64,11 @@ role scoped to this stack. Worth building only if Jamie wants merges to ship
 with no Mac involved. Needs: `Approved: create the sync deploy role for
 GitHub Actions`.
 
-### 1. Scenario fixtures and a page preview
+### 1. [x] Scenario fixtures and a page preview
+
+Deployed 2026-10-27, [PR #1](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/1).
+All six previews render; 31 tests pass on Node 24; the public health receipt
+serves the tested package (`a443b7e…`).
 
 The design work needs to see the page in every state without waiting for a
 send. Add `test/scenarios/<name>/` sets (facts, journeys, a fixed clock) for
