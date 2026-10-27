@@ -2291,7 +2291,12 @@
                 ]
               }
             },
-            "Input": "{\"ref\":\"main\",\"inputs\":{\"dry_run\":\"false\"}}"
+            "InputTransformer": {
+              "InputPathsMap": {
+                "repository": "$.detail.repository"
+              },
+              "InputTemplate": "{\"ref\":\"main\",\"inputs\":{\"dry_run\":\"false\",\"repository\":<repository>}}"
+            }
           }
         ]
       }
@@ -2354,7 +2359,7 @@
                 ]
               }
             },
-            "Input": "{\"ref\":\"main\",\"inputs\":{\"dry_run\":\"true\"}}"
+            "Input": "{\"ref\":\"main\",\"inputs\":{\"dry_run\":\"true\",\"repository\":\"\"}}"
           }
         ]
       }

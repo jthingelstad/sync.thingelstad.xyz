@@ -16,7 +16,7 @@ export function dispatchRequest(route, event, repositories) {
   } else if (detail?.subscriber !== route.slug) return null;
   return {
     ref: 'main',
-    inputs: { dry_run: String(dry), ...(route.name === 'Librarian' ? { only: 'weekly', issue: dry ? '' : String(detail.id) } : {}) },
+    inputs: { dry_run: String(dry), ...(route.name === 'Librarian' ? { only: 'weekly', issue: dry ? '' : String(detail.id) } : route.name === 'Registry' ? {repository:dry ? '' : detail.repository} : {}) },
   };
 }
 
@@ -51,13 +51,14 @@ export function subscriberTemplate(flows, repositories) {
       Policies: [{ PolicyName: 'InvokeOneReviewedWorkflow', PolicyDocument: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 'events:InvokeApiDestination', Resource: att(destination, 'ArnForPolicy') }] } }],
     } };
     for (const dry of [false, true]) {
-      const request = { ref: 'main', inputs: { dry_run: String(dry), ...(route.name === 'Librarian' ? { only: 'weekly', issue: dry ? '' : '<issue>' } : {}) } };
+      const request = { ref: 'main', inputs: { dry_run: String(dry), ...(route.name === 'Librarian' ? { only: 'weekly', issue: dry ? '' : '<issue>' } : route.name === 'Registry' ? {repository:dry ? '' : '<repository>'} : {}) } };
       const target = {
         Id: `${route.slug}-${dry ? 'ping' : 'work'}`, Arn: att(destination), RoleArn: att(role),
         HttpParameters: { HeaderParameters: { Accept: 'application/vnd.github+json', 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2026-03-10' } },
         RetryPolicy: { MaximumEventAgeInSeconds: 3600, MaximumRetryAttempts: 10 }, DeadLetterConfig: { Arn: att('SubscriberDeadLetters') },
       };
       if (route.name === 'Librarian' && !dry) target.InputTransformer = { InputPathsMap: { issue: '$.detail.id' }, InputTemplate: JSON.stringify(request).replace('"<issue>"', '<issue>') };
+      else if (route.name === 'Registry' && !dry) target.InputTransformer = {InputPathsMap:{repository:'$.detail.repository'},InputTemplate:JSON.stringify(request).replace('"<repository>"','<repository>')};
       else target.Input = JSON.stringify(request);
       Resources[`${route.name}Subscriber${dry ? 'Ping' : 'Work'}Rule`] = { Type: 'AWS::Events::Rule', Condition: condition, Properties: {
         Name: sub(`\${AWS::StackName}-${route.slug}-${dry ? 'ping' : 'work'}`), EventBusName: ref('PublishingBus'),

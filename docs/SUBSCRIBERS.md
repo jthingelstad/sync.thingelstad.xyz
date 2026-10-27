@@ -29,6 +29,8 @@ concurrency and unchanged-output checks absorb duplicates. An accepted HTTP
 request is not proof that a workflow completed.
 The registry excludes its own repository's pushes: publishing already
 deploys that site, and collecting a collector commit again would loop.
+Each accepted push refreshes only that registered repository and its commit
+evidence; it does not repeat Wayback, screenshots, website or Tinylytics reads.
 
 ## Jamie's activation order
 

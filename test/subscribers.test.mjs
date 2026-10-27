@@ -56,5 +56,7 @@ test('each role invokes only its pinned API destination, with finite retry and a
   assert.equal(generated.Resources.SubscriberDeadLetters.Properties.SqsManagedSseEnabled,true);
   assert.equal(generated.Resources.SubscriberDeadLetters.DeletionPolicy,'Retain');
   assert.ok(!generated.Resources.RegistrySubscriberWorkRule.Properties.EventPattern.detail.repository.includes('jthingelstad/thingelstad.xyz'));
+  const transformer=generated.Resources.RegistrySubscriberWorkRule.Properties.Targets[0].InputTransformer;
+  assert.deepEqual(JSON.parse(transformer.InputTemplate.replace('<repository>',JSON.stringify('jthingelstad/wt-builder'))),fixtures[2].request);
   assert.ok(!JSON.stringify(generated).includes('GetSecretValue'));
 });
