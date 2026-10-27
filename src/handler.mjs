@@ -20,6 +20,7 @@ import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge
 import { acknowledgeBlog, blogPlan, BLOG_PRODUCER_KEY, BLOG_PUBLISHER_KEY } from './blog.mjs';
 import { FEEDBIN_KEY, feedbinConfig, importStars, readFeedbin } from './feedbin.mjs';
 import { pinboardClient } from './pinboard.mjs';
+import { captureBookmark, handoffBookmarks } from './bookmarks.mjs';
 
 const s3 = new S3Client({});
 const bus = new EventBridgeClient({});
@@ -192,6 +193,18 @@ export async function handler(event = {}, context = {}) {
   try { feedbin = feedbinConfig(process.env); }
   catch { feedbin_sync = { error: 'The Feedbin connection configuration is invalid.' }; }
   const pinboard = pinboardClient({ token: process.env.PINBOARD_API_TOKEN });
+  if (event.bookmarks_preview) {
+    const state = await s3Get(bucket, FEEDBIN_KEY);
+    const report = { checked: 0, public: 0, private: 0, invalid: 0 };
+    for (const item of Object.values(state?.items ?? {}).filter((item) => item.state === 'present').slice(0, 5)) {
+      try {
+        const capture = captureBookmark(item, await pinboard.capture(item.url), now);
+        report[capture ? 'public' : 'private']++;
+      } catch { report.invalid++; }
+      report.checked++;
+    }
+    return { bookmarks_preview: report };
+  }
   // Read-only inspection runs in the deployed runtime, so the existing
   // secret never has to be retrieved into a local session. No S3 writes.
   if (event.feedbin_preview) {
@@ -213,6 +226,19 @@ export async function handler(event = {}, context = {}) {
         checkpoint: (next) => put(bucket, FEEDBIN_KEY, JSON.stringify(next, null, 1)),
         remaining: () => context.getRemainingTimeInMillis?.() ?? Infinity });
       feedbin_sync = result.report;
+      if (process.env.LINKS_BOOKMARK_INBOX) {
+        let processed = [];
+        try {
+          const response = await fetch('https://links.thingelstad.xyz/sync-fact.json', { signal: AbortSignal.timeout(5000) });
+          if (response.ok) processed = (await response.json()).bookmark_captures ?? [];
+        } catch { /* Missing destination evidence leaves the handoff pending. */ }
+        const handoff = await handoffBookmarks({ state: result.state, now: stamp(), pinboard, processed,
+          store: (key, body) => put(process.env.LINKS_BOOKMARK_INBOX, key, body),
+          checkpoint: (next) => put(bucket, FEEDBIN_KEY, JSON.stringify(next, null, 1)),
+          emit: (event) => emitBlog(event, process.env.PUBLISHING_BUS),
+          remaining: () => context.getRemainingTimeInMillis?.() ?? Infinity });
+        feedbin_sync.bookmarks = handoff.report;
+      }
     } catch {
       // A provider or storage error must not expose a URL or token in a log.
       // Pending work stays in its last successful checkpoint.

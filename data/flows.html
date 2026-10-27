@@ -85,11 +85,12 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <h2>Open</h2>
 <ul class="open"><li><a href="#hop-6"><span class="pill pill--gap">gap</span> 6. Weekly Thing (web) → Linking Things</a>: Broken on 2026-10-26: WT354 was sent 2026-10-24, the nightly ran green, and Linking Things still reports 353. The sibling checkout was on a feature branch without 354.md. Fix: read weekly's published archive over HTTPS, or origin main, never a working checkout; and nudge the join from the send (hop 10). Arrival reporting contract (sync plan step 4): source links, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 5 Linking Things receipt contract: the public build publishes only its imported change stamp and newest joined issue id/time in sync-fact.json. The deploy compares a known earlier public fact with the tested build and a verified public readback, then source links reports received via site-deploy. A local join or stats write alone is not arrival; unknown baselines, unchanged facts and regressions report nothing. This sender is proposed off, and does not fix the WT354 join or enable a subscriber. Step 8 proposed subscriber: published website leg may invoke a guarded Links join workflow through an API destination; this rule and any actual join remain disabled until Jamie explicitly approves repairing the WT354 example. Connections and real-work rules default off; ping targets dry-run workflows only. Repository-scoped Actions-write tokens live as new keys in sync-runtime, never in a session. Trigger labels remain the deployed clock/nudge until activation.</li>
 <li><a href="#hop-19"><span class="pill pill--gap">gap</span> 19. Library Agent → micro.blog</a>: First write round, 2026-10-22: 20 edits accepted by Micropub, 4 missing from the rendered pages after the rebuild. The read-back checks Micropub, not the page, so the round was green. A write needs a receipt: written, rendered, pulled back (hop 11). Sync plan step 6: the sync probe observes the public JSON feed and announces a newly observed post as source microblog, detail-type published, kind post, website leg, on thingelstad-publishing. Existing posts establish a baseline; retries do not manufacture another send. A post journey advances when the bus event is consumed. The captured public feed has tags but no independent numeric Micropub uid or modification time: authenticated q=source stays behind that explicit reader TODO. Hop 19 stays no-fact until an independent source identity and Library Agent write receipt can support a stored/rendered comparison; a destination-only witness never makes it fresh or late.</li>
-<li><a href="#hop-21"><span class="pill pill--unverified">unverified</span> 21. WT Builder → Another Thing</a>: Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length. Arrival reporting contract (sync plan step 4): source another, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 6 leaves hand-published episodes with the public podcast feed as their producer. This row remains unverified until the first WT Builder another send announces itself; no episode is invented to change the status. Step 5 sender contract: Another Thing reports source another, received, kind episode, via site-deploy after the public feed matches its build and changes from a known prior episode. An unchanged deploy or unknown baseline sends no arrival. This reporting does not turn the manual producer into a WT Builder send; its proposed sender and delivery-role permission wait for PR review and Jamie's activation.</li></ul>
+<li><a href="#hop-21"><span class="pill pill--unverified">unverified</span> 21. WT Builder → Another Thing</a>: Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length. Arrival reporting contract (sync plan step 4): source another, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 6 leaves hand-published episodes with the public podcast feed as their producer. This row remains unverified until the first WT Builder another send announces itself; no episode is invented to change the status. Step 5 sender contract: Another Thing reports source another, received, kind episode, via site-deploy after the public feed matches its build and changes from a known prior episode. An unchanged deploy or unknown baseline sends no arrival. This reporting does not turn the manual producer into a WT Builder send; its proposed sender and delivery-role permission wait for PR review and Jamie's activation.</li>
+<li><a href="#hop-23"><span class="pill pill--unverified">unverified</span> 23. Pinboard → Linking Things</a>: Requested by Jamie on 2026-10-27 to complete one Feedbin -&gt; Pinboard -&gt; Linking Things path. In preparation; no downstream trigger is active yet. The original nightly full mirror (hop 5), enrichment, and the separate WT354 issue join (hop 6) remain in place.</li></ul>
 
 <h2>Map</h2>
 <div class="scroll">
-<svg class="map" viewBox="0 0 1208 650" width="1208" height="650" role="img" aria-labelledby="map-title">
+<svg class="map" viewBox="0 0 1208 666" width="1208" height="666" role="img" aria-labelledby="map-title">
 <title id="map-title">Data flows between Jamie's systems, 2026-10-27</title>
 <defs>
   <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker>
@@ -99,125 +100,127 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <text class="col" x="604" y="20" text-anchor="middle">Published sites</text>
 <text class="col" x="852" y="20" text-anchor="middle">Archive</text>
 <text class="col" x="1100" y="20" text-anchor="middle">Answers</text>
-<path class="edge edge--ok edge--live" d="M 192 224 C 232 224, 232 300.5, 272 300.5" stroke-dasharray="" marker-end="url(#arrow)"><title>1. Pinboard → WT Builder: Every bookmark saved inside the issue's window.</title></path>
-<path class="edge edge--ok edge--live" d="M 272 309.5 C 232 309.5, 232 236, 192 236" stroke-dasharray="" marker-end="url(#arrow)"><title>2. WT Builder → Pinboard: Jamie's commentary edits, mirrored back as his note.</title></path>
-<path class="edge edge--ok edge--live" d="M 192 299.6 C 232 299.6, 232 318.5, 272 318.5" stroke-dasharray="" marker-end="url(#arrow)"><title>3. micro.blog → WT Builder: Posts in the window, for the Journal; later edits to posts not edited in WT Builder.</title></path>
-<path class="edge edge--ok edge--live" d="M 272 327.5 C 232 327.5, 232 306.8, 192 306.8" stroke-dasharray="" marker-end="url(#arrow)"><title>4. WT Builder → micro.blog: Edits to a Journal item, and the Weekly Thing category on reprinted posts.</title></path>
-<path class="edge edge--ok edge--clock" d="M 192 248 L 216 248 Q 224 248 224 240 L 224 44 Q 224 36 232 36 L 480 36 Q 488 36 488 44 L 488 462 Q 488 470 496 470 L 520 470" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>5. Pinboard → Linking Things: Every public bookmark, as the year shards under data/links/.</title></path>
-<path class="edge edge--gap edge--clock" d="M 644 182 C 764 212, 764 416, 644 446" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>6. Weekly Thing (web) → Linking Things: Which issue carried each link (the /issues/&lt;n&gt;/ pages and wt: search).</title></path>
-<path class="edge edge--ok edge--nudge" d="M 440 299 C 480 299, 480 158, 520 158" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>7. WT Builder → Weekly Thing (web): The issue's generated 11ty inputs (apps/site/archive/&lt;n&gt;.md and its assets).</title></path>
-<path class="edge edge--ok edge--nudge" d="M 440 305 C 480 305, 480 236, 520 236" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>8. WT Builder → Buttondown: The email edition, as a draft.</title></path>
-<path class="edge edge--ok edge--nudge" d="M 440 311 C 480 311, 480 314, 520 314" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>9. WT Builder → files.thingelstad.com: The issue's audio edition (with chapters and VTT) and every rehosted image.</title></path>
-<path class="edge edge--ok edge--nudge" d="M 440 317 L 472 317 Q 480 317 480 309 L 480 60 Q 480 52 488 52 L 720 52 Q 728 52 728 60 L 728 329.25 Q 728 337.25 736 337.25 L 768 337.25" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>10. WT Builder → Librarian: The news that an issue is out (its number), not the text.</title></path>
-<path class="edge edge--ok edge--clock" d="M 192 314 L 232 314 Q 240 314 240 306 L 240 76 Q 240 68 248 68 L 712 68 Q 720 68 720 76 L 720 333.75 Q 720 341.75 728 341.75 L 768 341.75" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>11. micro.blog → Librarian: Every post and page, with categories and alt as micro.blog holds them.</title></path>
-<path class="edge edge--ok edge--clock" d="M 688 392 C 728 392, 728 346.25, 768 346.25" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>12. Another Thing → Librarian: Each episode and its transcript, into the podcast corpus.</title></path>
-<path class="edge edge--ok edge--clock" d="M 688 548 C 728 548, 728 350.75, 768 350.75" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>13. Things I've built → Librarian: The registry of things, into the reference base.</title></path>
-<path class="edge edge--ok edge--clock" d="M 688 470 C 728 470, 728 355.25, 768 355.25" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>14. Linking Things → Librarian: Every public link, one passage each, into the links corpus.</title></path>
-<path class="edge edge--ok edge--clock" d="M 192 392 L 216 392 Q 224 392 224 384 L 224 92 Q 224 84 232 84 L 728 84 Q 736 84 736 92 L 736 351.75 Q 736 359.75 744 359.75 L 768 359.75" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>15. Tinylytics → Librarian: View counts per post, page and issue.</title></path>
-<path class="edge edge--ok edge--nudge" d="M 936 353 C 976 353, 976 314, 1016 314" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>16. Librarian → Thingy: The embedded corpora the API answers from (Weekly Thing, blog, podcast, reference, links).</title></path>
-<path class="edge edge--ok edge--nudge" d="M 768 364.25 C 728 364.25, 728 158, 688 158" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>17. Librarian → Weekly Thing (web): The topic graph (graph.json) that renders the topic pages.</title></path>
-<path class="edge edge--ok edge--live" d="M 768 368.75 C 718 498.75, 490 453, 440 323" stroke-dasharray="" marker-end="url(#arrow)"><title>18. Librarian → WT Builder: Retrieval for Thingy drafts, Echoes and the earlier issues that carried a link.</title></path>
-<path class="edge edge--gap edge--clock" d="M 272 392 C 232 392, 232 321.2, 192 321.2" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>19. Library Agent → micro.blog: Categories for unfiled posts, alt for photos without it, and the Featured choice (proposed to Jamie first).</title></path>
-<path class="edge edge--ok edge--live" d="M 192 328.4 L 224 328.4 Q 232 328.4 232 320.4 L 232 108 Q 232 100 240 100 L 968 100 Q 976 100 976 108 L 976 384 Q 976 392 984 392 L 1016 392" stroke-dasharray="" marker-end="url(#arrow)"><title>20. micro.blog → cards.thingelstad.com: The post's title, date, categories and text, for its social card.</title></path>
-<path class="edge edge--unverified edge--nudge" d="M 440 329 C 480 329, 480 392, 520 392" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>21. WT Builder → Another Thing: An episode: the mastered MP3 into the audio bucket, then its page and transcript in one commit.</title></path>
-<path class="edge edge--ok edge--clock" d="M 148 446 C 268 416, 268 290, 148 260" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>22. Feedbin → Pinboard: The article URL and title of each newly observed star; creates a bookmark only when that exact URL is missing.</title></path>
+<path class="edge edge--ok edge--live" d="M 192 238.5 C 232 238.5, 232 316.5, 272 316.5" stroke-dasharray="" marker-end="url(#arrow)"><title>1. Pinboard → WT Builder: Every bookmark saved inside the issue's window.</title></path>
+<path class="edge edge--ok edge--live" d="M 272 325.5 C 232 325.5, 232 247.5, 192 247.5" stroke-dasharray="" marker-end="url(#arrow)"><title>2. WT Builder → Pinboard: Jamie's commentary edits, mirrored back as his note.</title></path>
+<path class="edge edge--ok edge--live" d="M 192 315.6 C 232 315.6, 232 334.5, 272 334.5" stroke-dasharray="" marker-end="url(#arrow)"><title>3. micro.blog → WT Builder: Posts in the window, for the Journal; later edits to posts not edited in WT Builder.</title></path>
+<path class="edge edge--ok edge--live" d="M 272 343.5 C 232 343.5, 232 322.8, 192 322.8" stroke-dasharray="" marker-end="url(#arrow)"><title>4. WT Builder → micro.blog: Edits to a Journal item, and the Weekly Thing category on reprinted posts.</title></path>
+<path class="edge edge--ok edge--clock" d="M 192 256.5 L 216 256.5 Q 224 256.5 224 248.5 L 224 44 Q 224 36 232 36 L 480 36 Q 488 36 488 44 L 488 472 Q 488 480 496 480 L 520 480" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>5. Pinboard → Linking Things: Every public bookmark, as the year shards under data/links/.</title></path>
+<path class="edge edge--gap edge--clock" d="M 644 198 C 764 228, 764 432, 644 462" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>6. Weekly Thing (web) → Linking Things: Which issue carried each link (the /issues/&lt;n&gt;/ pages and wt: search).</title></path>
+<path class="edge edge--ok edge--nudge" d="M 440 315 C 480 315, 480 174, 520 174" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>7. WT Builder → Weekly Thing (web): The issue's generated 11ty inputs (apps/site/archive/&lt;n&gt;.md and its assets).</title></path>
+<path class="edge edge--ok edge--nudge" d="M 440 321 C 480 321, 480 252, 520 252" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>8. WT Builder → Buttondown: The email edition, as a draft.</title></path>
+<path class="edge edge--ok edge--nudge" d="M 440 327 C 480 327, 480 330, 520 330" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>9. WT Builder → files.thingelstad.com: The issue's audio edition (with chapters and VTT) and every rehosted image.</title></path>
+<path class="edge edge--ok edge--nudge" d="M 440 333 L 472 333 Q 480 333 480 325 L 480 60 Q 480 52 488 52 L 720 52 Q 728 52 728 60 L 728 345.25 Q 728 353.25 736 353.25 L 768 353.25" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>10. WT Builder → Librarian: The news that an issue is out (its number), not the text.</title></path>
+<path class="edge edge--ok edge--clock" d="M 192 330 L 232 330 Q 240 330 240 322 L 240 76 Q 240 68 248 68 L 712 68 Q 720 68 720 76 L 720 349.75 Q 720 357.75 728 357.75 L 768 357.75" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>11. micro.blog → Librarian: Every post and page, with categories and alt as micro.blog holds them.</title></path>
+<path class="edge edge--ok edge--clock" d="M 688 408 C 728 408, 728 362.25, 768 362.25" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>12. Another Thing → Librarian: Each episode and its transcript, into the podcast corpus.</title></path>
+<path class="edge edge--ok edge--clock" d="M 688 564 C 728 564, 728 366.75, 768 366.75" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>13. Things I've built → Librarian: The registry of things, into the reference base.</title></path>
+<path class="edge edge--ok edge--clock" d="M 688 486 C 728 486, 728 371.25, 768 371.25" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>14. Linking Things → Librarian: Every public link, one passage each, into the links corpus.</title></path>
+<path class="edge edge--ok edge--clock" d="M 192 408 L 216 408 Q 224 408 224 400 L 224 92 Q 224 84 232 84 L 728 84 Q 736 84 736 92 L 736 367.75 Q 736 375.75 744 375.75 L 768 375.75" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>15. Tinylytics → Librarian: View counts per post, page and issue.</title></path>
+<path class="edge edge--ok edge--nudge" d="M 936 369 C 976 369, 976 330, 1016 330" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>16. Librarian → Thingy: The embedded corpora the API answers from (Weekly Thing, blog, podcast, reference, links).</title></path>
+<path class="edge edge--ok edge--nudge" d="M 768 380.25 C 728 380.25, 728 174, 688 174" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>17. Librarian → Weekly Thing (web): The topic graph (graph.json) that renders the topic pages.</title></path>
+<path class="edge edge--ok edge--live" d="M 768 384.75 C 718 514.75, 490 469, 440 339" stroke-dasharray="" marker-end="url(#arrow)"><title>18. Librarian → WT Builder: Retrieval for Thingy drafts, Echoes and the earlier issues that carried a link.</title></path>
+<path class="edge edge--gap edge--clock" d="M 272 408 C 232 408, 232 337.2, 192 337.2" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>19. Library Agent → micro.blog: Categories for unfiled posts, alt for photos without it, and the Featured choice (proposed to Jamie first).</title></path>
+<path class="edge edge--ok edge--live" d="M 192 344.4 L 224 344.4 Q 232 344.4 232 336.4 L 232 108 Q 232 100 240 100 L 968 100 Q 976 100 976 108 L 976 400 Q 976 408 984 408 L 1016 408" stroke-dasharray="" marker-end="url(#arrow)"><title>20. micro.blog → cards.thingelstad.com: The post's title, date, categories and text, for its social card.</title></path>
+<path class="edge edge--unverified edge--nudge" d="M 440 345 C 480 345, 480 408, 520 408" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>21. WT Builder → Another Thing: An episode: the mastered MP3 into the audio bucket, then its page and transcript in one commit.</title></path>
+<path class="edge edge--ok edge--clock" d="M 148 462 C 268 432, 268 306, 148 276" stroke-dasharray="2 4" marker-end="url(#arrow)"><title>22. Feedbin → Pinboard: The article URL and title of each newly observed star; creates a bookmark only when that exact URL is missing.</title></path>
+<path class="edge edge--unverified edge--nudge" d="M 192 265.5 L 232 265.5 Q 240 265.5 240 257.5 L 240 124 Q 240 116 248 116 L 464 116 Q 472 116 472 124 L 472 484 Q 472 492 480 492 L 520 492" stroke-dasharray="8 4" marker-end="url(#arrow)"><title>23. Pinboard → Linking Things: A verified public bookmark associated with a Feedbin star, including its exact Pinboard fields and Feedbin identity.</title></path>
 <g class="node node--source">
-  <rect x="24" y="212" width="168" height="48" rx="8"/>
-  <text class="name" x="36" y="232">Pinboard</text>
-  <text class="runs" x="36" y="249">pinboard.in</text>
+  <rect x="24" y="228" width="168" height="48" rx="8"/>
+  <text class="name" x="36" y="248">Pinboard</text>
+  <text class="runs" x="36" y="265">pinboard.in</text>
 </g>
 <g class="node node--source">
-  <rect x="24" y="290" width="168" height="48" rx="8"/>
-  <text class="name" x="36" y="310">micro.blog</text>
-  <text class="runs" x="36" y="327">micro.blog</text>
+  <rect x="24" y="306" width="168" height="48" rx="8"/>
+  <text class="name" x="36" y="326">micro.blog</text>
+  <text class="runs" x="36" y="343">micro.blog</text>
 </g>
 <g class="node node--source">
-  <rect x="24" y="368" width="168" height="48" rx="8"/>
-  <text class="name" x="36" y="388">Tinylytics</text>
-  <text class="runs" x="36" y="405">tinylytics.app</text>
+  <rect x="24" y="384" width="168" height="48" rx="8"/>
+  <text class="name" x="36" y="404">Tinylytics</text>
+  <text class="runs" x="36" y="421">tinylytics.app</text>
 </g>
 <g class="node node--publisher node--mac">
-  <rect x="272" y="290" width="168" height="48" rx="8"/>
-  <text class="name" x="284" y="310">WT Builder</text>
-  <text class="runs" x="284" y="327">mac</text>
+  <rect x="272" y="306" width="168" height="48" rx="8"/>
+  <text class="name" x="284" y="326">WT Builder</text>
+  <text class="runs" x="284" y="343">mac</text>
 </g>
 <g class="node node--agent node--mac">
-  <rect x="272" y="368" width="168" height="48" rx="8"/>
-  <text class="name" x="284" y="388">Library Agent</text>
-  <text class="runs" x="284" y="405">mac</text>
+  <rect x="272" y="384" width="168" height="48" rx="8"/>
+  <text class="name" x="284" y="404">Library Agent</text>
+  <text class="runs" x="284" y="421">mac</text>
 </g>
 <g class="node node--site">
-  <rect x="520" y="134" width="168" height="48" rx="8"/>
-  <text class="name" x="532" y="154">Weekly Thing (web)</text>
-  <text class="runs" x="532" y="171">github-actions</text>
+  <rect x="520" y="150" width="168" height="48" rx="8"/>
+  <text class="name" x="532" y="170">Weekly Thing (web)</text>
+  <text class="runs" x="532" y="187">github-actions</text>
 </g>
 <g class="node node--site">
-  <rect x="520" y="212" width="168" height="48" rx="8"/>
-  <text class="name" x="532" y="232">Buttondown</text>
-  <text class="runs" x="532" y="249">buttondown.com</text>
+  <rect x="520" y="228" width="168" height="48" rx="8"/>
+  <text class="name" x="532" y="248">Buttondown</text>
+  <text class="runs" x="532" y="265">buttondown.com</text>
 </g>
 <g class="node node--site">
-  <rect x="520" y="290" width="168" height="48" rx="8"/>
-  <text class="name" x="532" y="310">files.thingelstad.com</text>
-  <text class="runs" x="532" y="327">aws</text>
+  <rect x="520" y="306" width="168" height="48" rx="8"/>
+  <text class="name" x="532" y="326">files.thingelstad.com</text>
+  <text class="runs" x="532" y="343">aws</text>
 </g>
 <g class="node node--site">
-  <rect x="520" y="368" width="168" height="48" rx="8"/>
-  <text class="name" x="532" y="388">Another Thing</text>
-  <text class="runs" x="532" y="405">github-actions</text>
+  <rect x="520" y="384" width="168" height="48" rx="8"/>
+  <text class="name" x="532" y="404">Another Thing</text>
+  <text class="runs" x="532" y="421">github-actions</text>
 </g>
 <g class="node node--site node--mac">
-  <rect x="520" y="446" width="168" height="48" rx="8"/>
-  <text class="name" x="532" y="466">Linking Things</text>
-  <text class="runs" x="532" y="483">mac+github-actions</text>
+  <rect x="520" y="462" width="168" height="48" rx="8"/>
+  <text class="name" x="532" y="482">Linking Things</text>
+  <text class="runs" x="532" y="499">mac+github-actions</text>
 </g>
 <g class="node node--site">
-  <rect x="520" y="524" width="168" height="48" rx="8"/>
-  <text class="name" x="532" y="544">Things I've built</text>
-  <text class="runs" x="532" y="561">github-actions</text>
+  <rect x="520" y="540" width="168" height="48" rx="8"/>
+  <text class="name" x="532" y="560">Things I've built</text>
+  <text class="runs" x="532" y="577">github-actions</text>
 </g>
 <g class="node node--archive">
-  <rect x="768" y="329" width="168" height="48" rx="8"/>
-  <text class="name" x="780" y="349">Librarian</text>
-  <text class="runs" x="780" y="366">github-actions+aws</text>
+  <rect x="768" y="345" width="168" height="48" rx="8"/>
+  <text class="name" x="780" y="365">Librarian</text>
+  <text class="runs" x="780" y="382">github-actions+aws</text>
 </g>
 <g class="node node--answers">
-  <rect x="1016" y="290" width="168" height="48" rx="8"/>
-  <text class="name" x="1028" y="310">Thingy</text>
-  <text class="runs" x="1028" y="327">aws</text>
+  <rect x="1016" y="306" width="168" height="48" rx="8"/>
+  <text class="name" x="1028" y="326">Thingy</text>
+  <text class="runs" x="1028" y="343">aws</text>
 </g>
 <g class="node node--answers">
-  <rect x="1016" y="368" width="168" height="48" rx="8"/>
-  <text class="name" x="1028" y="388">cards.thingelstad.com</text>
-  <text class="runs" x="1028" y="405">aws</text>
+  <rect x="1016" y="384" width="168" height="48" rx="8"/>
+  <text class="name" x="1028" y="404">cards.thingelstad.com</text>
+  <text class="runs" x="1028" y="421">aws</text>
 </g>
 <g class="node node--source">
-  <rect x="24" y="446" width="168" height="48" rx="8"/>
-  <text class="name" x="36" y="466">Feedbin</text>
-  <text class="runs" x="36" y="483">feedbin.com</text>
+  <rect x="24" y="462" width="168" height="48" rx="8"/>
+  <text class="name" x="36" y="482">Feedbin</text>
+  <text class="runs" x="36" y="499">feedbin.com</text>
 </g>
-<g class="badge badge--ok badge--mac"><a href="#hop-1"><circle cx="232" cy="262.25" r="11"/><text x="232" y="266.25" text-anchor="middle">1</text></a></g>
-<g class="badge badge--ok badge--mac"><a href="#hop-2"><circle cx="252.16000000000008" cy="301.85600000000005" r="11"/><text x="252.16000000000008" y="305.85600000000005" text-anchor="middle">2</text></a></g>
-<g class="badge badge--ok badge--mac"><a href="#hop-3"><circle cx="232" cy="309.05" r="11"/><text x="232" y="313.05" text-anchor="middle">3</text></a></g>
-<g class="badge badge--ok badge--mac"><a href="#hop-4"><circle cx="252.16000000000008" cy="325.3472000000001" r="11"/><text x="252.16000000000008" y="329.3472000000001" text-anchor="middle">4</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-1"><circle cx="232" cy="277.5" r="11"/><text x="232" y="281.5" text-anchor="middle">1</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-2"><circle cx="252.16000000000008" cy="317.3880000000001" r="11"/><text x="252.16000000000008" y="321.3880000000001" text-anchor="middle">2</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-3"><circle cx="232" cy="325.05" r="11"/><text x="232" y="329.05" text-anchor="middle">3</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-4"><circle cx="252.16000000000008" cy="341.3472000000001" r="11"/><text x="252.16000000000008" y="345.3472000000001" text-anchor="middle">4</text></a></g>
 <g class="badge badge--ok badge--mac"><a href="#hop-5"><circle cx="356" cy="36" r="11"/><text x="356" y="40" text-anchor="middle">5</text></a></g>
-<g class="badge badge--gap badge--mac"><a href="#hop-6"><circle cx="719.5999999999998" cy="246.58399999999995" r="11"/><text x="719.5999999999998" y="250.58399999999995" text-anchor="middle">6</text></a></g>
-<g class="badge badge--ok badge--mac"><a href="#hop-7"><circle cx="480" cy="228.5" r="11"/><text x="480" y="232.5" text-anchor="middle">7</text></a></g>
-<g class="badge badge--ok badge--mac"><a href="#hop-8"><circle cx="480" cy="270.5" r="11"/><text x="480" y="274.5" text-anchor="middle">8</text></a></g>
-<g class="badge badge--ok badge--mac"><a href="#hop-9"><circle cx="480" cy="312.5" r="11"/><text x="480" y="316.5" text-anchor="middle">9</text></a></g>
+<g class="badge badge--gap badge--mac"><a href="#hop-6"><circle cx="719.5999999999998" cy="262.58399999999995" r="11"/><text x="719.5999999999998" y="266.58399999999995" text-anchor="middle">6</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-7"><circle cx="480" cy="244.5" r="11"/><text x="480" y="248.5" text-anchor="middle">7</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-8"><circle cx="480" cy="286.5" r="11"/><text x="480" y="290.5" text-anchor="middle">8</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-9"><circle cx="480" cy="328.5" r="11"/><text x="480" y="332.5" text-anchor="middle">9</text></a></g>
 <g class="badge badge--ok badge--mac"><a href="#hop-10"><circle cx="604" cy="52" r="11"/><text x="604" y="56" text-anchor="middle">10</text></a></g>
 <g class="badge badge--ok badge--mac"><a href="#hop-11"><circle cx="480" cy="68" r="11"/><text x="480" y="72" text-anchor="middle">11</text></a></g>
-<g class="badge badge--ok badge--mac"><a href="#hop-12"><circle cx="728" cy="369.125" r="11"/><text x="728" y="373.125" text-anchor="middle">12</text></a></g>
-<g class="badge badge--ok badge--mac"><a href="#hop-13"><circle cx="728" cy="449.375" r="11"/><text x="728" y="453.375" text-anchor="middle">13</text></a></g>
-<g class="badge badge--ok badge--mac"><a href="#hop-14"><circle cx="728" cy="412.625" r="11"/><text x="728" y="416.625" text-anchor="middle">14</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-12"><circle cx="728" cy="385.125" r="11"/><text x="728" y="389.125" text-anchor="middle">12</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-13"><circle cx="728" cy="465.375" r="11"/><text x="728" y="469.375" text-anchor="middle">13</text></a></g>
+<g class="badge badge--ok badge--mac"><a href="#hop-14"><circle cx="728" cy="428.625" r="11"/><text x="728" y="432.625" text-anchor="middle">14</text></a></g>
 <g class="badge badge--ok badge--mac"><a href="#hop-15"><circle cx="480" cy="84" r="11"/><text x="480" y="88" text-anchor="middle">15</text></a></g>
-<g class="badge badge--ok"><a href="#hop-16"><circle cx="976" cy="333.5" r="11"/><text x="976" y="337.5" text-anchor="middle">16</text></a></g>
-<g class="badge badge--ok"><a href="#hop-17"><circle cx="748.1600000000003" cy="342.80000000000007" r="11"/><text x="748.1600000000003" y="346.80000000000007" text-anchor="middle">17</text></a></g>
-<g class="badge badge--ok"><a href="#hop-18"><circle cx="604" cy="443.375" r="11"/><text x="604" y="447.375" text-anchor="middle">18</text></a></g>
-<g class="badge badge--gap badge--mac"><a href="#hop-19"><circle cx="252.16000000000008" cy="384.63680000000005" r="11"/><text x="252.16000000000008" y="388.63680000000005" text-anchor="middle">19</text></a></g>
+<g class="badge badge--ok"><a href="#hop-16"><circle cx="976" cy="349.5" r="11"/><text x="976" y="353.5" text-anchor="middle">16</text></a></g>
+<g class="badge badge--ok"><a href="#hop-17"><circle cx="748.1600000000003" cy="358.80000000000007" r="11"/><text x="748.1600000000003" y="362.80000000000007" text-anchor="middle">17</text></a></g>
+<g class="badge badge--ok"><a href="#hop-18"><circle cx="604" cy="459.375" r="11"/><text x="604" y="463.375" text-anchor="middle">18</text></a></g>
+<g class="badge badge--gap badge--mac"><a href="#hop-19"><circle cx="252.16000000000008" cy="400.6368000000001" r="11"/><text x="252.16000000000008" y="404.6368000000001" text-anchor="middle">19</text></a></g>
 <g class="badge badge--ok"><a href="#hop-20"><circle cx="604" cy="100" r="11"/><text x="604" y="104" text-anchor="middle">20</text></a></g>
-<g class="badge badge--unverified badge--mac"><a href="#hop-21"><circle cx="480" cy="360.5" r="11"/><text x="480" y="364.5" text-anchor="middle">21</text></a></g>
-<g class="badge badge--ok"><a href="#hop-22"><circle cx="223.59999999999997" cy="398.2639999999999" r="11"/><text x="223.59999999999997" y="402.2639999999999" text-anchor="middle">22</text></a></g>
+<g class="badge badge--unverified badge--mac"><a href="#hop-21"><circle cx="480" cy="376.5" r="11"/><text x="480" y="380.5" text-anchor="middle">21</text></a></g>
+<g class="badge badge--ok"><a href="#hop-22"><circle cx="223.59999999999997" cy="414.2639999999999" r="11"/><text x="223.59999999999997" y="418.2639999999999" text-anchor="middle">22</text></a></g>
+<g class="badge badge--unverified"><a href="#hop-23"><circle cx="356" cy="116" r="11"/><text x="356" y="120" text-anchor="middle">23</text></a></g>
 </svg>
 </div>
 <ul class="legend">
@@ -433,6 +436,15 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>An exact posts/get URL lookup confirms the bookmark. A change stamp or an unrelated newer bookmark never proves arrival. Sync exposes the pending count and a receipt for the newest observed star.</td>
   <td><span class="pill pill--ok">ok</span><br><span class="muted">Requested by Jamie on 2026-10-27. This is an explicitly authorized additive writer in sync; other hops remain observation only. The first-run import and bookmark privacy are deployment choices. Feed publication dates are never read as star or save times; no starring-to-save lag is claimed. The RSS feed is a fifty-item window, so stars that leave between successful polls cannot be recovered from it.</span></td>
 </tr>
+<tr id="hop-23" class="status--unverified">
+  <td class="num">23</td>
+  <td><strong>Pinboard</strong> → <strong>Linking Things</strong><br><span class="muted">star</span></td>
+  <td>A verified public bookmark associated with a Feedbin star, including its exact Pinboard fields and Feedbin identity.<br><span class="muted">A durable public-record capture in the private Linking Things inbox precedes a metadata-only pinboard bookmarks-ready event. A dedicated workflow imports the capture and commits only bookmark data and provenance; the existing tested static deploy publishes it before reporting an exact item arrival. Enrichment remains nightly.</span></td>
+  <td>nudge, on pinboard bookmarks-ready<br><span class="muted">github-actions</span></td>
+  <td class="num">30 min</td>
+  <td>The exact saved URL and bookmark id are present in the published record and sync-fact.json carries its Feedbin star identity. The destination reports received only after independent public readback; a partial bookmark import never advances the account-wide Pinboard change stamp.</td>
+  <td><span class="pill pill--unverified">unverified</span><br><span class="muted">Requested by Jamie on 2026-10-27 to complete one Feedbin -&gt; Pinboard -&gt; Linking Things path. In preparation; no downstream trigger is active yet. The original nightly full mirror (hop 5), enrichment, and the separate WT354 issue join (hop 6) remain in place.</span></td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -564,6 +576,12 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td class="num"><a href="#hop-22">22</a></td>
   <td>Durably queued stars, exact Pinboard URL readbacks, importer failures and pending counts.</td>
   <td>Stars that disappear from the fifty-item feed before any successful poll. There is no star timestamp in this feed.</td>
+</tr>
+<tr>
+  <td><strong>Linking Things bookmark arrival receipts</strong><br><span class="muted">The dedicated bookmark importer, the normal static deploy, and sync</span></td>
+  <td class="num"><a href="#hop-22">22</a>, <a href="#hop-23">23</a></td>
+  <td>Exact public bookmark and Feedbin star identities, durable handoff, published record readback, and received events.</td>
+  <td>It does not claim the entire Pinboard account was mirrored or repair the Weekly Thing join.</td>
 </tr>
 </tbody>
 </table>

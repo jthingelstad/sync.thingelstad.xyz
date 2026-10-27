@@ -596,6 +596,25 @@
       "verify": "An exact posts/get URL lookup confirms the bookmark. A change stamp or an unrelated newer bookmark never proves arrival. Sync exposes the pending count and a receipt for the newest observed star.",
       "status": "ok",
       "notes": "Requested by Jamie on 2026-10-27. This is an explicitly authorized additive writer in sync; other hops remain observation only. The first-run import and bookmark privacy are deployment choices. Feed publication dates are never read as star or save times; no starring-to-save lag is claimed. The RSS feed is a fifty-item window, so stars that leave between successful polls cannot be recovered from it."
+    },
+    {
+      "id": 23,
+      "from": "pinboard",
+      "to": "links",
+      "kinds": [
+        "star"
+      ],
+      "moves": "A verified public bookmark associated with a Feedbin star, including its exact Pinboard fields and Feedbin identity.",
+      "mechanism": "A durable public-record capture in the private Linking Things inbox precedes a metadata-only pinboard bookmarks-ready event. A dedicated workflow imports the capture and commits only bookmark data and provenance; the existing tested static deploy publishes it before reporting an exact item arrival. Enrichment remains nightly.",
+      "trigger": {
+        "type": "nudge",
+        "event": "pinboard bookmarks-ready",
+        "runs_on": "github-actions"
+      },
+      "expected_lag_hours": 0.5,
+      "verify": "The exact saved URL and bookmark id are present in the published record and sync-fact.json carries its Feedbin star identity. The destination reports received only after independent public readback; a partial bookmark import never advances the account-wide Pinboard change stamp.",
+      "status": "unverified",
+      "notes": "Requested by Jamie on 2026-10-27 to complete one Feedbin -> Pinboard -> Linking Things path. In preparation; no downstream trigger is active yet. The original nightly full mirror (hop 5), enrichment, and the separate WT354 issue join (hop 6) remain in place."
     }
   ],
   "fields": [
@@ -770,6 +789,16 @@
       ],
       "sees": "Durably queued stars, exact Pinboard URL readbacks, importer failures and pending counts.",
       "misses": "Stars that disappear from the fifty-item feed before any successful poll. There is no star timestamp in this feed."
+    },
+    {
+      "name": "Linking Things bookmark arrival receipts",
+      "where": "The dedicated bookmark importer, the normal static deploy, and sync",
+      "hops": [
+        22,
+        23
+      ],
+      "sees": "Exact public bookmark and Feedbin star identities, durable handoff, published record readback, and received events.",
+      "misses": "It does not claim the entire Pinboard account was mirrored or repair the Weekly Thing join."
     }
   ]
 }

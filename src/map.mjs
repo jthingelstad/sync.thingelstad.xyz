@@ -106,12 +106,17 @@ export function mapSvg(status, journeys = {}) {
   // Pele fits the drawing to its container; the page shows it at its own
   // size and scrolls, so the labels stay readable.
   svg = svg.replace('max-width:100%;height:auto;', '');
-  const seen = new Map();
+  // Pele numbers parallel edges itself (its current second edge is _2,
+  // rather than _1). Read the rendered ids instead of predicting them.
+  const edgeIds = new Map();
+  for (const [, id, pair] of svg.matchAll(/<g class="pele-edge" data-id="(L_(n\d+_n\d+)_\d+)">/g)) {
+    if (!edgeIds.has(pair)) edgeIds.set(pair, []);
+    edgeIds.get(pair).push(id);
+  }
   for (const h of flows.hops) {
     const pair = `${key.get(h.from)}_${key.get(h.to)}`;
-    const n = seen.get(pair) ?? 0;
-    seen.set(pair, n + 1);
-    const id = `L_${pair}_${n}`;
+    const id = edgeIds.get(pair)?.shift();
+    if (!id) throw new Error(`map: no rendered edge for hop ${h.id}`);
     const { status: worst, kinds } = hopSummary(status.hops, h.id);
     const title = `${h.id}. ${systemName(h.from)} → ${systemName(h.to)}: ${kinds.join(', ')}`;
     const before = svg;

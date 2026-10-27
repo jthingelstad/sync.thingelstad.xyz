@@ -237,7 +237,7 @@ const READERS = {
     };
   },
 
-  async links(ctx) {
+  async links(ctx, facts) {
     const [stats, sync] = await Promise.all([
       text(ctx, URLS.linksMcp, {
         method: 'POST',
@@ -252,7 +252,22 @@ const READERS = {
     // time is when the newest public link was saved.
     if (sync.pinboard_stamp) newest.link = { id: sync.pinboard_stamp, at: stats.last_saved ?? sync.pinboard_stamp, url: 'https://links.thingelstad.xyz/newest/' };
     if (stats.latest_issue) newest.issue = { id: stats.latest_issue, at: null, url: `https://links.thingelstad.xyz/issues/${stats.latest_issue}/` };
-    return { newest, extra: { links: stats.links, site_generated: stats.generated, synced_at: sync.fetched_at, pinboard_stamp: sync.pinboard_stamp } };
+    const fact = { newest, extra: { links: stats.links, site_generated: stats.generated, synced_at: sync.fetched_at, pinboard_stamp: sync.pinboard_stamp } };
+    const star = facts.feedbin?.newest?.star;
+    if (star) {
+      try {
+        const id = createHash('md5').update(star.url).digest('hex').slice(0, 12);
+        const response = await ctx.fetch(`https://links.thingelstad.xyz/links/${id}.json`, { signal: AbortSignal.timeout(10_000) });
+        if (response.status === 404) fact.absent = { star: { id: star.id } };
+        else if (!response.ok) throw new Error('Exact link unavailable');
+        else {
+          const record = await response.json();
+          if (record.id !== id || record.url !== star.url) throw new Error('Exact link mismatch');
+          newest.star = { ...star, url: `https://links.thingelstad.xyz/links/${id}/` };
+        }
+      } catch { fact.errors = { star: 'The exact Linking Things bookmark lookup failed.' }; }
+    }
+    return fact;
   },
 
   async feedbin(ctx) {
@@ -364,7 +379,7 @@ const READERS = {
   },
 };
 
-const DEPENDENT = new Set(['cdn', 'cards', 'thingy', 'pinboard']);
+const DEPENDENT = new Set(['cdn', 'cards', 'thingy', 'pinboard', 'links']);
 
 /**
  * Read every system's fact. Returns { <system id>: fact } for every system in

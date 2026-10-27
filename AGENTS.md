@@ -69,7 +69,12 @@ added tags (`replace=no`), and verifies each with a readback. The first run
 imports missing links from the current fifty-item feed. Existing bookmarks
 keep every field; unstars never delete. `src/feedbin.mjs`, `src/pinboard.mjs`
 and `docs/FEEDBIN.md` describe the journal, preview and private connection
-configuration. This exception does not authorize repairs on any other hop.
+configuration. Jamie then requested the end-to-end Feedbin → Pinboard → Linking Things path
+(2026-10-27, "Can we do that? That would get one path going end to end").
+Hop 23 captures only explicitly public exact Pinboard records to Links'
+private inbox before a metadata-only bookmark wake-up. `src/bookmarks.mjs`,
+`docs/SUBSCRIBERS.md` and `docs/FEEDBIN.md` cover this continuation.
+This exception does not authorize repairs on any other hop, including WT354.
 
 - It is not the source of a single hop. `data/flows.json` is vendored from
   `../shared/flows.json` (`npm run flows:sync`; `npm run flows:check` fails on
@@ -96,6 +101,10 @@ configuration. This exception does not authorize repairs on any other hop.
   version means Thingy serves what the Librarian holds, and a mismatch shows
   as the build Thingy still serves (`build <8 hex>`), so the hop reads moving
   until the redeploy after the upload lands.
+- `src/bookmarks.mjs` — public capture outbox to Linking Things. Inbox write,
+  journal checkpoint, then bus acknowledgement; retries continue until the
+  deployed Links fact acknowledges each capture. `LinksBookmarkMode` is one
+  off/rehearsal/active switch; off resolves no GitHub key.
 - `src/feedbin.mjs`, `src/pinboard.mjs` — RSS discovery, the durable additive
   import and a paced Pinboard API client. Feedbin's `star` fact names an exact
   article independently of the existing Pinboard `link` change stamp. The feed
@@ -192,8 +201,10 @@ grants nobody. It does not change trust or bypass a permissions boundary.
 `docs/DESTINATIONS.md` has the activation order. Unknown baselines never
 become measured arrivals.
 
-- Subscribers (rules on the bus that start a destination's workflow) are
-  not in the stack. The night of 2026-10-26 built four, all off, as twenty
+- The public bookmark subscriber (hop 23) is the stack's one destination
+  starter, with `LinksBookmarkMode` off/rehearsal/active. It pins
+  `sync-bookmarks.yml` on Linking Things main. Its GitHub token resolves
+  only when the mode is not off. The night of 2026-10-26 built four, all off, as twenty
   dormant resources and ten switches; they came out the next morning at
   Jamie's ask to keep the stack hobby-sized. `docs/SUBSCRIBERS.md` keeps
   the shape for the day one is wanted, and git history (987138f) the code.
@@ -222,7 +233,8 @@ Secrets Manager secret, `sync-runtime` (the house `<app>-runtime` shape; made
 the sync app not just for this one secret"). Each key is one secret the app
 needs; the template resolves each into its own environment variable with
 `{{resolve:secretsmanager:${RuntimeSecret}:SecretString:<key>}}`, so no value
-enters a session. Keys today: `pinboard_token` → `PINBOARD_API_TOKEN`, the
+enters a session. Keys today: `github_links_actions_token` authorizes the bookmark API
+destination only when enabled; `pinboard_token` → `PINBOARD_API_TOKEN`, the
 Pinboard fact; `microblog_api_key` → `MICROBLOG_API_KEY` (added 2026-10-26 at
 Jamie's ask). The blog producer reads the public feed without it. Its
 authenticated source query waits for the verified identity and write
