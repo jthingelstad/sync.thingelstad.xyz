@@ -94,7 +94,7 @@ export function mapSource(status, journeys) {
  */
 export function mapSvg(status, journeys = {}) {
   const key = new Map(flows.systems.map((s, i) => [s.id, `n${i}`]));
-  let { svg } = render(mapSource(status, journeys), { fontFamily: 'Inter, system-ui, sans-serif', padding: 4, idPrefix: 'map', autoDirection: false });
+  let { svg } = render(mapSource(status, journeys), { fontFamily: 'Inter, system-ui, sans-serif', fontSize: 17, padding: 24, idPrefix: 'map', autoDirection: false });
   // Pele fits the drawing to its container; the page shows it at its own
   // size and scrolls, so the labels stay readable.
   svg = svg.replace('max-width:100%;height:auto;', '');
@@ -116,5 +116,9 @@ export function mapSvg(status, journeys = {}) {
     svg = svg.replace(new RegExp(`<g class="pele-node ([^"]*)" data-id="${key.get(s.id)}"`), `<g class="pele-node $1 node--${nodeState(status.facts[s.id])}" data-id="${key.get(s.id)}" data-system="${s.id}"`);
     if (svg === before) throw new Error(`map: no node for ${s.id}`);
   }
+  // A quiet outer pipe separates crossing paths. Only its inner stroke
+  // carries status; width never stands for volume or throughput.
+  svg = svg.replace(/(<g class="pele-edge hop--[^"]+"[^>]*>[\s\S]*?)(<path d="([^"]+)"[^>]*>)/g,
+    '$1<path class="pipe-case" d="$3" aria-hidden="true"/>$2');
   return `${svg}\n`;
 }
