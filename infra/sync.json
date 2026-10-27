@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "sync.thingelstad.xyz: the sync probe on a half-hour schedule and the static page it publishes",
+  "Description": "sync.thingelstad.xyz: the publishing bus, the sync probe on a half-hour schedule and on every published event, and the page it publishes",
   "Parameters": {
     "CodeKey": {
       "Type": "String",
@@ -21,13 +21,74 @@
       "Type": "String",
       "Default": "",
       "Description": "Name of the Secrets Manager secret whose token key holds a Pinboard API token; empty leaves the Pinboard fact unread"
+    },
+    "PublisherUser": {
+      "Type": "String",
+      "Default": "wt-archive",
+      "Description": "IAM user WT Builder signs its AWS calls with; it may put events on the publishing bus. Empty grants nobody."
     }
   },
   "Conditions": {
-    "HasCode": { "Fn::Not": [{ "Fn::Equals": [{ "Ref": "CodeKey" }, ""] }] },
-    "HasCodeVersion": { "Fn::Not": [{ "Fn::Equals": [{ "Ref": "CodeVersion" }, ""] }] },
-    "HasCertificate": { "Fn::Not": [{ "Fn::Equals": [{ "Ref": "CertificateArn" }, ""] }] },
-    "HasPinboard": { "Fn::Not": [{ "Fn::Equals": [{ "Ref": "PinboardSecret" }, ""] }] }
+    "HasCode": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "CodeKey"
+            },
+            ""
+          ]
+        }
+      ]
+    },
+    "HasCodeVersion": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "CodeVersion"
+            },
+            ""
+          ]
+        }
+      ]
+    },
+    "HasCertificate": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "CertificateArn"
+            },
+            ""
+          ]
+        }
+      ]
+    },
+    "HasPinboard": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "PinboardSecret"
+            },
+            ""
+          ]
+        }
+      ]
+    },
+    "HasPublisher": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "PublisherUser"
+            },
+            ""
+          ]
+        }
+      ]
+    }
   },
   "Resources": {
     "CodeBucket": {
@@ -35,8 +96,12 @@
       "DeletionPolicy": "Retain",
       "UpdateReplacePolicy": "Retain",
       "Properties": {
-        "BucketName": { "Fn::Sub": "${AWS::StackName}-code-${AWS::AccountId}" },
-        "VersioningConfiguration": { "Status": "Enabled" },
+        "BucketName": {
+          "Fn::Sub": "${AWS::StackName}-code-${AWS::AccountId}"
+        },
+        "VersioningConfiguration": {
+          "Status": "Enabled"
+        },
         "PublicAccessBlockConfiguration": {
           "BlockPublicAcls": true,
           "BlockPublicPolicy": true,
@@ -44,12 +109,30 @@
           "RestrictPublicBuckets": true
         },
         "BucketEncryption": {
-          "ServerSideEncryptionConfiguration": [{ "ServerSideEncryptionByDefault": { "SSEAlgorithm": "AES256" } }]
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
         },
         "LifecycleConfiguration": {
           "Rules": [
-            { "Id": "expire-old-packages", "Status": "Enabled", "NoncurrentVersionExpiration": { "NoncurrentDays": 30 } },
-            { "Id": "abort-incomplete-uploads", "Status": "Enabled", "AbortIncompleteMultipartUpload": { "DaysAfterInitiation": 7 } }
+            {
+              "Id": "expire-old-packages",
+              "Status": "Enabled",
+              "NoncurrentVersionExpiration": {
+                "NoncurrentDays": 30
+              }
+            },
+            {
+              "Id": "abort-incomplete-uploads",
+              "Status": "Enabled",
+              "AbortIncompleteMultipartUpload": {
+                "DaysAfterInitiation": 7
+              }
+            }
           ]
         }
       }
@@ -57,7 +140,9 @@
     "CodeBucketPolicy": {
       "Type": "AWS::S3::BucketPolicy",
       "Properties": {
-        "Bucket": { "Ref": "CodeBucket" },
+        "Bucket": {
+          "Ref": "CodeBucket"
+        },
         "PolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -66,8 +151,22 @@
               "Effect": "Deny",
               "Principal": "*",
               "Action": "s3:*",
-              "Resource": [{ "Fn::GetAtt": ["CodeBucket", "Arn"] }, { "Fn::Sub": "${CodeBucket.Arn}/*" }],
-              "Condition": { "Bool": { "aws:SecureTransport": "false" } }
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "CodeBucket",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Sub": "${CodeBucket.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              }
             }
           ]
         }
@@ -78,7 +177,9 @@
       "DeletionPolicy": "Retain",
       "UpdateReplacePolicy": "Retain",
       "Properties": {
-        "BucketName": { "Fn::Sub": "${AWS::StackName}-site-${AWS::AccountId}" },
+        "BucketName": {
+          "Fn::Sub": "${AWS::StackName}-site-${AWS::AccountId}"
+        },
         "PublicAccessBlockConfiguration": {
           "BlockPublicAcls": true,
           "BlockPublicPolicy": true,
@@ -86,14 +187,22 @@
           "RestrictPublicBuckets": true
         },
         "BucketEncryption": {
-          "ServerSideEncryptionConfiguration": [{ "ServerSideEncryptionByDefault": { "SSEAlgorithm": "AES256" } }]
+          "ServerSideEncryptionConfiguration": [
+            {
+              "ServerSideEncryptionByDefault": {
+                "SSEAlgorithm": "AES256"
+              }
+            }
+          ]
         }
       }
     },
     "SiteBucketPolicy": {
       "Type": "AWS::S3::BucketPolicy",
       "Properties": {
-        "Bucket": { "Ref": "SiteBucket" },
+        "Bucket": {
+          "Ref": "SiteBucket"
+        },
         "PolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -102,17 +211,39 @@
               "Effect": "Deny",
               "Principal": "*",
               "Action": "s3:*",
-              "Resource": [{ "Fn::GetAtt": ["SiteBucket", "Arn"] }, { "Fn::Sub": "${SiteBucket.Arn}/*" }],
-              "Condition": { "Bool": { "aws:SecureTransport": "false" } }
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "SiteBucket",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Sub": "${SiteBucket.Arn}/*"
+                }
+              ],
+              "Condition": {
+                "Bool": {
+                  "aws:SecureTransport": "false"
+                }
+              }
             },
             {
               "Sid": "CloudFrontReadsSite",
               "Effect": "Allow",
-              "Principal": { "Service": "cloudfront.amazonaws.com" },
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com"
+              },
               "Action": "s3:GetObject",
-              "Resource": { "Fn::Sub": "${SiteBucket.Arn}/*" },
+              "Resource": {
+                "Fn::Sub": "${SiteBucket.Arn}/*"
+              },
               "Condition": {
-                "StringEquals": { "AWS:SourceArn": { "Fn::Sub": "arn:aws:cloudfront::${AWS::AccountId}:distribution/${Distribution}" } }
+                "StringEquals": {
+                  "AWS:SourceArn": {
+                    "Fn::Sub": "arn:aws:cloudfront::${AWS::AccountId}:distribution/${Distribution}"
+                  }
+                }
               }
             }
           ]
@@ -122,17 +253,89 @@
     "Logs": {
       "Type": "AWS::Logs::LogGroup",
       "Properties": {
-        "LogGroupName": { "Fn::Sub": "/aws/lambda/${AWS::StackName}" },
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}"
+        },
         "RetentionInDays": 30
+      }
+    },
+    "PublishingBus": {
+      "Type": "AWS::Events::EventBus",
+      "Properties": {
+        "Name": "thingelstad-publishing",
+        "Description": "Every send announces itself here: a published event per leg, from WT Builder; the sync probe listens"
+      }
+    },
+    "PublishingArchive": {
+      "Type": "AWS::Events::Archive",
+      "Properties": {
+        "ArchiveName": "thingelstad-publishing",
+        "Description": "Ninety days of published events, replayable",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "PublishingBus",
+            "Arn"
+          ]
+        },
+        "EventPattern": {
+          "detail-type": [
+            "published"
+          ]
+        },
+        "RetentionDays": 90
+      }
+    },
+    "PublisherPutEvents": {
+      "Type": "AWS::IAM::Policy",
+      "Condition": "HasPublisher",
+      "Properties": {
+        "PolicyName": "sync-publishing-put-events",
+        "Users": [
+          {
+            "Ref": "PublisherUser"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "PutPublishedEvents",
+              "Effect": "Allow",
+              "Action": "events:PutEvents",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "PublishingBus",
+                  "Arn"
+                ]
+              }
+            }
+          ]
+        }
+      }
+    },
+    "FollowUps": {
+      "Type": "AWS::Scheduler::ScheduleGroup",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-follow-ups"
+        }
       }
     },
     "ExecutionRole": {
       "Type": "AWS::IAM::Role",
       "Properties": {
-        "Description": "sync probe: writes the page to the site bucket and reads the Librarian artifact times",
+        "Description": "sync probe: writes the page and its facts to the site bucket, reads the Librarian artifact times, and makes its own follow-up schedules",
         "AssumeRolePolicyDocument": {
           "Version": "2012-10-17",
-          "Statement": [{ "Effect": "Allow", "Principal": { "Service": "lambda.amazonaws.com" }, "Action": "sts:AssumeRole" }]
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
         },
         "Policies": [
           {
@@ -143,19 +346,31 @@
                 {
                   "Sid": "OwnLogs",
                   "Effect": "Allow",
-                  "Action": ["logs:CreateLogStream", "logs:PutLogEvents"],
-                  "Resource": { "Fn::Sub": "${Logs.Arn}" }
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${Logs.Arn}"
+                  }
                 },
                 {
-                  "Sid": "PublishSite",
+                  "Sid": "PublishAndReadSite",
                   "Effect": "Allow",
-                  "Action": ["s3:PutObject"],
-                  "Resource": { "Fn::Sub": "${SiteBucket.Arn}/*" }
+                  "Action": [
+                    "s3:PutObject",
+                    "s3:GetObject"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${SiteBucket.Arn}/*"
+                  }
                 },
                 {
                   "Sid": "ReadLibrarianArtifactTimes",
                   "Effect": "Allow",
-                  "Action": ["s3:GetObject"],
+                  "Action": [
+                    "s3:GetObject"
+                  ],
                   "Resource": "arn:aws:s3:::weekly-thing-librarian/artifacts/*"
                 }
               ]
@@ -167,29 +382,130 @@
     "Function": {
       "Type": "AWS::Lambda::Function",
       "Condition": "HasCode",
-      "DependsOn": ["Logs"],
+      "DependsOn": [
+        "Logs"
+      ],
       "Properties": {
-        "FunctionName": { "Ref": "AWS::StackName" },
-        "Description": "sync.thingelstad.xyz probe: reads what every system publishes and writes the sync page",
+        "FunctionName": {
+          "Ref": "AWS::StackName"
+        },
+        "Description": "sync.thingelstad.xyz probe: reads what every system publishes and writes the sync page; runs on the clock and on every published event",
         "Runtime": "nodejs24.x",
-        "Architectures": ["arm64"],
+        "Architectures": [
+          "arm64"
+        ],
         "Handler": "src/handler.handler",
         "MemorySize": 256,
         "Timeout": 120,
-        "Role": { "Fn::GetAtt": ["ExecutionRole", "Arn"] },
+        "Role": {
+          "Fn::GetAtt": [
+            "ExecutionRole",
+            "Arn"
+          ]
+        },
         "Code": {
-          "S3Bucket": { "Ref": "CodeBucket" },
-          "S3Key": { "Ref": "CodeKey" },
-          "S3ObjectVersion": { "Fn::If": ["HasCodeVersion", { "Ref": "CodeVersion" }, { "Ref": "AWS::NoValue" }] }
+          "S3Bucket": {
+            "Ref": "CodeBucket"
+          },
+          "S3Key": {
+            "Ref": "CodeKey"
+          },
+          "S3ObjectVersion": {
+            "Fn::If": [
+              "HasCodeVersion",
+              {
+                "Ref": "CodeVersion"
+              },
+              {
+                "Ref": "AWS::NoValue"
+              }
+            ]
+          }
         },
         "Environment": {
           "Variables": {
-            "SYNC_CODE": { "Ref": "CodeKey" },
-            "SITE_BUCKET": { "Ref": "SiteBucket" },
+            "SYNC_CODE": {
+              "Ref": "CodeKey"
+            },
+            "SITE_BUCKET": {
+              "Ref": "SiteBucket"
+            },
             "PINBOARD_API_TOKEN": {
-              "Fn::If": ["HasPinboard", { "Fn::Sub": "{{resolve:secretsmanager:${PinboardSecret}:SecretString:token}}" }, { "Ref": "AWS::NoValue" }]
+              "Fn::If": [
+                "HasPinboard",
+                {
+                  "Fn::Sub": "{{resolve:secretsmanager:${PinboardSecret}:SecretString:token}}"
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            },
+            "FOLLOW_UP_GROUP": {
+              "Ref": "FollowUps"
+            },
+            "SCHEDULER_ROLE_ARN": {
+              "Fn::GetAtt": [
+                "SchedulerRole",
+                "Arn"
+              ]
+            },
+            "PUBLISHING_BUS": {
+              "Ref": "PublishingBus"
             }
           }
+        },
+        "ReservedConcurrentExecutions": 1
+      }
+    },
+    "PublishedRule": {
+      "Type": "AWS::Events::Rule",
+      "Condition": "HasCode",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-published"
+        },
+        "Description": "A published event runs the sync probe",
+        "EventBusName": {
+          "Ref": "PublishingBus"
+        },
+        "EventPattern": {
+          "detail-type": [
+            "published"
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Id": "probe",
+            "Arn": {
+              "Fn::GetAtt": [
+                "Function",
+                "Arn"
+              ]
+            },
+            "RetryPolicy": {
+              "MaximumRetryAttempts": 3,
+              "MaximumEventAgeInSeconds": 3600
+            }
+          }
+        ]
+      }
+    },
+    "PublishedInvoke": {
+      "Type": "AWS::Lambda::Permission",
+      "Condition": "HasCode",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "Function"
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "PublishedRule",
+            "Arn"
+          ]
         }
       }
     },
@@ -203,9 +519,17 @@
           "Statement": [
             {
               "Effect": "Allow",
-              "Principal": { "Service": "scheduler.amazonaws.com" },
+              "Principal": {
+                "Service": "scheduler.amazonaws.com"
+              },
               "Action": "sts:AssumeRole",
-              "Condition": { "StringEquals": { "aws:SourceAccount": { "Ref": "AWS::AccountId" } } }
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                }
+              }
             }
           ]
         },
@@ -214,25 +538,99 @@
             "PolicyName": "invoke-sync-probe",
             "PolicyDocument": {
               "Version": "2012-10-17",
-              "Statement": [{ "Effect": "Allow", "Action": "lambda:InvokeFunction", "Resource": { "Fn::GetAtt": ["Function", "Arn"] } }]
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "lambda:InvokeFunction",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "Function",
+                      "Arn"
+                    ]
+                  }
+                }
+              ]
             }
           }
         ]
+      }
+    },
+    "FollowUpPolicy": {
+      "Type": "AWS::IAM::Policy",
+      "Condition": "HasCode",
+      "Properties": {
+        "PolicyName": "sync-follow-ups",
+        "Roles": [
+          {
+            "Ref": "ExecutionRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Sid": "OwnFollowUps",
+              "Effect": "Allow",
+              "Action": [
+                "scheduler:CreateSchedule",
+                "scheduler:GetSchedule",
+                "scheduler:DeleteSchedule"
+              ],
+              "Resource": {
+                "Fn::Sub": "arn:aws:scheduler:${AWS::Region}:${AWS::AccountId}:schedule/${FollowUps}/*"
+              }
+            },
+            {
+              "Sid": "HandTheSchedulerItsRole",
+              "Effect": "Allow",
+              "Action": "iam:PassRole",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "SchedulerRole",
+                  "Arn"
+                ]
+              },
+              "Condition": {
+                "StringEquals": {
+                  "iam:PassedToService": "scheduler.amazonaws.com"
+                }
+              }
+            }
+          ]
+        }
       }
     },
     "Schedule": {
       "Type": "AWS::Scheduler::Schedule",
       "Condition": "HasCode",
       "Properties": {
-        "Name": { "Fn::Sub": "${AWS::StackName}-probe" },
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-probe"
+        },
         "Description": "Run the sync probe every half hour",
         "ScheduleExpression": "rate(30 minutes)",
-        "FlexibleTimeWindow": { "Mode": "OFF" },
+        "FlexibleTimeWindow": {
+          "Mode": "OFF"
+        },
         "State": "ENABLED",
         "Target": {
-          "Arn": { "Fn::GetAtt": ["Function", "Arn"] },
-          "RoleArn": { "Fn::GetAtt": ["SchedulerRole", "Arn"] },
-          "RetryPolicy": { "MaximumRetryAttempts": 1, "MaximumEventAgeInSeconds": 600 }
+          "Arn": {
+            "Fn::GetAtt": [
+              "Function",
+              "Arn"
+            ]
+          },
+          "RoleArn": {
+            "Fn::GetAtt": [
+              "SchedulerRole",
+              "Arn"
+            ]
+          },
+          "RetryPolicy": {
+            "MaximumRetryAttempts": 1,
+            "MaximumEventAgeInSeconds": 600
+          },
+          "Input": "{\"clock\": true}"
         }
       }
     },
@@ -240,7 +638,9 @@
       "Type": "AWS::CloudFront::OriginAccessControl",
       "Properties": {
         "OriginAccessControlConfig": {
-          "Name": { "Fn::Sub": "${AWS::StackName}-site" },
+          "Name": {
+            "Fn::Sub": "${AWS::StackName}-site"
+          },
           "Description": "CloudFront signs its reads of the sync site bucket",
           "OriginAccessControlOriginType": "s3",
           "SigningBehavior": "always",
@@ -252,7 +652,9 @@
       "Type": "AWS::CloudFront::CachePolicy",
       "Properties": {
         "CachePolicyConfig": {
-          "Name": { "Fn::Sub": "${AWS::StackName}-site" },
+          "Name": {
+            "Fn::Sub": "${AWS::StackName}-site"
+          },
           "Comment": "sync page: short cache, the probe rewrites it every half hour",
           "MinTTL": 0,
           "DefaultTTL": 60,
@@ -260,9 +662,15 @@
           "ParametersInCacheKeyAndForwardedToOrigin": {
             "EnableAcceptEncodingGzip": true,
             "EnableAcceptEncodingBrotli": true,
-            "CookiesConfig": { "CookieBehavior": "none" },
-            "HeadersConfig": { "HeaderBehavior": "none" },
-            "QueryStringsConfig": { "QueryStringBehavior": "none" }
+            "CookiesConfig": {
+              "CookieBehavior": "none"
+            },
+            "HeadersConfig": {
+              "HeaderBehavior": "none"
+            },
+            "QueryStringsConfig": {
+              "QueryStringBehavior": "none"
+            }
           }
         }
       }
@@ -270,7 +678,9 @@
     "IndexFunction": {
       "Type": "AWS::CloudFront::Function",
       "Properties": {
-        "Name": { "Fn::Sub": "${AWS::StackName}-index" },
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-index"
+        },
         "AutoPublish": true,
         "FunctionConfig": {
           "Comment": "Map directory paths to their index.html",
@@ -289,45 +699,150 @@
           "IPV6Enabled": true,
           "PriceClass": "PriceClass_100",
           "DefaultRootObject": "index.html",
-          "Aliases": { "Fn::If": ["HasCertificate", ["sync.thingelstad.xyz"], { "Ref": "AWS::NoValue" }] },
+          "Aliases": {
+            "Fn::If": [
+              "HasCertificate",
+              [
+                "sync.thingelstad.xyz"
+              ],
+              {
+                "Ref": "AWS::NoValue"
+              }
+            ]
+          },
           "ViewerCertificate": {
             "Fn::If": [
               "HasCertificate",
-              { "AcmCertificateArn": { "Ref": "CertificateArn" }, "SslSupportMethod": "sni-only", "MinimumProtocolVersion": "TLSv1.2_2021" },
-              { "CloudFrontDefaultCertificate": true }
+              {
+                "AcmCertificateArn": {
+                  "Ref": "CertificateArn"
+                },
+                "SslSupportMethod": "sni-only",
+                "MinimumProtocolVersion": "TLSv1.2_2021"
+              },
+              {
+                "CloudFrontDefaultCertificate": true
+              }
             ]
           },
           "Origins": [
             {
               "Id": "site",
-              "DomainName": { "Fn::GetAtt": ["SiteBucket", "RegionalDomainName"] },
-              "OriginAccessControlId": { "Fn::GetAtt": ["OriginAccess", "Id"] },
-              "S3OriginConfig": { "OriginAccessIdentity": "" }
+              "DomainName": {
+                "Fn::GetAtt": [
+                  "SiteBucket",
+                  "RegionalDomainName"
+                ]
+              },
+              "OriginAccessControlId": {
+                "Fn::GetAtt": [
+                  "OriginAccess",
+                  "Id"
+                ]
+              },
+              "S3OriginConfig": {
+                "OriginAccessIdentity": ""
+              }
             }
           ],
           "DefaultCacheBehavior": {
             "TargetOriginId": "site",
             "ViewerProtocolPolicy": "redirect-to-https",
-            "AllowedMethods": ["GET", "HEAD"],
-            "CachedMethods": ["GET", "HEAD"],
+            "AllowedMethods": [
+              "GET",
+              "HEAD"
+            ],
+            "CachedMethods": [
+              "GET",
+              "HEAD"
+            ],
             "Compress": true,
-            "CachePolicyId": { "Ref": "CachePolicy" },
+            "CachePolicyId": {
+              "Ref": "CachePolicy"
+            },
             "ResponseHeadersPolicyId": "67f7725c-6f97-4210-82d7-5512b31e9d03",
-            "FunctionAssociations": [{ "EventType": "viewer-request", "FunctionARN": { "Fn::GetAtt": ["IndexFunction", "FunctionARN"] } }]
+            "FunctionAssociations": [
+              {
+                "EventType": "viewer-request",
+                "FunctionARN": {
+                  "Fn::GetAtt": [
+                    "IndexFunction",
+                    "FunctionARN"
+                  ]
+                }
+              }
+            ]
           },
           "CustomErrorResponses": [
-            { "ErrorCode": 403, "ResponseCode": 404, "ResponsePagePath": "/404.html", "ErrorCachingMinTTL": 60 },
-            { "ErrorCode": 404, "ResponseCode": 404, "ResponsePagePath": "/404.html", "ErrorCachingMinTTL": 60 }
+            {
+              "ErrorCode": 403,
+              "ResponseCode": 404,
+              "ResponsePagePath": "/404.html",
+              "ErrorCachingMinTTL": 60
+            },
+            {
+              "ErrorCode": 404,
+              "ResponseCode": 404,
+              "ResponsePagePath": "/404.html",
+              "ErrorCachingMinTTL": 60
+            }
           ]
         }
       }
     }
   },
   "Outputs": {
-    "CodeBucket": { "Value": { "Ref": "CodeBucket" } },
-    "SiteBucket": { "Value": { "Ref": "SiteBucket" } },
-    "FunctionName": { "Value": { "Fn::If": ["HasCode", { "Ref": "Function" }, ""] } },
-    "DistributionId": { "Value": { "Ref": "Distribution" } },
-    "DistributionDomain": { "Value": { "Fn::GetAtt": ["Distribution", "DomainName"] } }
+    "CodeBucket": {
+      "Value": {
+        "Ref": "CodeBucket"
+      }
+    },
+    "SiteBucket": {
+      "Value": {
+        "Ref": "SiteBucket"
+      }
+    },
+    "FunctionName": {
+      "Value": {
+        "Fn::If": [
+          "HasCode",
+          {
+            "Ref": "Function"
+          },
+          ""
+        ]
+      }
+    },
+    "DistributionId": {
+      "Value": {
+        "Ref": "Distribution"
+      }
+    },
+    "DistributionDomain": {
+      "Value": {
+        "Fn::GetAtt": [
+          "Distribution",
+          "DomainName"
+        ]
+      }
+    },
+    "PublishingBus": {
+      "Value": {
+        "Ref": "PublishingBus"
+      }
+    },
+    "PublishingBusArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "PublishingBus",
+          "Arn"
+        ]
+      }
+    },
+    "FollowUpGroup": {
+      "Value": {
+        "Ref": "FollowUps"
+      }
+    }
   }
 }

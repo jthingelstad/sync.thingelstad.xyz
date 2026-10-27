@@ -32,9 +32,10 @@ test('the fixtures reproduce the WT354 gap: Weekly Thing to Linking Things is la
   assert.ok(status.open.some((h) => h.id === join.id));
 });
 
-test('a hop whose source has no fact is measured from the next system down', async () => {
-  const ctx = await fixtureContext('2026-10-26T22:00:00Z');
+test('before its first published event, a hop out of WT Builder is measured from the next system down', async () => {
+  const ctx = await fixtureContext('2026-10-26T22:00:00Z', { publisher: false });
   const facts = await collect(ctx, systems);
+  assert.match(facts['wt-builder'].none, /No published event has reached the bus yet/);
   const status = probe({ flows, facts, now: ctx.now });
   const audio = hop(status, 'wt-builder', 'cdn', 'audio');
   assert.equal(audio.status, 'fresh');
@@ -44,6 +45,41 @@ test('a hop whose source has no fact is measured from the next system down', asy
   const site = hop(status, 'wt-builder', 'weekly', 'issue');
   assert.equal(site.status, 'no-fact');
   assert.match(site.why, /wt-builder publishes no fact/);
+});
+
+test('with the published events, each send hop is measured from its own leg', async () => {
+  const ctx = await fixtureContext('2026-10-26T22:00:00Z');
+  const facts = await collect(ctx, systems);
+  assert.equal(facts['wt-builder'].newest.issue.id, '354');
+  assert.equal(facts['wt-builder'].newest.audio.at, '2026-10-24T12:08:05Z', 'the audio edition is the podcast leg');
+  const status = probe({ flows, facts, now: ctx.now });
+  const site = hop(status, 'wt-builder', 'weekly', 'issue');
+  assert.equal(site.status, 'fresh');
+  assert.equal(site.leg, 'website');
+  assert.equal(site.measured_from, 'wt-builder');
+  assert.equal(site.source.at, '2026-10-24T12:00:12Z');
+  const archive = hop(status, 'wt-builder', 'librarian', 'issue');
+  assert.equal(archive.leg, 'archive');
+  assert.equal(archive.source.at, '2026-10-24T12:09:40Z', 'the archive hop starts when the archive leg went');
+  assert.equal(archive.status, 'late', 'the fixture corpus still holds WT353');
+  const cdn = hop(status, 'wt-builder', 'cdn', 'audio');
+  assert.equal(cdn.status, 'fresh');
+  assert.equal(cdn.measured_from, 'wt-builder');
+  // Buttondown publishes no fact, so its hop stays no-fact even with a leg time.
+  assert.equal(hop(status, 'wt-builder', 'buttondown', 'issue').status, 'no-fact');
+  // The issue receipt now comes from the publisher.
+  assert.equal(status.receipts.find((r) => r.kind === 'issue').origin, 'wt-builder');
+  // A leg that has not gone: the item is out, this hop is moving from the first leg.
+  const stored = JSON.parse(JSON.stringify(await ctx.s3Get('fixtures', 'facts/wt-builder.json')));
+  delete stored.newest.issue.legs.archive;
+  const partial = { ...ctx, s3Get: async () => stored, now: '2026-10-24T12:05:00Z' };
+  const early = probe({ flows, facts: await collect(partial, systems), now: partial.now });
+  const waiting = hop(early, 'wt-builder', 'librarian', 'issue');
+  assert.equal(waiting.status, 'moving');
+  assert.equal(waiting.leg, 'archive');
+  assert.match(waiting.why, /the archive leg has not sent/);
+  assert.equal(waiting.lag_hours, 0.1);
+  assert.equal(status.trigger.type, 'clock');
 });
 
 test('Pinboard without a token is no fact, and the link receipt comes from Linking Things', async () => {
@@ -86,12 +122,18 @@ test('the Librarian fact is the corpus metadata, with the kind prefix taken off'
   assert.equal(facts.librarian.extra.weekly_corpus.items, 353);
   assert.equal(facts.librarian.extra.reference_corpus.items, 41);
   assert.equal(facts.librarian.none, undefined);
-  // The weekly site has WT354 and the corpus does not: the hop into the
-  // Librarian is measured from the site and reads late.
+  // WT354's archive leg went and the corpus does not have it: the hop into
+  // the Librarian is measured from that leg and reads late.
   const into = hop(status(ctx, facts), 'wt-builder', 'librarian', 'issue');
   assert.equal(into.status, 'late');
-  assert.equal(into.measured_from, 'weekly');
+  assert.equal(into.measured_from, 'wt-builder');
+  assert.equal(into.leg, 'archive');
   assert.equal(into.target.id, '353');
+  // Before the first published event, the site stands in for the publisher.
+  const before = await fixtureContext('2026-10-26T22:00:00Z', { publisher: false });
+  const standIn = hop(status(before, await collect(before, systems)), 'wt-builder', 'librarian', 'issue');
+  assert.equal(standIn.status, 'late');
+  assert.equal(standIn.measured_from, 'weekly');
 });
 
 test('Thingy holds the build it serves where a corpus was uploaded but not redeployed', async () => {

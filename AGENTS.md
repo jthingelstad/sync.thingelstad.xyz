@@ -1,11 +1,53 @@
 # AGENTS.md — sync.thingelstad.xyz
 
 The sync page: what each of Jamie's systems holds right now, how far behind
-each hop runs, and a receipt for the newest item of each kind. One Lambda
-probe on a half-hour EventBridge schedule writes a scriptless HTML page,
-`status.json` and `receipts/<kind>.json` into a private S3 bucket that
-CloudFront serves. Public by design (Jamie, 2026-10-26: "seems fine if that is
-public"): it holds ids and times, never a secret and never a visitor.
+each hop runs, a receipt for the newest item of each kind, and the journey
+each item is on. One Lambda probe writes a scriptless HTML page, `status.json`,
+`receipts/<kind>.json`, `journeys.json` and `facts/wt-builder.json` into a
+private S3 bucket that CloudFront serves. It runs on a half-hour EventBridge
+schedule, on every `published` event on the publishing bus, and then again
+at 2, 5, 10, 15, 30, 45 and 60 minutes after the event (one-off Scheduler
+schedules it makes for itself), so an item is watched as it moves. Public by
+design (Jamie, 2026-10-26: "seems fine if that is public"): it holds ids and
+times, never a secret and never a visitor.
+
+## The publishing bus
+
+This stack owns the EventBridge bus `thingelstad-publishing` (Jamie,
+2026-10-26: "I really would like to get as many things to be event based";
+"Approved: build the publishing event bus, the WT Builder send event, and the
+event-driven sync map with items and lags"). A publisher puts one event on it
+per send leg:
+
+```
+source       wt-builder
+detail-type  published
+detail       { product, kind, id, title, url, leg, leg_url, at, legs }
+```
+
+`kind` is a kind in the flows file (`issue`, `episode`), `id` the item's
+public id (354), `leg` the leg that just went (`website`, `buttondown`,
+`podcast`, `archive`, `another`), `at` when, `legs` every leg sent so far
+with its `at` and `url`. `src/events.mjs` validates it (a malformed event is
+logged and dropped, never guessed at) and folds it into
+`facts/wt-builder.json`, WT Builder's fact: the newest item of each kind with
+its legs, and the last fifty events. A hop out of WT Builder is measured from
+the leg that reaches its destination (`LEGS` in `src/probe.mjs`) and reads
+"moving: the archive leg has not sent" until that leg goes. The audio edition
+is the issue's podcast leg. The bus has a ninety-day archive (replayable), a
+rule for `published` that invokes the probe, and an inline policy on the
+`PublisherUser` parameter's IAM user (`wt-archive`, the user WT Builder's
+`.env` names) allowing `events:PutEvents` on the bus and nothing else.
+
+The sender side lives in wt-builder (`src/server/integrations/publishing.ts`):
+each leg announces itself after its send is recorded, and a failure to
+announce is logged and recorded on the issue but never stops a send.
+
+To rehearse without a send: invoke the function with a published-shaped
+payload plus `"rehearsal": true`. It is parsed and reported (the parsed
+event, the follow-up times it would make, whether the Scheduler client is
+there) and recorded nowhere. A `ping` detail-type put on the bus from WT
+Builder's credentials proves the permission without matching the rule.
 
 `CLAUDE.md` is a symlink to this file. Domain rules are one level up in
 `../AGENTS.md` (the data flows section), AWS and secret rules in
@@ -40,18 +82,31 @@ public"): it holds ids and times, never a secret and never a visitor.
   until the redeploy after the upload lands.
 - `src/probe.mjs` — facts in, status out: fresh / moving / late / held /
   no-fact / unknown per hop and kind; the matrix; the receipts. Pure.
+- `src/events.mjs` — the published event: validation, the fold into the
+  publisher fact, the follow-up times. Pure.
+- `src/journey.mjs` — one journey per kind: the newest item and when the
+  probe first saw each system holding it. An arrival is `observed` (a
+  measurement: the system lacked the item on one run and had it on the next;
+  its resolution is the gap between runs) or not (the system already held it
+  when the journey started, so no lag is quoted). Kept in `journeys.json`
+  and advanced on every run. Pure.
 - `src/page.mjs` — the HTML. No script, `--jt-` colours, Central time. It
-  opens with the map: `data/map.svg`, drawn at build time by `tools/map.mjs`
-  with Pele (the renderer Things I've built draws its connection diagrams
-  with; a devDependency, never shipped to Lambda) from the vendored
-  `data/flows.json`, one node per system and one edge per hop, left to right,
-  tagged `data-system` and `data-hop`. `npm run flows:sync` draws it and
-  `flows:check` fails when it is stale. On each run `src/map.mjs` only adds
-  classes: an edge takes the worst status of the hop's kinds, its label links
-  to the hop's rows, and a system with no fact gets a dashed box. Jamie,
-  2026-10-26: the hand-laid map on `/flows/` was not on the page and was
-  harder to follow than the Things I've built diagrams.
-- `src/handler.mjs` — the Lambda: collect, probe, render, put to S3.
+  opens with the map, then the journeys, then the receipts, matrix, hops and
+  facts.
+- `src/map.mjs` — the map, drawn on every run with Pele (the renderer Things
+  I've built draws its connection diagrams with) from the vendored
+  `data/flows.json` and this run's status: one node per system saying what
+  it holds ("WT354 · post Oct 25"), one edge per hop saying what is on it and
+  how it is doing ("7 · WT354 · in 2 min" from an observed arrival, "10 ·
+  WT355 · moving 12 min", "6 · WT354 · 2 d 4 h late", "8 · issue · no
+  fact"), left to right, tagged `data-system` and `data-hop`, coloured by
+  the worst status of the hop's kinds, each label linking to the hop's rows.
+  Jamie, 2026-10-26: a map drawn at build time "is rather useless… Ideally
+  this would show the 'flows' as they actually are, not just a diagram."
+- `src/handler.mjs` — the Lambda: fold a published event into the fact,
+  collect, probe, advance the journeys, render, put to S3, make the
+  follow-ups. `ReservedConcurrentExecutions` is 1, so an event run and a
+  clock run never write the journeys at once (the later one is retried).
 - `tools/probe.mjs` — run it here: live, or `--fixtures` with a fixed clock.
   Output in `.build/site/`.
 - `tools/package.mjs`, `tools/deploy.mjs`, `infra/sync.json`,
@@ -90,8 +145,12 @@ creates the secret in the console (secret safety rules in
 - Hold: the Librarian → Thingy hop is held Friday and Saturday (US Central)
   by the flows file's `hold` text; the probe treats any `hold` as those days.
 - Node 24 is the house runtime; no packages at runtime beyond the AWS SDK the
-  Lambda runtime provides. Pele runs only on the Mac, in `flows:sync`; the
-  Lambda ships the drawing it made.
+  Lambda runtime provides and Pele, a single self-contained file that
+  `tools/package.mjs` copies from `node_modules` into the zip (it refuses if
+  that file ever imports something).
+- A lag on the map or in a journey is quoted only from an observed arrival;
+  a system that already held the item when watching started shows the time
+  watching started and no lag.
 - A fact that states only a day (the podcast corpus) is compared by day in
   `holds`, so a date is never read as midnight and found behind that
   afternoon's feed entry.

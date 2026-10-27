@@ -35,6 +35,11 @@ const RELATED = {
 
 export const SEVERITY = { late: 5, held: 4, moving: 3, unknown: 2, 'no-fact': 1, fresh: 0 };
 
+// WT Builder's fact is its published event, which names each send leg with
+// its time; a hop out of WT Builder is measured from the leg that reaches
+// the hop's destination, and reads moving until that leg has sent.
+export const LEGS = { weekly: 'website', buttondown: 'buttondown', cdn: 'podcast', librarian: 'archive', another: 'another' };
+
 const HOLD_DAYS = new Set(['Fri', 'Sat']);
 const onHold = (hop, now) => Boolean(hop.hold) && HOLD_DAYS.has(centralWeekday(now));
 
@@ -50,7 +55,7 @@ export function origin(facts, kind) {
 }
 
 /**
- * Does `have` hold `want`? Same id, or published at or after it. A fact that
+ * Does `have` hold `want`? Same id or URL, or published at or after it. A fact that
  * states only a day (the podcast corpus dates its episodes) is compared by
  * day, so a date is never read as midnight and found behind the same day's
  * afternoon.
@@ -58,6 +63,7 @@ export function origin(facts, kind) {
 export function holds(have, want) {
   if (!have || !want) return false;
   if (String(have.id) === String(want.id)) return true;
+  if (have.url && want.url && have.url === want.url) return true;
   if (!have.at || !want.at) return false;
   const dayOnly = (at) => /^\d{4}-\d{2}-\d{2}$/.test(at);
   if (dayOnly(have.at) || dayOnly(want.at)) return have.at.slice(0, 10) >= want.at.slice(0, 10);
@@ -80,15 +86,27 @@ function hopStatus(hop, kind, facts, now) {
   const target = newest(facts, hop.to, kind);
   if (!source) return { status: 'no-fact', why: `${hop.from} publishes no fact for ${kind}` };
   if (!target) return { status: 'no-fact', why: `${hop.to} publishes no fact for ${kind}`, source, measured_from: measuredFrom };
-  if (holds(target, source)) return { status: 'fresh', source, target, measured_from: measuredFrom, lag_hours: 0 };
+  const leg = measuredFrom === hop.from && source.legs ? LEGS[hop.to] : null;
+  if (leg) {
+    const sent = source.legs[leg];
+    if (!sent) {
+      // The item is out somewhere, and this leg has not gone: moving from
+      // the first leg's time until the hop's expected lag has passed.
+      const lag = source.at ? hoursBetween(source.at, now) : null;
+      const status = lag != null && lag > hop.expected_lag_hours ? 'late' : 'moving';
+      return { status, source, target, measured_from: measuredFrom, lag_hours: lag == null ? null : Math.round(lag * 10) / 10, leg, why: `the ${leg} leg has not sent` };
+    }
+    source = { ...source, at: sent.at, leg };
+  }
+  if (holds(target, source)) return { status: 'fresh', source, target, measured_from: measuredFrom, lag_hours: 0, ...(leg ? { leg } : {}) };
   const lag = source.at ? hoursBetween(source.at, now) : null;
-  if (onHold(hop, now)) return { status: 'held', source, target, measured_from: measuredFrom, lag_hours: lag, why: hop.hold };
-  if (lag === null) return { status: 'late', source, target, measured_from: measuredFrom, lag_hours: null, why: 'the ids differ and the source item has no time' };
+  if (onHold(hop, now)) return { status: 'held', source, target, measured_from: measuredFrom, lag_hours: lag, why: hop.hold, ...(leg ? { leg } : {}) };
+  if (lag === null) return { status: 'late', source, target, measured_from: measuredFrom, lag_hours: null, why: 'the ids differ and the source item has no time', ...(leg ? { leg } : {}) };
   const status = lag > hop.expected_lag_hours ? 'late' : 'moving';
-  return { status, source, target, measured_from: measuredFrom, lag_hours: Math.round(lag * 10) / 10 };
+  return { status, source, target, measured_from: measuredFrom, lag_hours: Math.round(lag * 10) / 10, ...(leg ? { leg } : {}) };
 }
 
-export function probe({ flows, facts, now, code = null }) {
+export function probe({ flows, facts, now, code = null, trigger = { type: 'clock' } }) {
   const systems = flows.systems.map((s) => s.id);
 
   const hops = [];
@@ -146,6 +164,7 @@ export function probe({ flows, facts, now, code = null }) {
   return {
     checked_at: now,
     code,
+    trigger,
     summary: {
       hops: hops.length,
       late: hops.filter((h) => h.status === 'late').length,

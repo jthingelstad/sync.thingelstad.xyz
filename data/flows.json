@@ -1,7 +1,7 @@
 {
   "$comment": "The data flows between Jamie's systems: every hop content takes, who owns each field, and what watches each hop today. This file is the contract; shared/flows.html is rendered from it by `node shared/build-flows.mjs`. A hop is a row here before it is code anywhere. Times are America/Chicago unless a cron says otherwise.",
   "version": 1,
-  "updated": "2026-10-26",
+  "updated": "2026-10-27",
   "kinds": {
     "issue": "a Weekly Thing issue",
     "post": "a blog post on www.thingelstad.com",
@@ -52,7 +52,7 @@
       "url": "http://127.0.0.1:10001/",
       "repo": "jthingelstad/wt-builder",
       "runs_on": "mac",
-      "fact": "get_status (MCP) shows each issue's send legs; list_events shows what was sent when.",
+      "fact": "Every send puts a `published` event on the publishing bus (EventBridge bus `thingelstad-publishing`, owned by the sync stack; since 2026-10-27): product, kind, id, which leg went out and when, and every leg sent so far. The sync probe records it as WT Builder's fact and shows the item's journey from that moment. get_status (MCP) shows each issue's send legs; list_events shows what was sent when.",
       "notes": "Authors and publishes each issue, and makes Another Thing since 2026-10-11 (that send has not run yet)."
     },
     {
@@ -237,7 +237,7 @@
       "mechanism": "The website leg commits to main; the deploy workflow builds and publishes on push.",
       "trigger": { "type": "nudge", "event": "send", "runs_on": "mac" },
       "expected_lag_hours": 0.25,
-      "verify": "feed.xml carries the issue; /archive/<n>/ renders.",
+      "verify": "feed.xml carries the issue; /archive/<n>/ renders. Its receipt is the published event for the website leg on the bus; the sync page measures the hop from that event's time.",
       "status": "ok",
       "notes": "Sent for every issue since WT350."
     },
@@ -250,7 +250,7 @@
       "mechanism": "Buttondown API: creates and updates a draft. Never schedules, never sends; Jamie sends.",
       "trigger": { "type": "nudge", "event": "send", "runs_on": "mac" },
       "expected_lag_hours": 0.25,
-      "verify": "The draft exists with the issue's subject; the email goes out when Jamie sends it.",
+      "verify": "The draft exists with the issue's subject; the email goes out when Jamie sends it. Its receipt is the published event for the buttondown leg on the bus; the sync page measures the hop from that event's time.",
       "status": "ok"
     },
     {
@@ -262,7 +262,7 @@
       "mechanism": "Upload to files.thingelstad.com before the website and email legs; content-named files, so a re-render re-sends the website leg.",
       "trigger": { "type": "nudge", "event": "send", "runs_on": "mac" },
       "expected_lag_hours": 0.25,
-      "verify": "The URL the issue names returns the object.",
+      "verify": "The URL the issue names returns the object. Its receipt is the published event for the podcast leg on the bus; the sync page measures the hop from that event's time.",
       "status": "ok"
     },
     {
@@ -274,7 +274,7 @@
       "mechanism": "repository_dispatch issue-sent to librarian-thing after the website leg; the library round pulls the issue page from weekly.thingelstad.com and ends the weekend hold.",
       "trigger": { "type": "nudge", "event": "send", "runs_on": "mac" },
       "expected_lag_hours": 0.5,
-      "verify": "The round's 'The sent issue arrived' step passed; latest_content lists the issue.",
+      "verify": "The round's 'The sent issue arrived' step passed; latest_content lists the issue. Its receipt is the published event for the archive leg on the bus; the sync page measures the hop from that event's time.",
       "status": "ok",
       "notes": "Sent for every issue since WT350. Linking Things gets no such nudge (hop 6)."
     },
@@ -413,7 +413,7 @@
       "mechanism": "The Another Thing send (/another), built 2026-10-11. Since 2026-10-26 (wt-builder PR #8) it puts the tagged MP3 in the another-site audio bucket at uploads/YYYY/another-thing-N.mp3 with the AWS key in WT Builder's .env, reads it back, then commits the episode page (with audioBytes and audioSeconds) and its transcript to git. No MP3 goes to git; CloudFront serves the bucket at the same /uploads/ URL.",
       "trigger": { "type": "nudge", "event": "send", "runs_on": "mac" },
       "expected_lag_hours": 0.25,
-      "verify": "podcast.xml carries the episode.",
+      "verify": "podcast.xml carries the episode. Its receipt is the published event for the another leg on the bus; the sync page measures the hop from that event's time.",
       "status": "unverified",
       "notes": "Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length."
     }
@@ -475,6 +475,13 @@
     }
   ],
   "watchers": [
+    {
+      "name": "sync.thingelstad.xyz",
+      "where": "AWS Lambda on a half-hour schedule and on every published event (then again at 2, 5, 10, 15, 30, 45 and 60 minutes), publishing a public page",
+      "hops": [6, 7, 8, 9, 10, 11, 12, 14, 16, 20, 21],
+      "sees": "Whether the destination of each hop holds the newest item of its kind, measured from the published event or the next fact down; each item's journey, system by system, with the time it was first seen at each.",
+      "misses": "A hop whose ends publish no fact (Pinboard without a token, Buttondown, Tinylytics); whether the content is right."
+    },
     {
       "name": "weekly-thing-feed-publication-monitor",
       "where": "OpenClaw cron on the Mac, 12:00 daily, posts to Discord",

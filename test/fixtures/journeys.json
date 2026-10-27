@@ -1,0 +1,13 @@
+{
+ "issue": {
+  "kind": "issue",
+  "item": { "id": "354", "at": "2026-10-24T12:00:12Z", "url": "https://weekly.thingelstad.com/archive/354/", "title": "WT354 — A museum for nnxyz" },
+  "origin": "wt-builder",
+  "started_at": "2026-10-24T12:00:13Z",
+  "arrivals": {
+   "weekly": { "at": "2026-10-24T12:02:13Z", "observed": true },
+   "cdn": { "at": "2026-10-24T12:10:13Z", "observed": true }
+  },
+  "updated_at": "2026-10-24T12:10:13Z"
+ }
+}

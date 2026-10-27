@@ -2,20 +2,41 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { collect } from '../src/facts.mjs';
 import { flows } from '../src/flows.mjs';
-import { hopSummary, mapSvg, nodeState } from '../src/map.mjs';
+import fs from 'node:fs/promises';
+import { edgeText, hopSummary, mapSource, mapSvg, nodeState, nodeText, shortItem } from '../src/map.mjs';
+import { advanceAll } from '../src/journey.mjs';
 import { renderPage } from '../src/page.mjs';
 import { probe } from '../src/probe.mjs';
 import { fixtureContext } from '../tools/probe.mjs';
-import { renderMap } from '../tools/map.mjs';
 
 const systems = flows.systems.map((s) => s.id);
+const journeysFixture = async () => JSON.parse(await fs.readFile(new URL('./fixtures/journeys.json', import.meta.url), 'utf8'));
 
-test('the map template is the drawing of the vendored flows, one edge per hop and one node per system', async () => {
-  const svg = renderMap(flows);
+test('the map is drawn on every run: one edge per hop, one node per system, each saying what it holds', async () => {
+  const ctx = await fixtureContext('2026-10-26T22:00:00Z');
+  const facts = await collect(ctx, systems);
+  const status = probe({ flows, facts, now: ctx.now });
+  const journeys = advanceAll(await journeysFixture(), status);
+  const svg = mapSvg(status, journeys);
   for (const h of flows.hops) assert.equal((svg.match(new RegExp(`data-hop="${h.id}"`, 'g')) || []).length, 2, `hop ${h.id}: edge and label`);
   for (const s of flows.systems) assert.match(svg, new RegExp(`data-system="${s.id}"`));
   assert.doesNotMatch(svg, /max-width:100%/);
-  assert.equal(renderMap(flows), svg, 'deterministic');
+  assert.equal(mapSvg(status, journeys), svg, 'deterministic');
+  // Nodes carry the items; edges carry the item, and its measured lag where a journey saw it arrive.
+  const source = mapSource(status, journeys);
+  assert.match(source, /\["WT Builder<br>WT354"\]/, 'the issue and its audio edition, said once');
+  assert.match(source, /\["Weekly Thing \(web\)<br>WT354"\]/);
+  assert.match(source, /\["Buttondown<br>no fact yet"\]/);
+  assert.match(source, /\|"7 · WT354 · in 2 min"\|/, 'the website leg, measured by the journey');
+  assert.match(source, /\|"6 · WT354 · \d+ d(?: \d+ h)? late"\|/, 'the WT354 join gap');
+  assert.match(source, /\|"8 · issue · no fact"\|/);
+  assert.match(svg, /WT354 · in 2 min/);
+  assert.equal(nodeText('wt-builder', status.facts['wt-builder']), 'WT354');
+  assert.equal(nodeText('microblog', status.facts.microblog), 'post Oct 25');
+  assert.equal(shortItem('episode', { id: 'https://another.thingelstad.com/x', at: '2025-10-05T14:00:00Z' }), 'episode Oct 5');
+  assert.equal(shortItem('link', { id: '2026-10-26T01:00:00Z', at: '2026-10-26T01:00:00Z' }), 'link Oct 25');
+  assert.equal(shortItem('post', { id: 'build 8a0fea73', behind: true }), 'build 8a0fea73');
+  assert.equal(edgeText(status, {}, 7), '7 · WT354 · fresh', 'fresh with no journey is just fresh');
 });
 
 test('the map colours each hop by its worst kind and marks systems without a fact', async () => {
@@ -32,6 +53,7 @@ test('the map colours each hop by its worst kind and marks systems without a fac
   assert.ok(fresh.length, 'some hop is fresh in the fixtures');
   for (const id of fresh) assert.match(svg, new RegExp(`<g class="pele-edge hop--fresh" data-id="[^"]+" data-hop="${id}">`));
   assert.match(svg, /<g class="pele-edge hop--no-fact" data-id="[^"]+" data-hop="8">/);
+  assert.match(svg, /<g class="pele-edge hop--fresh" data-id="[^"]+" data-hop="7">/, 'WT Builder to the site, from the website leg');
   assert.match(svg, /<g class="pele-node [^"]*node--no-fact" data-id="[^"]+" data-system="buttondown"/);
   assert.match(svg, /<g class="pele-node [^"]*node--has" data-id="[^"]+" data-system="librarian"/);
   assert.equal((svg.match(/ hop--/g) || []).length, flows.hops.length * 2);
@@ -41,8 +63,16 @@ test('the map colours each hop by its worst kind and marks systems without a fac
   assert.equal(nodeState({ error: 'boom' }), 'unknown');
   assert.equal(nodeState({ none: 'nothing', newest: {} }), 'no-fact');
   // The page carries the map, and each hop's label has rows to open.
-  const page = renderPage(status);
+  const journeys = advanceAll(await journeysFixture(), status);
+  const page = renderPage(status, journeys);
   assert.match(page, /<div class="map">\s*<svg/);
   assert.match(page, /<tr class="status--[a-z-]+" id="hop-6">/);
+  assert.match(page, /<h2>Journeys<\/h2>/);
+  assert.match(page, /<li class="step step--seen"><span class="step__mark" aria-hidden="true"><\/span><span class="step__name">Weekly Thing \(web\)<\/span><span class="step__when">Sat Oct 24, 7:02 a.m. CDT, <strong>2 min<\/strong> after it went out<\/span>/);
+  assert.match(page, /step--waiting"><span class="step__mark" aria-hidden="true"><\/span><span class="step__name">Linking Things<\/span><span class="step__when">not yet, <strong>2 d 10 h<\/strong> so far/);
+  assert.match(page, /step--had"[^<]*<span class="step__mark" aria-hidden="true"><\/span><span class="step__name">Buttondown|step--no-fact"[^<]*<span class="step__mark" aria-hidden="true"><\/span><span class="step__name">Buttondown/);
+  assert.match(page, /Checked Mon Oct 26, 5:00 p.m. CDT, on the half-hour clock/);
   assert.doesNotMatch(page, /<script/);
+  assert.doesNotMatch(renderPage(status), /class="step step--/, 'no journeys, no steps');
+  assert.match(renderPage(status), /No item is on a journey yet/);
 });

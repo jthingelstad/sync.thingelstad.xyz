@@ -1,8 +1,9 @@
 // The sync page: one scriptless HTML page from a status. Facts only, so it
 // is fine to publish: newest ids and ages, never a secret, never a visitor.
 import { systemName, systemsById } from './flows.mjs';
-import { mapSvg } from './map.mjs';
-import { age, central } from './time.mjs';
+import { lagAt } from './journey.mjs';
+import { mapSvg, shortItem } from './map.mjs';
+import { age, central, hoursBetween } from './time.mjs';
 
 const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
@@ -102,7 +103,69 @@ ${extra}
     .join('\n');
 }
 
-export function renderPage(status) {
+/** How this run started, for the lede. */
+export function triggerText(t) {
+  if (!t) return 'on the half-hour clock';
+  switch (t.type) {
+    case 'event':
+      return `on the published event for the ${esc(t.leg)} leg of ${esc(shortItem(t.kind, { id: t.id }))}${t.rehearsal ? ' (a rehearsal: nothing recorded)' : ''}`;
+    case 'follow-up':
+      return `${esc(String(t.minutes))} min after the ${esc(t.leg)} leg of ${esc(shortItem(t.kind, { id: t.id }))} went out`;
+    case 'deploy':
+      return 'by a deploy';
+    case 'manual':
+      return 'by hand';
+    default:
+      return 'on the half-hour clock';
+  }
+}
+
+/** The journey of each kind's newest item: when the probe first saw each system holding it. */
+function journeysSection(status, journeys) {
+  const cards = status.receipts
+    .filter((r) => r.item && journeys?.[r.kind])
+    .map((r) => {
+      const j = journeys[r.kind];
+      const rows = r.holders
+        .filter((h) => !h.label)
+        .map((h) => {
+          const arrival = j.arrivals?.[h.system];
+          let text;
+          let state;
+          if (arrival?.observed) {
+            const lag = lagAt(j, h.system);
+            text = `${esc(central(arrival.at))}${lag == null ? '' : `, <strong>${esc(age(lag))}</strong> after it went out`}`;
+            state = 'seen';
+          } else if (arrival) {
+            text = `already there when the page started watching, ${esc(central(arrival.at))}`;
+            state = 'had';
+          } else if (h.state === 'unknown') {
+            text = 'unknown';
+            state = 'unknown';
+          } else if (h.state === 'no-fact') {
+            text = 'no fact yet';
+            state = 'no-fact';
+          } else {
+            text = `not yet${j.item.at ? `, <strong>${esc(age(hoursBetween(j.item.at, status.checked_at)))}</strong> so far` : ''}`;
+            state = 'waiting';
+          }
+          return `<li class="step step--${state}"><span class="step__mark" aria-hidden="true"></span><span class="step__name">${esc(systemName(h.system))}</span><span class="step__when">${text}</span></li>`;
+        })
+        .join('\n');
+      const title = j.item.url ? `<a href="${esc(j.item.url)}">${esc(itemLabel(r.kind, j.item))}</a>` : esc(itemLabel(r.kind, j.item));
+      return `<section class="journey">
+<h3>${esc(KIND_LABEL[r.kind] ?? r.kind)}</h3>
+<p class="receipt__item">${title}</p>
+<p class="muted">${j.item.at ? `out ${esc(central(j.item.at))} from ${esc(systemName(j.origin))}` : `from ${esc(systemName(j.origin))}, undated`}; watched since ${esc(central(j.started_at))}</p>
+<ul class="steps">
+${rows}
+</ul>
+</section>`;
+    });
+  return cards.length ? `<div class="receipts">\n${cards.join('\n')}\n</div>` : '<p class="muted">No item is on a journey yet.</p>';
+}
+
+export function renderPage(status, journeys = {}) {
   const s = status.summary;
   const open = status.open.length
     ? `<ul class="open">${status.open.map((h) => `<li>${pill(h.status)} <a href="#hops">${h.id}. ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</a>, ${esc(h.kind)}${h.lag_hours != null ? `: ${esc(age(h.lag_hours))} behind, expected ${esc(age(h.expected_lag_hours))}` : ''}${h.why ? ` <span class="muted">${esc(h.why)}</span>` : ''}</li>`).join('\n')}</ul>`
@@ -171,6 +234,12 @@ td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
 pre { font-size: 12.5px; background: var(--soft); padding: 8px 10px; border-radius: 6px; overflow-x: auto; }
 code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
 footer { margin-top: 48px; font-size: 14px; color: var(--muted); }
+.journey { border: 1px solid var(--line); border-radius: 10px; padding: 14px 16px; }
+.steps { list-style: none; padding: 0; margin: 10px 0 0; font-size: 14.5px; }
+.step { display: flex; gap: 8px; align-items: baseline; padding: 4px 0; border-top: 1px solid var(--line); }
+.step__mark { width: 10px; height: 10px; border-radius: 50%; background: var(--nofact); flex: none; position: relative; top: 1px; }
+.step--seen .step__mark { background: var(--fresh); } .step--had .step__mark { background: var(--fresh); opacity: 0.5; } .step--waiting .step__mark { background: var(--moving); } .step--unknown .step__mark { background: var(--unknown); }
+.step__name { flex: 1; font-weight: 600; } .step__when { text-align: right; }
 .map { margin: 12px calc(50% - 50vw) 0; padding: 0 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 .map svg { display: block; margin: 0 auto; --pele-bg: var(--bg); --pele-fg: var(--ink); --pele-muted: var(--muted); --pele-line: var(--nofact); --pele-surface: var(--soft); --pele-surface-alt: var(--soft); --pele-border: var(--muted); --pele-radius: 6px; --pele-font: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
 .map .pele-edge path { stroke-width: 1.75; }
@@ -197,16 +266,20 @@ footer { margin-top: 48px; font-size: 14px; color: var(--muted); }
 <body>
 <main>
 <h1>Sync state</h1>
-<p class="lede">What each of Jamie's systems holds right now, how far behind each hop runs, and a receipt for the newest item of each kind. Checked ${esc(central(status.checked_at))}; the probe runs every half hour. What each hop moves, and how, is at <a href="/flows/">/flows/</a>.</p>
+<p class="lede">What each of Jamie's systems holds right now, how far behind each hop runs, and a receipt for the newest item of each kind. Checked ${esc(central(status.checked_at))}, ${triggerText(status.trigger)}. The probe runs every half hour and on every <code>published</code> event WT Builder puts on the publishing bus, then again at 2, 5, 10, 15, 30, 45 and 60 minutes to watch the item move. What each hop moves, and how, is at <a href="/flows/">/flows/</a>.</p>
 <ul class="counts">
 <li>${pill('fresh')} ${s.fresh}</li><li>${pill('moving')} ${s.moving}</li><li>${pill('late')} ${s.late}</li><li>${pill('held')} ${s.held}</li><li>${pill('no-fact')} ${s.no_fact}</li><li>${pill('unknown')} ${s.unknown}</li>
 </ul>
 
-<h2>The map</h2>
-<p class="muted">Every hop, coloured by the worst of the kinds it moves; a dashed hop runs on a clock, a solid one live or on a nudge. A dashed box is a system that publishes no fact yet. The map scrolls sideways; a hop's label opens its rows below.</p>
+<h2>The map, as it is now</h2>
+<p class="muted">Each box is a system and what it holds; each hop carries the item on it and how it is doing: <strong>in 2 min</strong> is a measured arrival, <strong>moving</strong> is on its way within the expected lag, <strong>late</strong> is past it. A hop is coloured by the worst of the kinds it moves; a dashed hop runs on a clock, a solid one live or on a nudge. A dashed box publishes no fact yet. The map scrolls sideways; a hop's label opens its rows below.</p>
 <div class="map">
-${mapSvg(status)}
+${mapSvg(status, journeys)}
 </div>
+
+<h2>Journeys</h2>
+<p class="muted">The newest item of each kind, and when the probe first saw each system holding it. A time in bold is measured: the system did not have the item on one run and had it on the next.</p>
+${journeysSection(status, journeys)}
 
 <h2>Needs a look</h2>
 ${open}
@@ -231,7 +304,7 @@ ${hopsTable(status.hops)}
 <h2>Facts, as read</h2>
 ${factsList(status.facts)}
 
-<footer>Published by the sync probe${status.code ? ` (<code>${esc(status.code)}</code>)` : ''}. The same data is at <a href="/status.json">/status.json</a>; each receipt at <code>/receipts/&lt;kind&gt;.json</code>. Source: <a href="https://github.com/jthingelstad/sync.thingelstad.xyz">sync.thingelstad.xyz</a>.</footer>
+<footer>Published by the sync probe${status.code ? ` (<code>${esc(status.code)}</code>)` : ''}. The same data is at <a href="/status.json">/status.json</a>; each receipt at <code>/receipts/&lt;kind&gt;.json</code>; the journeys at <a href="/journeys.json">/journeys.json</a>; the published events, as folded, at <a href="/facts/wt-builder.json">/facts/wt-builder.json</a>. Source: <a href="https://github.com/jthingelstad/sync.thingelstad.xyz">sync.thingelstad.xyz</a>.</footer>
 </main>
 </body>
 </html>

@@ -80,7 +80,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <body>
 <main>
 <h1>Data flows</h1>
-<p class="lede">Every hop content takes between Jamie's systems, who owns each field, and what watches each hop today. Rendered from <code>shared/flows.json</code>, updated 2026-10-26. A hop is a row in that file before it is code anywhere.</p>
+<p class="lede">Every hop content takes between Jamie's systems, who owns each field, and what watches each hop today. Rendered from <code>shared/flows.json</code>, updated 2026-10-27. A hop is a row in that file before it is code anywhere.</p>
 
 <h2>Open</h2>
 <ul class="open"><li><a href="#hop-6"><span class="pill pill--gap">gap</span> 6. Weekly Thing (web) → Linking Things</a>: Broken on 2026-10-26: WT354 was sent 2026-10-24, the nightly ran green, and Linking Things still reports 353. The sibling checkout was on a feature branch without 354.md. Fix: read weekly's published archive over HTTPS, or origin main, never a working checkout; and nudge the join from the send (hop 10).</li>
@@ -90,7 +90,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <h2>Map</h2>
 <div class="scroll">
 <svg class="map" viewBox="0 0 1208 650" width="1208" height="650" role="img" aria-labelledby="map-title">
-<title id="map-title">Data flows between Jamie's systems, 2026-10-26</title>
+<title id="map-title">Data flows between Jamie's systems, 2026-10-27</title>
 <defs>
   <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker>
 </defs>
@@ -288,7 +288,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>The issue's generated 11ty inputs (apps/site/archive/&lt;n&gt;.md and its assets).<br><span class="muted">The website leg commits to main; the deploy workflow builds and publishes on push.</span></td>
   <td>nudge, on send<br><span class="muted">mac</span></td>
   <td class="num">15 min</td>
-  <td>feed.xml carries the issue; /archive/&lt;n&gt;/ renders.</td>
+  <td>feed.xml carries the issue; /archive/&lt;n&gt;/ renders. Its receipt is the published event for the website leg on the bus; the sync page measures the hop from that event's time.</td>
   <td><span class="pill pill--ok">ok</span><br><span class="muted">Sent for every issue since WT350.</span></td>
 </tr>
 <tr id="hop-8" class="status--ok">
@@ -297,7 +297,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>The email edition, as a draft.<br><span class="muted">Buttondown API: creates and updates a draft. Never schedules, never sends; Jamie sends.</span></td>
   <td>nudge, on send<br><span class="muted">mac</span></td>
   <td class="num">15 min</td>
-  <td>The draft exists with the issue's subject; the email goes out when Jamie sends it.</td>
+  <td>The draft exists with the issue's subject; the email goes out when Jamie sends it. Its receipt is the published event for the buttondown leg on the bus; the sync page measures the hop from that event's time.</td>
   <td><span class="pill pill--ok">ok</span></td>
 </tr>
 <tr id="hop-9" class="status--ok">
@@ -306,7 +306,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>The issue's audio edition (with chapters and VTT) and every rehosted image.<br><span class="muted">Upload to files.thingelstad.com before the website and email legs; content-named files, so a re-render re-sends the website leg.</span></td>
   <td>nudge, on send<br><span class="muted">mac</span></td>
   <td class="num">15 min</td>
-  <td>The URL the issue names returns the object.</td>
+  <td>The URL the issue names returns the object. Its receipt is the published event for the podcast leg on the bus; the sync page measures the hop from that event's time.</td>
   <td><span class="pill pill--ok">ok</span></td>
 </tr>
 <tr id="hop-10" class="status--ok">
@@ -315,7 +315,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>The news that an issue is out (its number), not the text.<br><span class="muted">repository_dispatch issue-sent to librarian-thing after the website leg; the library round pulls the issue page from weekly.thingelstad.com and ends the weekend hold.</span></td>
   <td>nudge, on send<br><span class="muted">mac</span></td>
   <td class="num">30 min</td>
-  <td>The round's 'The sent issue arrived' step passed; latest_content lists the issue.</td>
+  <td>The round's 'The sent issue arrived' step passed; latest_content lists the issue. Its receipt is the published event for the archive leg on the bus; the sync page measures the hop from that event's time.</td>
   <td><span class="pill pill--ok">ok</span><br><span class="muted">Sent for every issue since WT350. Linking Things gets no such nudge (hop 6).</span></td>
 </tr>
 <tr id="hop-11" class="status--ok">
@@ -414,7 +414,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>An episode: the mastered MP3 into the audio bucket, then its page and transcript in one commit.<br><span class="muted">The Another Thing send (/another), built 2026-10-11. Since 2026-10-26 (wt-builder PR #8) it puts the tagged MP3 in the another-site audio bucket at uploads/YYYY/another-thing-N.mp3 with the AWS key in WT Builder's .env, reads it back, then commits the episode page (with audioBytes and audioSeconds) and its transcript to git. No MP3 goes to git; CloudFront serves the bucket at the same /uploads/ URL.</span></td>
   <td>nudge, on send<br><span class="muted">mac</span></td>
   <td class="num">15 min</td>
-  <td>podcast.xml carries the episode.</td>
+  <td>podcast.xml carries the episode. Its receipt is the published event for the another leg on the bus; the sync page measures the hop from that event's time.</td>
   <td><span class="pill pill--unverified">unverified</span><br><span class="muted">Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length.</span></td>
 </tr>
 </tbody>
@@ -490,6 +490,12 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <thead><tr><th>Watcher</th><th>Hops</th><th>Sees</th><th>Misses</th></tr></thead>
 <tbody>
 <tr>
+  <td><strong>sync.thingelstad.xyz</strong><br><span class="muted">AWS Lambda on a half-hour schedule and on every published event (then again at 2, 5, 10, 15, 30, 45 and 60 minutes), publishing a public page</span></td>
+  <td class="num"><a href="#hop-6">6</a>, <a href="#hop-7">7</a>, <a href="#hop-8">8</a>, <a href="#hop-9">9</a>, <a href="#hop-10">10</a>, <a href="#hop-11">11</a>, <a href="#hop-12">12</a>, <a href="#hop-14">14</a>, <a href="#hop-16">16</a>, <a href="#hop-20">20</a>, <a href="#hop-21">21</a></td>
+  <td>Whether the destination of each hop holds the newest item of its kind, measured from the published event or the next fact down; each item's journey, system by system, with the time it was first seen at each.</td>
+  <td>A hop whose ends publish no fact (Pinboard without a token, Buttondown, Tinylytics); whether the content is right.</td>
+</tr>
+<tr>
   <td><strong>weekly-thing-feed-publication-monitor</strong><br><span class="muted">OpenClaw cron on the Mac, 12:00 daily, posts to Discord</span></td>
   <td class="num"><a href="#hop-7">7</a></td>
   <td>A new item in weekly's feed.xml or podcast.xml.</td>
@@ -557,7 +563,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 </tr>
 <tr>
   <td><strong><a href="http://127.0.0.1:10001/">WT Builder</a></strong><br><span class="muted">publisher · mac · jthingelstad/wt-builder</span></td>
-  <td>get_status (MCP) shows each issue's send legs; list_events shows what was sent when.</td>
+  <td>Every send puts a `published` event on the publishing bus (EventBridge bus `thingelstad-publishing`, owned by the sync stack; since 2026-10-27): product, kind, id, which leg went out and when, and every leg sent so far. The sync probe records it as WT Builder's fact and shows the item's journey from that moment. get_status (MCP) shows each issue's send legs; list_events shows what was sent when.</td>
   <td>Authors and publishes each issue, and makes Another Thing since 2026-10-11 (that send has not run yet).</td>
 </tr>
 <tr>

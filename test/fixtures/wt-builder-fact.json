@@ -1,0 +1,24 @@
+{
+ "updated_at": "2026-10-24T12:09:40Z",
+ "newest": {
+  "issue": {
+   "id": "354",
+   "at": "2026-10-24T12:00:12Z",
+   "url": "https://weekly.thingelstad.com/archive/354/",
+   "title": "WT354 — A museum for nnxyz",
+   "product": "weekly-thing",
+   "legs": {
+    "website": { "at": "2026-10-24T12:00:12Z", "url": "https://weekly.thingelstad.com/archive/354/" },
+    "buttondown": { "at": "2026-10-24T12:01:30Z", "url": "https://buttondown.com/emails/00000000-0000-0000-0000-000000000354" },
+    "podcast": { "at": "2026-10-24T12:08:05Z", "url": "https://weekly.thingelstad.com/uploads/2026/weekly-thing-354.mp3" },
+    "archive": { "at": "2026-10-24T12:09:40Z" }
+   }
+  }
+ },
+ "events": [
+  { "received_at": "2026-10-24T12:09:40Z", "product": "weekly-thing", "kind": "issue", "id": "354", "leg": "archive", "at": "2026-10-24T12:09:40Z", "event_id": "d4" },
+  { "received_at": "2026-10-24T12:08:06Z", "product": "weekly-thing", "kind": "issue", "id": "354", "leg": "podcast", "at": "2026-10-24T12:08:05Z", "event_id": "c3" },
+  { "received_at": "2026-10-24T12:01:31Z", "product": "weekly-thing", "kind": "issue", "id": "354", "leg": "buttondown", "at": "2026-10-24T12:01:30Z", "event_id": "b2" },
+  { "received_at": "2026-10-24T12:00:13Z", "product": "weekly-thing", "kind": "issue", "id": "354", "leg": "website", "at": "2026-10-24T12:00:12Z", "event_id": "a1" }
+ ]
+}

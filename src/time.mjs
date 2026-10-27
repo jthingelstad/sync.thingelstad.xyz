@@ -32,6 +32,13 @@ export function central(iso) {
   return `${parts.weekday} ${parts.month} ${parts.day}, ${parts.hour}:${parts.minute} ${ampm} ${parts.timeZoneName}`;
 }
 
+/** "Oct 25": the day in Chicago, short. */
+export function centralDay(iso) {
+  if (!iso) return '';
+  if (/^\d{4}-\d{2}-\d{2}$/.test(iso)) iso = `${iso}T12:00:00Z`;
+  return new Intl.DateTimeFormat('en-US', { timeZone: CENTRAL, month: 'short', day: 'numeric' }).format(new Date(iso));
+}
+
 /** The weekday in Chicago, "Mon".."Sun". */
 export function centralWeekday(iso) {
   return new Intl.DateTimeFormat('en-US', { timeZone: CENTRAL, weekday: 'short' }).format(new Date(iso));

@@ -8,8 +8,9 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { collect, LIBRARIAN_ARTIFACTS, LIBRARIAN_HEALTH, URLS } from '../src/facts.mjs';
+import { collect, LIBRARIAN_ARTIFACTS, LIBRARIAN_HEALTH, PUBLISHER_FACT_KEY, URLS } from '../src/facts.mjs';
 import { flows } from '../src/flows.mjs';
+import { advanceAll } from '../src/journey.mjs';
 import { renderPage } from '../src/page.mjs';
 import { probe } from '../src/probe.mjs';
 
@@ -27,7 +28,13 @@ const FIXTURE_FACTS = {
   'artifacts/reference_corpus.json': { 'item-count': '41', 'built-at': '2026-10-26T19:58:00Z' },
 };
 
-export async function fixtureContext(now = '2026-10-26T22:00:00Z') {
+/**
+ * The fixtures as the probe reads them. `publisher: false` leaves WT Builder
+ * without a fact, the state before its first published event reached the
+ * bus; by default the fixture fact (test/fixtures/wt-builder-fact.json, the
+ * WT354 legs) is there.
+ */
+export async function fixtureContext(now = '2026-10-26T22:00:00Z', { publisher = true } = {}) {
   const read = (name) => fs.readFile(path.join(ROOT, 'test/fixtures', name), 'utf8');
   const bodies = {
     [URLS.weeklyFeed]: () => read('weekly-feed.json'),
@@ -58,7 +65,8 @@ export async function fixtureContext(now = '2026-10-26T22:00:00Z') {
   };
   return {
     now,
-    env: {},
+    env: { SITE_BUCKET: 'fixtures' },
+    s3Get: async (bucket, key) => (key === PUBLISHER_FACT_KEY && publisher ? JSON.parse(await read('wt-builder-fact.json')) : null),
     fetch: async (url, init) => {
       if ((init?.method ?? 'GET') === 'HEAD') return { ok: true, status: 200, text: async () => '' };
       const body = bodies[url];
@@ -71,10 +79,12 @@ export async function fixtureContext(now = '2026-10-26T22:00:00Z') {
 
 async function liveContext() {
   const { HeadObjectCommand, S3Client } = await import('@aws-sdk/client-s3');
+  const { s3Get } = await import('../src/handler.mjs');
   const s3 = new S3Client({});
   return {
     now: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
-    env: process.env,
+    env: { SITE_BUCKET: 'sync-site-999153317627', ...process.env },
+    s3Get,
     fetch: (url, init) => fetch(url, { ...init, headers: { 'user-agent': 'sync.thingelstad.xyz probe (local)', ...(init?.headers ?? {}) } }),
     s3Head: async (Bucket, Key) => {
       const head = await s3.send(new HeadObjectCommand({ Bucket, Key }));
@@ -86,10 +96,14 @@ async function liveContext() {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const ctx = fixtures ? await fixtureContext() : await liveContext();
   const facts = await collect(ctx, flows.systems.map((s) => s.id));
-  const status = probe({ flows, facts, now: ctx.now, code: fixtures ? 'fixtures' : 'local' });
+  const status = probe({ flows, facts, now: ctx.now, code: fixtures ? 'fixtures' : 'local', trigger: { type: 'manual' } });
+  // Journeys as the page would have them after watching WT354 arrive at the
+  // site two minutes after its website leg (fixtures only).
+  const journeys = fixtures ? advanceAll(JSON.parse(await fs.readFile(path.join(ROOT, 'test/fixtures/journeys.json'), 'utf8')), status) : advanceAll(null, status);
   await fs.mkdir(path.join(OUT, 'receipts'), { recursive: true });
-  await fs.writeFile(path.join(OUT, 'index.html'), renderPage(status));
+  await fs.writeFile(path.join(OUT, 'index.html'), renderPage(status, journeys));
   await fs.writeFile(path.join(OUT, 'status.json'), `${JSON.stringify(status, null, 1)}\n`);
+  await fs.writeFile(path.join(OUT, 'journeys.json'), `${JSON.stringify(journeys, null, 1)}\n`);
   for (const r of status.receipts) await fs.writeFile(path.join(OUT, 'receipts', `${r.kind}.json`), `${JSON.stringify(r, null, 1)}\n`);
   await fs.mkdir(path.join(OUT, 'flows'), { recursive: true });
   await fs.copyFile(path.join(ROOT, 'data/flows.html'), path.join(OUT, 'flows/index.html'));

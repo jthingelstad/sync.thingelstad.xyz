@@ -1,6 +1,8 @@
-// Package the probe for Lambda: src/, data/flows.json and data/map.svg, zipped into
-// .build/sync.zip. No bundler: the handler has no dependencies beyond the AWS
-// SDK the Node runtime provides. The zip's key, code/<sha256>.zip, hashes
+// Package the probe for Lambda: src/, data/flows.json and Pele (the one
+// package the probe needs beyond the AWS SDK the Node runtime provides: a
+// single self-contained file, copied from node_modules so the map is drawn
+// on every run), zipped into .build/sync.zip. No bundler. The zip's key,
+// code/<sha256>.zip, hashes
 // the entries' names and contents rather than the zip's bytes, so the same
 // source gives the same key on any machine and a deploy of an unchanged
 // package has nothing to do (the approach cards and Linking Things settled
@@ -72,13 +74,25 @@ export function contentKey(entries) {
   return `code/${hash.digest('hex')}.zip`;
 }
 
+/** Pele as the Lambda sees it: its package.json (the entry points) and dist/pele.js, which imports nothing. */
+export async function vendorPele() {
+  const dir = path.join(ROOT, 'node_modules/pele');
+  const pkg = JSON.parse(await fs.readFile(path.join(dir, 'package.json'), 'utf8'));
+  const bundle = await fs.readFile(path.join(dir, 'dist/pele.js'));
+  if (/^\s*import\s|\bfrom\s*["'][^"']+["'];?\s*$/m.test(bundle.toString('utf8').slice(0, 2000))) throw new Error('pele/dist/pele.js imports something; vendor it too');
+  return [
+    { name: 'node_modules/pele/package.json', data: Buffer.from(`${JSON.stringify({ name: pkg.name, version: pkg.version, type: pkg.type, exports: { '.': { import: './dist/pele.js', default: './dist/pele.js' } } })}\n`) },
+    { name: 'node_modules/pele/dist/pele.js', data: bundle },
+  ];
+}
+
 export async function packageProbe() {
   const sources = (await fs.readdir(path.join(ROOT, 'src'))).filter((f) => f.endsWith('.mjs')).sort();
   const entries = [
     ...(await Promise.all(sources.map(async (f) => ({ name: `src/${f}`, data: await fs.readFile(path.join(ROOT, 'src', f)) })))),
     { name: 'data/flows.json', data: await fs.readFile(path.join(ROOT, 'data/flows.json')) },
-    { name: 'data/map.svg', data: await fs.readFile(path.join(ROOT, 'data/map.svg')) },
     { name: 'package.json', data: Buffer.from('{"type":"module"}\n') },
+    ...(await vendorPele()),
   ];
   const archive = zip(entries);
   const manifest = {

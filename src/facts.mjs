@@ -42,6 +42,9 @@ export const LIBRARIAN_KINDS = {
   link: { artifact: 'links_corpus', prefix: 'link-' },
 };
 export const LIBRARIAN_HEALTH = 'https://librarian.thingelstad.com/health';
+// Where the probe keeps the publisher's fact: the fold of every published
+// event that reached the bus (src/events.mjs), in the site bucket.
+export const PUBLISHER_FACT_KEY = 'facts/wt-builder.json';
 
 // ---------- parsers ----------
 
@@ -143,6 +146,23 @@ export function parseLibrarianHealth(body) {
   };
 }
 
+/**
+ * The publisher's newest items from its stored fact: the issue and the
+ * episode as the events named them, each with its legs; and the audio
+ * edition, which is the issue's podcast leg.
+ */
+export function parsePublisherFact(stored) {
+  const newest = {};
+  for (const kind of ['issue', 'episode']) {
+    const item = stored?.newest?.[kind];
+    if (!item?.id) continue;
+    newest[kind] = { id: String(item.id), at: instant(item.at), url: item.url ?? null, title: item.title ?? null, legs: item.legs ?? {} };
+  }
+  const podcast = stored?.newest?.issue?.legs?.podcast;
+  if (podcast?.at) newest.audio = { id: String(stored.newest.issue.id), at: instant(podcast.at), url: podcast.url ?? null, title: stored.newest.issue.title ?? null };
+  return newest;
+}
+
 // ---------- readers ----------
 
 async function text(ctx, url, init) {
@@ -157,6 +177,17 @@ async function status(ctx, url, method = 'HEAD') {
 }
 
 const READERS = {
+  // WT Builder's fact is its published events: one per send leg, put on the
+  // publishing bus and folded into facts/wt-builder.json by the handler.
+  async 'wt-builder'(ctx) {
+    const bucket = ctx.env.SITE_BUCKET;
+    if (!bucket) return { none: 'No site bucket to read the published events from (SITE_BUCKET).' };
+    const stored = await ctx.s3Get(bucket, PUBLISHER_FACT_KEY);
+    if (!stored) return { none: 'No published event has reached the bus yet. WT Builder announces every send there from its next issue.' };
+    const newest = parsePublisherFact(stored);
+    return { newest, extra: { updated_at: stored.updated_at ?? null, events: (stored.events ?? []).slice(0, 10) } };
+  },
+
   async weekly(ctx) {
     const feed = JSON.parse(await text(ctx, URLS.weeklyFeed));
     const newest = parseWeeklyFeed(feed);

@@ -175,7 +175,7 @@ async function certificateArnFromResources(name) {
 
 async function invokeProbe(functionName) {
   log(`invoking ${functionName}`);
-  const result = await lambda.send(new InvokeCommand({ FunctionName: functionName, InvocationType: 'RequestResponse', LogType: 'Tail' }));
+  const result = await lambda.send(new InvokeCommand({ FunctionName: functionName, InvocationType: 'RequestResponse', LogType: 'Tail', Payload: JSON.stringify({ deploy: true }) }));
   const payload = Buffer.from(result.Payload ?? []).toString('utf8');
   if (result.FunctionError) {
     log(Buffer.from(result.LogResult ?? '', 'base64').toString('utf8'));
@@ -221,7 +221,7 @@ async function apply(execute_) {
 
   if (!stack) {
     log(`\n${name} does not exist: step one creates the buckets and roles`);
-    const set = await changeSet(name, template, { CodeKey: '', CodeVersion: '', CertificateArn: certificateArn, PinboardSecret: '' }, false);
+    const set = await changeSet(name, template, { CodeKey: '', CodeVersion: '', CertificateArn: certificateArn, PinboardSecret: '', PublisherUser: 'wt-archive' }, false);
     show(set);
     if (!execute_) return log('\nplan only; run `npm run deploy` to create it');
     stack = await execute(name, set, false);
@@ -235,6 +235,7 @@ async function apply(execute_) {
     CodeVersion: codeVersion,
     CertificateArn: certificateArn,
     PinboardSecret: parameter(stack, 'PinboardSecret'),
+    PublisherUser: parameter(stack, 'PublisherUser') || 'wt-archive',
   };
   log(`\nchange set for ${name}`);
   const set = await changeSet(name, template, parameters, true);
@@ -250,6 +251,7 @@ async function apply(execute_) {
   const siteBucket = output(stack, 'SiteBucket');
   const distributionId = output(stack, 'DistributionId');
   const domain = output(stack, 'DistributionDomain');
+  log(`publishing bus ${output(stack, 'PublishingBusArn')}`);
   await uploadStatic(siteBucket);
   await invokeProbe(functionName);
   await cloudfront.send(
