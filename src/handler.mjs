@@ -10,7 +10,7 @@ import { GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from 
 import { followUps, mergePublished, publishedEvent } from './events.mjs';
 import { collect, PUBLISHER_FACT_KEY } from './facts.mjs';
 import { flows } from './flows.mjs';
-import { advanceAll, historyFor } from './journey.mjs';
+import { advanceAll, archiveKey, historyFor, summarise } from './journey.mjs';
 import { renderPage } from './page.mjs';
 import { probe } from './probe.mjs';
 
@@ -67,9 +67,21 @@ export async function run({ now = stamp(), env = process.env, trigger = { type: 
   };
   const facts = await collect(ctx, flows.systems.map((s) => s.id));
   const status = probe({ flows, facts, now, code: env.SYNC_CODE ?? null, trigger });
-  const next = advanceAll(journeys, status);
-  const kept = historyFor(history, journeys, next, now);
-  return { status, journeys: next, history: kept.index, retired: kept.retired, page: renderPage(status, next, kept.index) };
+  const recorded = historyFor(history, journeys, journeys, now).index;
+  const bucket = env.SITE_BUCKET ?? ctx.env?.SITE_BUCKET;
+  if (bucket && ctx.s3Get) {
+    for (const receipt of status.receipts) {
+      if (!receipt.item || String(journeys?.[receipt.kind]?.item?.id) === String(receipt.item.id)) continue;
+      if (recorded.kinds[receipt.kind]?.some((j) => String(j.item.id) === String(receipt.item.id))) continue;
+      const archived = await ctx.s3Get(bucket, archiveKey(receipt.kind, receipt.item.id));
+      if (!archived) continue;
+      if (archived.kind !== receipt.kind || String(archived.item?.id) !== String(receipt.item.id)) throw new Error('The archived journey does not match its key');
+      (recorded.kinds[receipt.kind] ??= []).push(summarise(archived));
+    }
+  }
+  const next = advanceAll(journeys, status, recorded);
+  const kept = historyFor(recorded, journeys, next, now);
+  return { status, journeys: kept.journeys, history: kept.index, retired: kept.retired, page: renderPage(status, kept.journeys, kept.index) };
 }
 
 export async function publish(bucket, { status, journeys, history, retired = [], page }, write = put) {

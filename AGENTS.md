@@ -94,6 +94,9 @@ Builder's credentials proves the permission without matching the rule.
   kind, current one included. `retire` and `summarise` are pure;
   `typicalLag` and `worstLag` use only finished journeys' observed arrivals,
   so a send does not change its own comparison. Pure.
+  An id seen again after an origin's reader failed resumes its recorded
+  arrivals from the index, or its archive once outside the last fifty;
+  a fallback must not erase a measured lag.
 - `src/page.mjs` — the HTML. No script, `--jt-` colours, Central time. It
   opens with the map, then the journeys, then the receipts, matrix, hops and
   facts.

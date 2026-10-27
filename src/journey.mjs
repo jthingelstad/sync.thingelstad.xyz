@@ -52,13 +52,41 @@ function observedLag(journey, system) {
 }
 
 /** The journeys that apply to a status: one per receipt with an item, advanced to now. */
-export function advanceAll(journeys, status) {
+export function advanceAll(journeys, status, history = null) {
   const next = {};
   for (const r of status.receipts) {
-    const j = advance(journeys?.[r.kind] ?? null, r, status.checked_at);
+    const known = r.item ? history?.kinds?.[r.kind]?.find((j) => String(j.item.id) === String(r.item.id)) : null;
+    const prior = journeys?.[r.kind];
+    const base = known && String(prior?.item?.id) !== String(r.item?.id) ? remembered(known, known) : prior;
+    const j = advance(base ?? null, r, status.checked_at);
     if (j) next[r.kind] = j;
   }
   return next;
+}
+
+function firstArrival(a, b) {
+  if (!a) return b;
+  if (!b) return a;
+  const earlier = Date.parse(b.at) < Date.parse(a.at);
+  const tied = b.at === a.at && b.observed && !a.observed;
+  return earlier || tied ? b : a;
+}
+
+// An id can become current again after a weaker origin stood in during a
+// reader failure. Resume its evidence instead of manufacturing a fresh watch.
+function remembered(known, current) {
+  const arrivals = {};
+  for (const system of new Set([...Object.keys(known.arrivals ?? {}), ...Object.keys(current.arrivals ?? {})])) arrivals[system] = { ...firstArrival(known.arrivals?.[system], current.arrivals?.[system]) };
+  const observations = {};
+  for (const system of new Set([...Object.keys(known.observations ?? {}), ...Object.keys(current.observations ?? {})])) observations[system] = { ...known.observations?.[system], ...current.observations?.[system] };
+  return { kind: current.kind, item: pick(current.item), origin: known.origin ?? current.origin, started_at: known.started_at ?? current.started_at, updated_at: current.updated_at, arrivals, observations };
+}
+
+function restoreKnown(journeys, history) {
+  return Object.fromEntries(Object.entries(journeys ?? {}).map(([kind, j]) => {
+    const known = history?.kinds?.[kind]?.find((old) => String(old.item.id) === String(j.item.id));
+    return [kind, known ? remembered(known, j) : j];
+  }));
 }
 
 /** A public id is one key component, including when it is a URL. */
@@ -83,25 +111,26 @@ export function summarise(journey, { active = false } = {}) {
     const lag = observedLag(journey, system);
     if (lag != null) lags[system] = lag;
   }
-  return { kind: journey.kind, item: pick(journey.item), origin: journey.origin, started_at: journey.started_at, updated_at: journey.updated_at, active, archive: active ? null : archiveKey(journey.kind, journey.item.id), arrivals, lags };
+  return { kind: journey.kind, item: pick(journey.item), origin: journey.origin, started_at: journey.started_at, updated_at: journey.updated_at, active, archive: active ? null : archiveKey(journey.kind, journey.item.id), arrivals, observations: structuredClone(journey.observations ?? {}), lags };
 }
 
 /** The handler writes retired objects before this index and the current state. */
 export function historyFor(index, previous, current, now) {
   if (index && (index.version !== 1 || !index.kinds || typeof index.kinds !== 'object' || Array.isArray(index.kinds))) throw new Error('Unsupported journey history index');
-  const retired = retire(previous, current);
+  const next = restoreKnown(current, index);
+  const retired = retire(restoreKnown(previous, index), next);
   const kinds = {};
-  const named = new Set([...Object.keys(index?.kinds ?? {}), ...Object.keys(current ?? {})]);
+  const named = new Set([...Object.keys(index?.kinds ?? {}), ...Object.keys(next)]);
   for (const kind of named) {
     const entries = new Map();
     for (const j of index?.kinds?.[kind] ?? []) entries.set(String(j.item.id), summarise(j, { active: Boolean(j.active) }));
     for (const r of retired.filter((r) => r.journey.kind === kind)) entries.set(String(r.journey.item.id), summarise(r.journey));
-    if (current?.[kind]) entries.set(String(current[kind].item.id), summarise(current[kind], { active: true }));
+    if (next[kind]) entries.set(String(next[kind].item.id), summarise(next[kind], { active: true }));
     kinds[kind] = [...entries.values()]
       .sort((a, b) => Date.parse(b.started_at) - Date.parse(a.started_at) || (String(a.item.id) < String(b.item.id) ? -1 : 1))
       .slice(0, 50);
   }
-  return { index: { version: 1, updated_at: now, kinds }, retired };
+  return { index: { version: 1, updated_at: now, kinds }, retired, journeys: next };
 }
 
 function historicLags(index, kind, system) {

@@ -36,6 +36,20 @@ test('run uses the same history calculation with fixture readers and no AWS tran
   assert.equal(result.retired.length, 0);
 });
 
+test('an item outside the fifty-row index resumes its archived measurements', async () => {
+  const context = await fixtureContext();
+  const previous = (await loadScenario('superseded')).journeys;
+  const archived = { kind: 'issue', item: { id: '354', at: '2026-10-24T12:00:12Z' }, origin: 'wt-builder', started_at: '2026-10-24T12:00:13Z', updated_at: '2026-10-24T12:30:00Z', arrivals: { weekly: { at: '2026-10-24T12:02:12Z', observed: true } } };
+  const read = context.s3Get;
+  context.s3Get = async (bucket, key) => key === 'journeys/issue/354.json' ? archived : read(bucket, key);
+  const result = await run({ now: context.now, env: {}, context, journeys: previous, history: { version: 1, kinds: {} } });
+  assert.equal(result.journeys.issue.item.id, '354');
+  assert.equal(result.journeys.issue.started_at, archived.started_at);
+  assert.equal(result.journeys.issue.arrivals.weekly.at, archived.arrivals.weekly.at);
+  assert.equal(result.journeys.issue.arrivals.weekly.observed, true);
+  assert.equal(result.history.kinds.issue.find((j) => j.item.id === '354').lags.weekly, 2 / 60);
+});
+
 test('a rehearsal returns before any reader, state read, write or follow-up call', async () => {
   const prior = process.env.SITE_BUCKET;
   process.env.SITE_BUCKET = 'fixture-bucket';

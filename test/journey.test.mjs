@@ -1,12 +1,47 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { advance, advanceAll, archiveKey, historyFor, lagAt, retire, summarise, typicalLag, worstLag } from '../src/journey.mjs';
+import { flows } from '../src/flows.mjs';
+import { probe } from '../src/probe.mjs';
 
 const receipt = (holders) => ({
   kind: 'issue',
   origin: 'wt-builder',
   item: { id: '355', at: '2026-10-31T12:00:12Z', url: 'https://weekly.thingelstad.com/archive/355/', title: 'WT355' },
   holders: holders.map(([system, state]) => ({ system, kind: 'issue', state })),
+});
+
+test('a Pinboard outage and older fallback cannot erase a returning item\'s measured arrivals', () => {
+  const old = { id: 'stamp-A', at: '2026-10-26T12:00:00Z' };
+  const item = { id: 'stamp-B', at: '2026-10-27T12:00:00Z' };
+  const facts = { pinboard: { newest: { link: item } }, links: { newest: { link: old } }, librarian: { newest: { link: old } } };
+  let journeys = null;
+  let history = null;
+  const archives = new Map();
+  const measure = (now) => {
+    const status = probe({ flows, facts, now });
+    const kept = historyFor(history, journeys, advanceAll(journeys, status, history), now);
+    for (const r of kept.retired) archives.set(r.key, r.journey);
+    journeys = kept.journeys; history = kept.index;
+  };
+  measure('2026-10-27T12:00:00Z');
+  facts.librarian.newest.link = item;
+  measure('2026-10-27T12:02:00Z');
+  assert.equal(journeys.link.arrivals.librarian.observed, true);
+  facts.pinboard = { error: 'The reader failed.' };
+  measure('2026-10-27T12:03:00Z');
+  assert.equal(journeys.link.item.id, 'stamp-A');
+  facts.pinboard = { newest: { link: item } };
+  measure('2026-10-27T12:04:00Z');
+  assert.equal(journeys.link.started_at, '2026-10-27T12:00:00Z');
+  assert.equal(journeys.link.arrivals.librarian.at, '2026-10-27T12:02:00Z');
+  assert.equal(journeys.link.arrivals.librarian.observed, true);
+  facts.pinboard.newest.link = { id: 'stamp-C', at: '2026-10-27T12:05:00Z' };
+  measure('2026-10-27T12:05:00Z');
+  assert.equal(archives.get('journeys/link/stamp-B.json').arrivals.librarian.at, '2026-10-27T12:02:00Z');
+  assert.equal(archives.get('journeys/link/stamp-B.json').arrivals.librarian.observed, true);
+  assert.equal(history.kinds.link.find((j) => j.item.id === 'stamp-B').lags.librarian, 2 / 60);
+  assert.equal(typicalLag(history, 'link', 'librarian'), 2 / 60);
 });
 
 test('a journey starts when a new item appears; systems that already hold it are not measured', () => {

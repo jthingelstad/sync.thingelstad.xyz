@@ -22,9 +22,9 @@ export async function loadScenario(name) {
 
 export function renderScenario({ facts, journeys, history = null, now, trigger = { type: 'clock' } }) {
   const status = probe({ flows, facts, now, code: 'fixtures', trigger });
-  const next = advanceAll(journeys, status);
+  const next = advanceAll(journeys, status, history);
   const kept = historyFor(history, journeys, next, now);
-  return { status, journeys: next, history: kept.index, retired: kept.retired, page: renderPage(status, next, kept.index) };
+  return { status, journeys: kept.journeys, history: kept.index, retired: kept.retired, page: renderPage(status, kept.journeys, kept.index) };
 }
 
 /** Readable rendered text for the snapshots and each PR's send-in-progress page. */
