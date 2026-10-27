@@ -92,9 +92,10 @@ output; logs and failures use generic messages or HTTP status codes.
 Jamie requested the next leg on 2026-10-27. Hop 23 captures only confirmed
 explicitly public Pinboard records into Links' private S3 inbox. The public
 journal stores only a digest pointer, link id and capture time. A metadata-only
-`pinboard/bookmarks-ready` event wakes `sync-bookmarks.yml`; it keeps the
-Pinboard credential and private raw account export out of GitHub.
-`docs/SUBSCRIBERS.md` describes the off/rehearsal/active switch and GitHub key.
+`pinboard/bookmarks-ready` event wakes Linking Things' AWS publisher. The
+Pinboard credential and private raw account export stay in their existing
+source runtimes. `docs/SUBSCRIBERS.md` describes the off/active capture switch;
+the destination owns its IAM event rule and needs no GitHub key.
 Invoke `{"bookmarks_preview":true}` for a read-only five-record API contract
 check in the deployed runtime; it returns counts only.
 

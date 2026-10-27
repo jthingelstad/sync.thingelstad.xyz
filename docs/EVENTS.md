@@ -200,8 +200,9 @@ their own activation rules.
 `{version: 1, at: <UTC seconds>, pending: <count>}` is emitted by the sync runtime
 only after an exact explicitly public Pinboard capture lands in the Links
 private inbox and its pointer is checkpointed. It is a request to drain
-durable work, not a save-time or arrival claim. The subscriber pins its own
-repository/workflow/main input; none of those are taken from event data.
+durable work, not a save-time or arrival claim. The destination owns a rule that
+starts its one AWS publisher with fixed input; no build overrides, source
+locations or credentials are taken from event data.
 The runtime may send this detail type and `ping` only from source pinboard.
 The destination reports exact public `star` arrivals using source links and
 the existing received contract.
