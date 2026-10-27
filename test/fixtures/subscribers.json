@@ -1,0 +1,5 @@
+[
+  { "source": "wt-builder", "detail-type": "published", "detail": { "product": "weekly-thing", "kind": "issue", "id": "355", "leg": "archive" }, "route": "librarian", "request": { "ref": "main", "inputs": { "dry_run": "false", "only": "weekly", "issue": "355" } } },
+  { "source": "wt-builder", "detail-type": "published", "detail": { "product": "weekly-thing", "kind": "issue", "id": "355", "leg": "website" }, "route": "links", "request": { "ref": "main", "inputs": { "dry_run": "false" } } },
+  { "source": "github", "detail-type": "pushed", "detail": { "repository": "jthingelstad/wt-builder", "ref": "refs/heads/main", "id": "0123456789abcdef0123456789abcdef01234567" }, "route": "registry", "request": { "ref": "main", "inputs": { "dry_run": "false", "repository": "jthingelstad/wt-builder" } } }
+]

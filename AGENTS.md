@@ -178,6 +178,8 @@ from that destination's source. They do not change trust or bypass a
 permissions boundary. `docs/DESTINATIONS.md` names the overrides and the
 activation order. Unknown baselines never become measured arrivals.
 
+- `src/subscribers.mjs` — the proposed workflow destinations, rendered into the template by `tools/build-subscribers.mjs`. Connections and real work have separate switches; ping always requests a dry run. Defaults create nothing. Hop 6 also needs Jamie's explicit repair approval, so WT354 stays the example.
+
 ## Deploying
 
 From the Mac as the cloud-engineer identity (the tool refuses any other):

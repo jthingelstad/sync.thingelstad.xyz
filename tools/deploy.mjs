@@ -77,7 +77,7 @@ async function changeSet(name, template, parameters, exists) {
       StackName: name,
       ChangeSetName,
       ChangeSetType: exists ? 'UPDATE' : 'CREATE',
-      TemplateBody: template,
+      TemplateBody: JSON.stringify(JSON.parse(template)),
       Parameters: Object.entries(parameters).map(([ParameterKey, ParameterValue]) => ({ ParameterKey, ParameterValue })),
       Capabilities: ['CAPABILITY_IAM'],
       Tags: tags,
@@ -243,6 +243,10 @@ async function apply(execute_) {
     EnableGitHub: process.env.SYNC_ENABLE_GITHUB ?? (parameter(stack, 'EnableGitHub') || 'false'),
     EnableStrava: process.env.SYNC_ENABLE_STRAVA ?? (parameter(stack, 'EnableStrava') || 'false'),
     StravaOwnerId: process.env.SYNC_STRAVA_OWNER_ID ?? parameter(stack, 'StravaOwnerId'),
+    ...Object.fromEntries(['Librarian', 'Links', 'Registry'].flatMap((route) => ['Configure', 'Enable'].map((prefix) => [
+      `${prefix}${route}Subscriber`, process.env[`SYNC_${prefix.toUpperCase()}_${route.toUpperCase()}_SUBSCRIBER`] ?? (parameter(stack, `${prefix}${route}Subscriber`) || 'false'),
+    ]))),
+    ApproveLinksJoinRepair: process.env.SYNC_APPROVE_LINKS_JOIN_REPAIR ?? (parameter(stack, 'ApproveLinksJoinRepair') || 'false'),
     ...Object.fromEntries(['Weekly', 'Another', 'Librarian', 'Thingy', 'Links'].map((name) => [
       `${name}ReceiverRole`, process.env[`SYNC_${name.toUpperCase()}_RECEIVER_ROLE`] ?? parameter(stack, `${name}ReceiverRole`),
     ])),
