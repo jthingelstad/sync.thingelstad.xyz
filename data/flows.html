@@ -343,7 +343,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
   <td class="num">26 h</td>
   <td>get_source thing-&lt;id&gt; returns the current page.</td>
-  <td><span class="pill pill--ok">ok</span><br><span class="muted">Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 7 intake: signed GitHub push deliveries for thingelstad.xyz and the 44 public repository sources listed in https://thingelstad.xyz/things.json become source github, detail-type pushed, with repository/ref/commit id and intake time only. The /github sender is off until Jamie adds github_webhook_signing_key in sync-runtime and enables EnableGitHub. It does not rebuild anything until step 8 adds a subscriber; this hop remains on its existing clock.</span></td>
 </tr>
 <tr id="hop-14" class="status--ok">
   <td class="num">14</td>
@@ -605,7 +605,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <tr>
   <td><strong><a href="https://thingelstad.xyz/">Things I've built</a></strong><br><span class="muted">site · github-actions · jthingelstad/thingelstad.xyz</span></td>
   <td>The registry on the site; activity.xml carries each day's collected observations.</td>
-  <td>Content changes by pull request; a daily collector refreshes observations.</td>
+  <td>Content changes by pull request; a daily collector refreshes observations. Its public registry supplies the reviewed webhook repository allowlist; private repositories and unlisted pushes are refused. The intake is disabled until its signing key and explicit enable flag are set.</td>
 </tr>
 <tr>
   <td><strong><a href="https://librarian.thingelstad.com/">Librarian</a></strong><br><span class="muted">archive · github-actions+aws · jthingelstad/librarian-thing</span></td>

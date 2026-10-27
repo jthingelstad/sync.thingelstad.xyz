@@ -25,7 +25,7 @@
     "RuntimeSecret": {
       "Type": "String",
       "Default": "",
-      "Description": "Name of the sync app's Secrets Manager secret (sync-runtime). Keys: pinboard_token, microblog_api_key; optional buttondown_webhook_signing_key resolves only when EnableButtondown is true. Empty disables secret-backed readers and senders."
+      "Description": "Name of sync-runtime. Reader keys: pinboard_token, microblog_api_key. Optional buttondown_webhook_signing_key and github_webhook_signing_key resolve only when their sender flag is true."
     },
     "EnableButtondown": {
       "Type": "String",
@@ -35,6 +35,15 @@
         "true"
       ],
       "Description": "Enable the signed Buttondown subscriber webhook only after its sync-runtime signing key exists and the provider is configured."
+    },
+    "EnableGitHub": {
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Description": "Enable signed GitHub push intake only after its sync-runtime key exists and webhooks for registered public source repositories are configured."
     }
   },
   "Conditions": {
@@ -107,6 +116,21 @@
           "Fn::Equals": [
             {
               "Ref": "EnableButtondown"
+            },
+            "true"
+          ]
+        }
+      ]
+    },
+    "HasGitHubKey": {
+      "Fn::And": [
+        {
+          "Condition": "HasRuntimeSecret"
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "EnableGitHub"
             },
             "true"
           ]
@@ -305,7 +329,8 @@
           "detail-type": [
             "published",
             "received",
-            "subscriber"
+            "subscriber",
+            "pushed"
           ],
           "source": [
             "wt-builder",
@@ -315,7 +340,8 @@
             "weekly",
             "another",
             "microblog",
-            "buttondown"
+            "buttondown",
+            "github"
           ]
         },
         "RetentionDays": 90
@@ -897,7 +923,7 @@
       "Type": "AWS::IAM::Role",
       "Condition": "HasCode",
       "Properties": {
-        "Description": "Signed webhook intake: own logs and Buttondown count signals on the publishing bus only",
+        "Description": "Signed webhook intake: own logs, Buttondown count signals and registered public GitHub pushes on the publishing bus only",
         "AssumeRolePolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -944,6 +970,23 @@
                     "StringEquals": {
                       "events:source": "buttondown",
                       "events:detail-type": "subscriber"
+                    }
+                  }
+                },
+                {
+                  "Sid": "GitHubSourcePushes",
+                  "Effect": "Allow",
+                  "Action": "events:PutEvents",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "PublishingBus",
+                      "Arn"
+                    ]
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "events:source": "github",
+                      "events:detail-type": "pushed"
                     }
                   }
                 }
@@ -1010,6 +1053,20 @@
                 "HasButtondownKey",
                 {
                   "Fn::Sub": "{{resolve:secretsmanager:${RuntimeSecret}:SecretString:buttondown_webhook_signing_key}}"
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            },
+            "ENABLE_GITHUB": {
+              "Ref": "EnableGitHub"
+            },
+            "GITHUB_WEBHOOK_SIGNING_KEY": {
+              "Fn::If": [
+                "HasGitHubKey",
+                {
+                  "Fn::Sub": "{{resolve:secretsmanager:${RuntimeSecret}:SecretString:github_webhook_signing_key}}"
                 },
                 {
                   "Ref": "AWS::NoValue"
@@ -1125,7 +1182,7 @@
           ""
         ]
       },
-      "Description": "Append /buttondown; the sender is disabled until EnableButtondown is true and its signing key is present."
+      "Description": "Append /buttondown or /github; each sender is disabled until its explicit flag is true and its signing key is present."
     }
   }
 }

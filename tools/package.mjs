@@ -92,6 +92,7 @@ export async function packageProbe() {
   const entries = [
     ...(await Promise.all(sources.map(async (f) => ({ name: `src/${f}`, data: await fs.readFile(path.join(ROOT, 'src', f)) })))),
     { name: 'data/flows.json', data: await fs.readFile(path.join(ROOT, 'data/flows.json')) },
+    { name: 'data/github-repositories.json', data: await fs.readFile(path.join(ROOT, 'data/github-repositories.json')) },
     ...(await Promise.all(style.map(async (f) => ({ name: `data/style/${f}`, data: await fs.readFile(path.join(ROOT, 'data/style', f)) })))),
     { name: 'package.json', data: Buffer.from('{"type":"module"}\n') },
     ...(await vendorPele()),

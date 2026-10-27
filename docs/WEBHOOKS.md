@@ -74,3 +74,68 @@ To turn the sender off, plan and deploy with
 `SYNC_ENABLE_BUTTONDOWN=false`. Remove a secret key only after a deploy
 without its reference succeeds. Provider configuration and activation
 wait for Jamie; this step makes no Buttondown account changes.
+
+## GitHub: prepared, off
+
+The path is `/github`, using `X-Hub-Signature-256: sha256=…`, verified over
+the raw body with the same byte limit and constant-time comparison. Only
+`X-GitHub-Event: push` is accepted. `repository.private` must be false and
+`repository.full_name` must match `data/github-repositories.json` (case
+insensitive). The file captures the 44 public source repositories from
+`https://thingelstad.xyz/things.json`, including the site itself, with its
+source URL and capture time. It contains no observations or people.
+
+`npm run github:sync` refreshes that list from the public registry. Review
+the diff and deploy it before adding a webhook for a new source. Runtime
+validation uses the packaged list and makes no GitHub or registry request.
+The pure selector accepts that list as data; the handler supplies it.
+
+```json
+{
+  "source": "github",
+  "detail-type": "pushed",
+  "detail": {
+    "repository": "jthingelstad/thingelstad.xyz",
+    "ref": "refs/heads/main",
+    "id": "abc123abc123abc123abc123abc123abc123abcd",
+    "at": "2026-10-28T12:00:00Z"
+  }
+}
+```
+
+`id` is the push's `after` commit id; `at` is intake time, not the time a
+commit was authored. Branches and tags are carried, including deletion's
+zero id. The step-8 subscriber decides which start work; this step adds no
+rebuild rule or workflow dispatch. There is no actor, email, commit message,
+commit list or arbitrary URL in the event or logs. The existing archive
+retains these signals, but the probe does not subscribe to them. Delivery
+is at least once, so consumers must tolerate duplicate commit/ref ids.
+
+Fixtures record GitHub's documented push shape with synthetic private-field
+canaries and a public test key. Tests also use GitHub's published HMAC test
+vector. Sources: [signature validation](https://docs.github.com/en/webhooks/using-webhooks/validating-webhook-deliveries),
+[push payload](https://docs.github.com/en/webhooks/webhook-events-and-payloads#push).
+
+### Jamie's GitHub activation steps
+
+1. In the AWS console for account 999153317627, us-east-1, open Secrets
+   Manager, `sync-runtime`, **Retrieve secret value**, **Edit**. Add
+   `github_webhook_signing_key` with a new long random value and save.
+   Jamie handles values in the console; a session reads none.
+2. For the site and desired repositories in `data/github-repositories.json`,
+   open GitHub **Settings → Webhooks → Add webhook**. Choose payload URL
+   `https://aefqhjbboku2ywdd2vya2r3wwu0oabbp.lambda-url.us-east-1.on.aws/github`,
+   content type `application/json`, **Secret** equal to that signing value,
+   **Just the push event**, and keep the webhook inactive until deployment.
+   Repository access and these provider changes are Jamie's work.
+3. Run tests, then `SYNC_ENABLE_GITHUB=true npm run plan`, read the change
+   set, and `SYNC_ENABLE_GITHUB=true npm run deploy` as cloud-engineer.
+   CloudFormation resolves the key into `GITHUB_WEBHOOK_SIGNING_KEY` only
+   when the flag is true. Routine deploys preserve both senders' flags.
+4. After healthy deployment, activate the desired GitHub webhooks. Its
+   setup ping is dropped; a natural push supplies the first receipt. No
+   synthetic push or provider write is needed for this PR.
+
+To disable, plan/deploy with `SYNC_ENABLE_GITHUB=false`. Strava is still
+unbuilt and has no bus grant; its native delivery authentication contract
+must be established in its own PR before it can be enabled.
