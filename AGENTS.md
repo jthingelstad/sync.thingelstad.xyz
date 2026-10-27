@@ -162,14 +162,18 @@ This exception does not authorize repairs on any other hop, including WT354.
   byte for byte; `style:check` catches drift. The fonts and CSS are inlined
   so opening the page makes no font-service or asset request. Inter is 19px,
   Inter Tight heads use the house scale, and no sans text is italic.
-- `src/map.mjs` — the map, drawn on every run with Pele (the renderer Things
-  I've built draws its connection diagrams with) from the vendored
+- `src/map.mjs`, `src/atlas.mjs`, `data/atlas/` — the storybook atlas,
+  drawn on every run as SVG over two inline illustration assets from the vendored
   `data/flows.json` and this run's status: one node per system saying what
   it holds ("WT354 · post Oct 25"), one edge per hop saying what is on it and
   how it is doing ("7 · WT354 · in 2 min" from an observed arrival, "10 ·
   WT355 · moving 12 min", "6 · WT354 · 2 d 4 h late", "8 · issue · no
-  fact"), left to right, tagged `data-system` and `data-hop`, coloured by
+  fact"), in fixed schematic geography, tagged `data-system` and `data-hop`, coloured by
   the worst status of the hop's kinds, each label linking to the hop's rows.
+  The full pipe diagram remains a Pele fallback if the contract adds a place
+  or adds or redirects a road the atlas has not drawn yet. `docs/ATLAS.md`
+  records the approved direction and preview commands. Art has no labels or
+  status; only the generated SVG carries evidence. No browser script.
   Jamie, 2026-10-26: a map drawn at build time "is rather useless… Ideally
   this would show the 'flows' as they actually are, not just a diagram."
 - `src/handler.mjs` — the Lambda: fold a published event into the fact,

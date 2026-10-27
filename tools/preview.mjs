@@ -7,6 +7,11 @@ import { loadScenario, renderScenario, scenarioNames } from './scenarios.mjs';
 const root = fileURLToPath(new URL('../.build/site/', import.meta.url));
 for (const name of await scenarioNames()) {
   const out = path.join(root, name);
-  await writeSite(out, renderScenario(await loadScenario(name)));
+  const result = renderScenario(await loadScenario(name));
+  result.page = result.page
+    .replace('<body>', `<body><aside class="preview-note">Scenario preview · ${name.replaceAll('-', ' ')} · fixed test data. <a href="/#map">Published snapshot</a></aside>`)
+    .replace(/href="\/(?!\/)/g, `href="/${name}/`)
+    .replace(`href="/${name}/#map"`, 'href="/#map"');
+  await writeSite(out, result);
   console.log(path.join(out, 'index.html'));
 }

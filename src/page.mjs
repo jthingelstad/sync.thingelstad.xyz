@@ -5,7 +5,8 @@ import { historyLanes, journeyLanes } from './lanes.mjs';
 import { itemLabel, KIND_LABEL, movedThisWeek, storyFor } from './stories.mjs';
 import { pageStyles, sharedStyles } from './style.mjs';
 export { itemLabel } from './stories.mjs';
-import { mapSvg, shortItem } from './map.mjs';
+import { hopSummary, mapSvg, shortItem } from './map.mjs';
+import { atlasNavigation } from './atlas.mjs';
 import { age, central } from './time.mjs';
 
 const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -80,7 +81,10 @@ function hopsTable(hops) {
 }
 
 function factsList(facts) {
-  return Object.entries(facts)
+  const entries = [...Object.entries(facts), ...[...systemsById.keys()]
+    .filter((id) => !Object.hasOwn(facts, id))
+    .map((id) => [id, { none: 'No fact was available for this system in this snapshot.' }])];
+  return entries
     .map(([id, fact]) => {
       const sys = systemsById.get(id);
       const state = fact.error ? pill('unknown') : fact.none && !Object.keys(fact.newest ?? {}).length ? pill('no-fact') : pill('fresh');
@@ -88,7 +92,7 @@ function factsList(facts) {
         .map(([kind, item]) => `<li><code>${esc(kind)}</code> ${esc(itemLabel(kind, item))}${item.at ? ` <span class="muted">${esc(central(item.at))}</span>` : ''}${item.url ? ` <a class="muted" href="${esc(item.url)}">↗</a>` : ''}</li>`)
         .join('');
       const extra = Object.keys(fact.extra ?? {}).length ? `<pre>${esc(JSON.stringify(fact.extra, null, 1))}</pre>` : '';
-      return `<details class="fact"><summary>${state} <strong>${esc(sys?.name ?? id)}</strong>${fact.error ? ` <span class="muted">${esc(fact.error)}</span>` : fact.none ? ` <span class="muted">${esc(fact.none)}</span>` : ''}</summary>
+      return `<details class="fact" id="fact-${esc(id)}"><summary>${state} <strong>${esc(sys?.name ?? id)}</strong>${fact.error ? ` <span class="muted">${esc(fact.error)}</span>` : fact.none ? ` <span class="muted">${esc(fact.none)}</span>` : ''}</summary>
 ${sys?.fact ? `<p class="muted">${esc(sys.fact)}</p>` : ''}
 ${newest ? `<ul>${newest}</ul>` : ''}
 ${extra}
@@ -172,10 +176,14 @@ ${feedbinSection(status.facts.feedbin)}
 </ul>
 
 <h2 id="map">The map, as it is now</h2>
-<p class="section-note">Each station is a system and what it holds; each hop carries the item on it and how it is doing: <strong>in 2 min</strong> is a measured arrival, <strong>moving</strong> is on its way within the expected lag, <strong>late</strong> is past it. A hop is coloured by the worst of the kinds it moves; a dashed hop runs on a clock, a solid one live or on a nudge. A dashed box publishes no fact yet. The map scrolls sideways; a hop's label opens its rows below.</p>
-<div class="map" tabindex="0" role="region" aria-label="Publishing pipe map, scroll sideways to explore">
+<p class="section-note atlas-intro">Each place says what it holds. Each road is a real connection, with the item and its status on a signpost.</p>
+${status.open.length ? `<p class="atlas-attention"><span class="atlas-attention__label">Needs a look:</span><a href="#place-${esc(status.open[0].to)}">${esc(systemName(status.open[0].from))} → ${esc(systemName(status.open[0].to))}</a><span class="atlas-attention__state">${esc(status.open[0].kind)} ${pill(status.open[0].status)}</span></p>` : ''}
+${atlasNavigation(status, hopSummary)}
+<div class="map" tabindex="0" role="region" aria-label="Publishing atlas, scroll sideways to explore">
 ${mapSvg(status, journeys)}
 </div>
+<p class="atlas-caption">A snapshot, not continuous tracking. Geography and road length are illustrative; times come from receipts. A roof’s colour identifies its place. Choose a signpost for hop details, or a place for its facts.</p>
+<details class="atlas-key"><summary>Map key: status, timing and direction</summary><p>A signpost says <strong>in 2 min</strong> only for a measured arrival; <strong>moving</strong> is within the expected lag, <strong>late</strong> is past it. Roads are coloured by the worst of their kinds. Dashed roads run on a clock; solid roads run on an event or nudge. <strong>Held</strong> is waiting by rule, <strong>no fact yet</strong> means there is no readable fact, and <strong>unknown</strong> means the reader failed. Fine lines attach signposts to roads; arrows show direction. A signpost’s link opens all its kinds below.</p></details>
 
 <h2 id="journeys">Journeys</h2>
 <p class="section-note">Each lane is time since publication, with its scale above. A circle says <strong>seen</strong> in a poll; a square says <strong>reported</strong> by an event. A dashed marker is the median from finished, measured journeys. Polls give the check interval when known; reports have one-second resolution. First confirmations have no measured lag and no time mark.</p>
