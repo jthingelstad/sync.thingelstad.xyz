@@ -89,7 +89,14 @@ Builder's credentials proves the permission without matching the rule.
   measurement: the system lacked the item on one run and had it on the next;
   its resolution is the gap between runs) or not (the system already held it
   when the journey started, so no lag is quoted). Kept in `journeys.json`
-  and advanced on every run. Pure.
+  and advanced on every run. Superseded journeys stay at
+  `journeys/<kind>/<id>.json`; `journeys/index.json` keeps the last fifty per
+  kind, current one included. `retire` and `summarise` are pure;
+  `typicalLag` and `worstLag` use only finished journeys' observed arrivals,
+  so a send does not change its own comparison. Pure.
+  An id seen again after an origin's reader failed resumes its recorded
+  arrivals from the index, or its archive once outside the last fifty;
+  a fallback must not erase a measured lag.
 - `src/page.mjs` — the HTML. No script, `--jt-` colours, Central time. It
   opens with the map, then the journeys, then the receipts, matrix, hops and
   facts.
@@ -109,7 +116,7 @@ Builder's credentials proves the permission without matching the rule.
   clock run never write the journeys at once (the later one is retried).
 - `tools/probe.mjs` — run it here: live, or `--fixtures` with a fixed clock.
   Output in `.build/site/`. `--fixtures --scenario <name>` reads one of the
-  six `test/scenarios/` sets; `npm run preview` renders them all, offline,
+  `test/scenarios/` sets; `npm run preview` renders them all, offline,
   with readable `page.txt` beside each page. The map and journey snapshots
   make a wording change a visible diff before a send.
 - `tools/package.mjs`, `tools/deploy.mjs`, `infra/sync.json`,
@@ -165,6 +172,10 @@ empty name turns every secret-backed fact off. Secret safety rules are in
 - A lag on the map or in a journey is quoted only from an observed arrival;
   a system that already held the item when watching started shows the time
   watching started and no lag.
+- Each journey keeps its last holder states and last observed absence. A
+  failed reader or a missing fact is not evidence that an item was absent.
+  A rehearsal returns before collecting or writing, so it cannot advance
+  a journey. History is saved before current state; health is written last.
 - A fact that states only a day (the podcast corpus) is compared by day in
   `holds`, so a date is never read as midnight and found behind that
   afternoon's feed entry.

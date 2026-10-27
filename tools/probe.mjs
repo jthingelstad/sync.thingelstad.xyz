@@ -10,7 +10,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { collect, LIBRARIAN_ARTIFACTS, LIBRARIAN_HEALTH, PUBLISHER_FACT_KEY, URLS } from '../src/facts.mjs';
 import { flows } from '../src/flows.mjs';
-import { advanceAll } from '../src/journey.mjs';
+import { advanceAll, historyFor } from '../src/journey.mjs';
 import { renderPage } from '../src/page.mjs';
 import { probe } from '../src/probe.mjs';
 import { loadScenario, pageText, renderScenario } from './scenarios.mjs';
@@ -94,12 +94,19 @@ async function liveContext() {
   };
 }
 
-export async function writeSite(out, { status, journeys, page }) {
+export async function writeSite(out, { status, journeys, history = null, retired = [], page }) {
   await fs.mkdir(path.join(out, 'receipts'), { recursive: true });
   await fs.writeFile(path.join(out, 'index.html'), page);
   await fs.writeFile(path.join(out, 'page.txt'), pageText(page));
   await fs.writeFile(path.join(out, 'status.json'), `${JSON.stringify(status, null, 1)}\n`);
   await fs.writeFile(path.join(out, 'journeys.json'), `${JSON.stringify(journeys, null, 1)}\n`);
+  await fs.mkdir(path.join(out, 'journeys'), { recursive: true });
+  await fs.writeFile(path.join(out, 'journeys/index.json'), `${JSON.stringify(history, null, 1)}\n`);
+  for (const r of retired) {
+    const file = path.join(out, r.key);
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(file, `${JSON.stringify(r.journey, null, 1)}\n`);
+  }
   for (const r of status.receipts) await fs.writeFile(path.join(out, 'receipts', `${r.kind}.json`), `${JSON.stringify(r, null, 1)}\n`);
   await fs.mkdir(path.join(out, 'flows'), { recursive: true });
   await fs.copyFile(path.join(ROOT, 'data/flows.html'), path.join(out, 'flows/index.html'));
@@ -116,7 +123,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const facts = await collect(ctx, flows.systems.map((s) => s.id));
     const status = probe({ flows, facts, now: ctx.now, code: fixtures ? 'fixtures' : 'local', trigger: { type: 'manual' } });
     const journeys = advanceAll(fixtures ? JSON.parse(await fs.readFile(path.join(ROOT, 'test/fixtures/journeys.json'), 'utf8')) : null, status);
-    result = { status, journeys, page: renderPage(status, journeys) };
+    const kept = historyFor(null, null, journeys, ctx.now);
+    result = { status, journeys, history: kept.index, retired: kept.retired, page: renderPage(status, journeys, kept.index) };
   }
   const out = name ? path.join(OUT, name) : OUT;
   await writeSite(out, result);

@@ -10,7 +10,7 @@ import { GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from 
 import { followUps, mergePublished, publishedEvent } from './events.mjs';
 import { collect, PUBLISHER_FACT_KEY } from './facts.mjs';
 import { flows } from './flows.mjs';
-import { advanceAll } from './journey.mjs';
+import { advanceAll, archiveKey, copyHistory, historyFor, summarise } from './journey.mjs';
 import { renderPage } from './page.mjs';
 import { probe } from './probe.mjs';
 
@@ -24,6 +24,7 @@ const schedulerClient = async () => {
 };
 const CACHE = 'public, max-age=60';
 export const JOURNEYS_KEY = 'journeys.json';
+export const HISTORY_KEY = 'journeys/index.json';
 
 const stamp = (d = new Date()) => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
@@ -53,8 +54,8 @@ export function triggerOf(event, published) {
   return { type: 'manual' };
 }
 
-export async function run({ now = stamp(), env = process.env, trigger = { type: 'clock' }, journeys = null } = {}) {
-  const ctx = {
+export async function run({ now = stamp(), env = process.env, trigger = { type: 'clock' }, journeys = null, history = null, context = null } = {}) {
+  const ctx = context ?? {
     now,
     env,
     fetch: (url, init) => fetch(url, { ...init, headers: { 'user-agent': 'sync.thingelstad.xyz probe', ...(init?.headers ?? {}) } }),
@@ -66,18 +67,34 @@ export async function run({ now = stamp(), env = process.env, trigger = { type: 
   };
   const facts = await collect(ctx, flows.systems.map((s) => s.id));
   const status = probe({ flows, facts, now, code: env.SYNC_CODE ?? null, trigger });
-  const next = advanceAll(journeys, status);
-  return { status, journeys: next, page: renderPage(status, next) };
+  const recorded = copyHistory(history);
+  const bucket = env.SITE_BUCKET ?? ctx.env?.SITE_BUCKET;
+  if (bucket && ctx.s3Get) {
+    for (const receipt of status.receipts) {
+      if (!receipt.item || String(journeys?.[receipt.kind]?.item?.id) === String(receipt.item.id)) continue;
+      if (recorded.kinds[receipt.kind]?.some((j) => String(j.item.id) === String(receipt.item.id))) continue;
+      const archived = await ctx.s3Get(bucket, archiveKey(receipt.kind, receipt.item.id));
+      if (!archived) continue;
+      if (archived.kind !== receipt.kind || String(archived.item?.id) !== String(receipt.item.id)) throw new Error('The archived journey does not match its key');
+      (recorded.kinds[receipt.kind] ??= []).push(summarise(archived));
+    }
+  }
+  const next = advanceAll(journeys, status, recorded);
+  const kept = historyFor(recorded, journeys, next, now);
+  return { status, journeys: kept.journeys, history: kept.index, retired: kept.retired, page: renderPage(status, kept.journeys, kept.index) };
 }
 
-export async function publish(bucket, { status, journeys, page }) {
+export async function publish(bucket, { status, journeys, history, retired = [], page }, write = put) {
+  // A failed archive cannot advance the index or discard the current journey.
+  for (const r of retired) await write(bucket, r.key, JSON.stringify(r.journey, null, 1));
+  await write(bucket, HISTORY_KEY, JSON.stringify(history, null, 1));
   await Promise.all([
-    put(bucket, 'index.html', page, 'text/html; charset=utf-8'),
-    put(bucket, 'status.json', JSON.stringify(status, null, 1)),
-    put(bucket, 'health.json', JSON.stringify({ ok: true, code: status.code, checked_at: status.checked_at, trigger: status.trigger, summary: status.summary })),
-    put(bucket, JOURNEYS_KEY, JSON.stringify(journeys, null, 1)),
-    ...status.receipts.map((r) => put(bucket, `receipts/${r.kind}.json`, JSON.stringify(r, null, 1))),
+    write(bucket, 'index.html', page, 'text/html; charset=utf-8'),
+    write(bucket, 'status.json', JSON.stringify(status, null, 1)),
+    write(bucket, JOURNEYS_KEY, JSON.stringify(journeys, null, 1)),
+    ...status.receipts.map((r) => write(bucket, `receipts/${r.kind}.json`, JSON.stringify(r, null, 1))),
   ]);
+  await write(bucket, 'health.json', JSON.stringify({ ok: true, code: status.code, checked_at: status.checked_at, trigger: status.trigger, summary: status.summary }));
 }
 
 /** One-off schedules that run the probe again as the item moves; a name already taken is a follow-up already made. */
@@ -119,7 +136,13 @@ export async function handler(event = {}, context = {}) {
   const published = publishedEvent(event);
   if (published?.error) console.error(JSON.stringify({ published_event: 'rejected', why: published.error, event }));
   const rehearsal = Boolean(event?.rehearsal);
-  if (published && !published.error && !rehearsal) {
+  if (rehearsal) {
+    const scheduler = await schedulerClient().then(() => 'ok', () => 'missing');
+    const report = { checked_at: now, trigger: triggerOf(event, published), rehearsal: { parsed: published, would_follow_up: published && !published.error ? followUps(published, now).map((f) => f.at) : [], scheduler, follow_up_env: Boolean(process.env.FOLLOW_UP_GROUP && process.env.SCHEDULER_ROLE_ARN && process.env.PROBE_FUNCTION_ARN) } };
+    console.log(JSON.stringify(report));
+    return report;
+  }
+  if (published && !published.error) {
     const stored = await s3Get(bucket, PUBLISHER_FACT_KEY);
     const fact = mergePublished(stored, published, now);
     await put(bucket, PUBLISHER_FACT_KEY, JSON.stringify(fact, null, 1));
@@ -127,16 +150,13 @@ export async function handler(event = {}, context = {}) {
   }
   const trigger = triggerOf(event, published);
   const journeys = await s3Get(bucket, JOURNEYS_KEY);
-  const result = await run({ now, trigger, journeys });
+  const history = await s3Get(bucket, HISTORY_KEY);
+  const result = await run({ now, trigger, journeys, history });
   await publish(bucket, result);
   let follow_ups = [];
-  if (published && !published.error && !rehearsal) follow_ups = await scheduleFollowUps(published, now);
+  if (published && !published.error) follow_ups = await scheduleFollowUps(published, now);
   const s = result.status.summary;
   const report = { checked_at: result.status.checked_at, trigger, ...s, follow_ups };
-  if (rehearsal) {
-    const scheduler = await schedulerClient().then(() => 'ok', (error) => `missing: ${error.message}`);
-    report.rehearsal = { parsed: published, would_follow_up: published?.error ? [] : followUps(published, now).map((f) => f.at), scheduler, follow_up_env: Boolean(process.env.FOLLOW_UP_GROUP && process.env.SCHEDULER_ROLE_ARN && process.env.PROBE_FUNCTION_ARN) };
-  }
   console.log(JSON.stringify(report));
   return report;
 }
