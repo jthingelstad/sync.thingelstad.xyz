@@ -65,14 +65,6 @@
       "notes": "Codex automation, daily 05:00. Runs the library round on the Mac (the one runner with the Tinylytics key), then files categories, fills alt and proposes Featured."
     },
     {
-      "id": "otto",
-      "name": "Otto (OpenClaw)",
-      "role": "agent",
-      "runs_on": "mac",
-      "fact": "openclaw cron list; state files under ~/.openclaw/workspace/memory/.",
-      "notes": "Scheduled monitors that post to Discord, and the pinboard-enrichment skill that writes agent notes to Pinboard."
-    },
-    {
       "id": "weekly",
       "name": "Weekly Thing (web)",
       "role": "site",
@@ -417,26 +409,13 @@
       "from": "wt-builder",
       "to": "another",
       "kinds": ["episode", "audio"],
-      "moves": "An episode: outline, mastered audio, transcript, one commit.",
-      "mechanism": "The Another Thing send (/another), built 2026-10-11. It commits the episode, its transcript and the MP3 to git; since 2026-10-26 the MP3's home is the another-site audio bucket, served by CloudFront at the same /uploads/ URL.",
+      "moves": "An episode: the mastered MP3 into the audio bucket, then its page and transcript in one commit.",
+      "mechanism": "The Another Thing send (/another), built 2026-10-11. Since 2026-10-26 (wt-builder PR #8) it puts the tagged MP3 in the another-site audio bucket at uploads/YYYY/another-thing-N.mp3 with the AWS key in WT Builder's .env, reads it back, then commits the episode page (with audioBytes and audioSeconds) and its transcript to git. No MP3 goes to git; CloudFront serves the bucket at the same /uploads/ URL.",
       "trigger": { "type": "nudge", "event": "send", "runs_on": "mac" },
       "expected_lag_hours": 0.25,
       "verify": "podcast.xml carries the episode.",
       "status": "unverified",
-      "notes": "Never run. Episodes so far were committed by hand. Needs ANOTHER_GITHUB_PAT_TOKEN. Before the DNS cutover retires Pages, the send must put the MP3 in the audio bucket and write audioBytes and audioSeconds instead of committing it; until then the deploy-aws job refuses a feed whose MP3 is not in the bucket (npm run audio:put fixes it)."
-    },
-    {
-      "id": 22,
-      "from": "otto",
-      "to": "pinboard",
-      "kinds": ["note"],
-      "moves": "An agent-written summary on a link in the reading queue, tagged _agent.",
-      "mechanism": "The OpenClaw pinboard-enrichment skill, writing through the Pinboard API.",
-      "trigger": { "type": "clock", "schedule": "unknown (no cron job carries the name today)", "runs_on": "mac" },
-      "expected_lag_hours": 24,
-      "verify": "The note carries the _agent tag; Linking Things shows the voice as agent.",
-      "status": "unverified",
-      "notes": "68 agent-voice notes exist on Linking Things. No OpenClaw cron job carries this name on 2026-10-26; whether it still runs is unconfirmed."
+      "notes": "Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length."
     }
   ],
   "fields": [
@@ -473,7 +452,7 @@
     {
       "field": "Saved link and its note",
       "owner": "jamie",
-      "others_may": "WT Builder mirrors Jamie's commentary back (hop 2); Otto adds agent-voice summaries tagged _agent (hop 22); Linking Things and the Librarian read.",
+      "others_may": "WT Builder mirrors Jamie's commentary back (hop 2); Linking Things and the Librarian read.",
       "never": "A note rewritten by a system without the _agent tag."
     },
     {

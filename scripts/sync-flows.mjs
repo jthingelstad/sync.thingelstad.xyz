@@ -2,10 +2,13 @@
 // vendor sites.json: `npm run flows:sync` copies shared/flows.json and the
 // rendered shared/flows.html into data/; `npm run flows:check` fails when the
 // copies have drifted from the shared files, so a hop changed in the contract
-// reaches the probe (and the published /flows/ page) on the next deploy.
+// reaches the probe (and the published /flows/ page) on the next deploy. The
+// same run draws data/map.svg from the vendored flows.json (tools/map.mjs),
+// and --check fails when that drawing is stale too.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { renderMap } from '../tools/map.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SHARED = path.resolve(ROOT, '../shared');
@@ -34,5 +37,19 @@ for (const file of FILES) {
     await fs.writeFile(target, wanted);
     console.log(`${file}: copied`);
   }
+}
+
+// The map, from the vendored copy, so CI checks it too.
+const flows = JSON.parse(await fs.readFile(path.join(ROOT, 'data/flows.json'), 'utf8'));
+const wantedMap = renderMap(flows);
+const currentMap = await fs.readFile(path.join(ROOT, 'data/map.svg'), 'utf8').catch(() => null);
+if (currentMap === wantedMap) {
+  console.log('map.svg: current');
+} else if (check) {
+  console.error('map.svg: data/map.svg is not the drawing of data/flows.json; run npm run flows:sync');
+  drift++;
+} else {
+  await fs.writeFile(path.join(ROOT, 'data/map.svg'), wantedMap);
+  console.log('map.svg: drawn');
 }
 if (drift) process.exit(1);

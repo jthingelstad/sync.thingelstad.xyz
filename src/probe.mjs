@@ -33,7 +33,7 @@ const RELATED = {
   issue: [{ system: 'cdn', kind: 'audio', label: 'audio edition' }],
 };
 
-const SEVERITY = { late: 5, held: 4, moving: 3, unknown: 2, 'no-fact': 1, fresh: 0 };
+export const SEVERITY = { late: 5, held: 4, moving: 3, unknown: 2, 'no-fact': 1, fresh: 0 };
 
 const HOLD_DAYS = new Set(['Fri', 'Sat']);
 const onHold = (hop, now) => Boolean(hop.hold) && HOLD_DAYS.has(centralWeekday(now));
@@ -49,12 +49,19 @@ export function origin(facts, kind) {
   return null;
 }
 
-/** Does `have` hold `want`? Same id, or published at or after it. */
+/**
+ * Does `have` hold `want`? Same id, or published at or after it. A fact that
+ * states only a day (the podcast corpus dates its episodes) is compared by
+ * day, so a date is never read as midnight and found behind the same day's
+ * afternoon.
+ */
 export function holds(have, want) {
   if (!have || !want) return false;
   if (String(have.id) === String(want.id)) return true;
-  if (have.at && want.at) return Date.parse(have.at) >= Date.parse(want.at);
-  return false;
+  if (!have.at || !want.at) return false;
+  const dayOnly = (at) => /^\d{4}-\d{2}-\d{2}$/.test(at);
+  if (dayOnly(have.at) || dayOnly(want.at)) return have.at.slice(0, 10) >= want.at.slice(0, 10);
+  return Date.parse(have.at) >= Date.parse(want.at);
 }
 
 function hopStatus(hop, kind, facts, now) {

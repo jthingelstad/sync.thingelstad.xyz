@@ -40,7 +40,17 @@ public"): it holds ids and times, never a secret and never a visitor.
   until the redeploy after the upload lands.
 - `src/probe.mjs` — facts in, status out: fresh / moving / late / held /
   no-fact / unknown per hop and kind; the matrix; the receipts. Pure.
-- `src/page.mjs` — the HTML. No script, `--jt-` colours, Central time.
+- `src/page.mjs` — the HTML. No script, `--jt-` colours, Central time. It
+  opens with the map: `data/map.svg`, drawn at build time by `tools/map.mjs`
+  with Pele (the renderer Things I've built draws its connection diagrams
+  with; a devDependency, never shipped to Lambda) from the vendored
+  `data/flows.json`, one node per system and one edge per hop, left to right,
+  tagged `data-system` and `data-hop`. `npm run flows:sync` draws it and
+  `flows:check` fails when it is stale. On each run `src/map.mjs` only adds
+  classes: an edge takes the worst status of the hop's kinds, its label links
+  to the hop's rows, and a system with no fact gets a dashed box. Jamie,
+  2026-10-26: the hand-laid map on `/flows/` was not on the page and was
+  harder to follow than the Things I've built diagrams.
 - `src/handler.mjs` — the Lambda: collect, probe, render, put to S3.
 - `tools/probe.mjs` — run it here: live, or `--fixtures` with a fixed clock.
   Output in `.build/site/`.
@@ -80,4 +90,8 @@ creates the secret in the console (secret safety rules in
 - Hold: the Librarian → Thingy hop is held Friday and Saturday (US Central)
   by the flows file's `hold` text; the probe treats any `hold` as those days.
 - Node 24 is the house runtime; no packages at runtime beyond the AWS SDK the
-  Lambda runtime provides.
+  Lambda runtime provides. Pele runs only on the Mac, in `flows:sync`; the
+  Lambda ships the drawing it made.
+- A fact that states only a day (the podcast corpus) is compared by day in
+  `holds`, so a date is never read as midnight and found behind that
+  afternoon's feed entry.

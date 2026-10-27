@@ -1,6 +1,7 @@
 // The sync page: one scriptless HTML page from a status. Facts only, so it
 // is fine to publish: newest ids and ages, never a secret, never a visitor.
 import { systemName, systemsById } from './flows.mjs';
+import { mapSvg } from './map.mjs';
 import { age, central } from './time.mjs';
 
 const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -67,9 +68,10 @@ function matrixTable(matrix) {
 }
 
 function hopsTable(hops) {
+  const seen = new Set();
   const rows = hops
     .map(
-      (h) => `<tr class="status--${esc(h.status)}">
+      (h) => `<tr class="status--${esc(h.status)}"${seen.has(h.id) ? '' : (seen.add(h.id), ` id="hop-${h.id}"`)}>
 <td class="num"><a href="/flows/#hop-${h.id}">${h.id}</a></td>
 <td><strong>${esc(systemName(h.from))}</strong> → <strong>${esc(systemName(h.to))}</strong><br><span class="muted">${esc(h.kind)}</span></td>
 <td>${h.source ? `${esc(itemLabel(h.kind, h.source))}${h.measured_from && h.measured_from !== h.from ? ` <span class="muted">(as ${esc(systemName(h.measured_from))} has it)</span>` : ''}<br>${when(h.source)}` : '<span class="muted">—</span>'}</td>
@@ -169,16 +171,42 @@ td.num { white-space: nowrap; font-variant-numeric: tabular-nums; }
 pre { font-size: 12.5px; background: var(--soft); padding: 8px 10px; border-radius: 6px; overflow-x: auto; }
 code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radius: 4px; }
 footer { margin-top: 48px; font-size: 14px; color: var(--muted); }
+.map { margin: 12px calc(50% - 50vw) 0; padding: 0 16px; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.map svg { display: block; margin: 0 auto; --pele-bg: var(--bg); --pele-fg: var(--ink); --pele-muted: var(--muted); --pele-line: var(--nofact); --pele-surface: var(--soft); --pele-surface-alt: var(--soft); --pele-border: var(--muted); --pele-radius: 6px; --pele-font: Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+.map .pele-edge path { stroke-width: 1.75; }
+.map .pele-edge.hop--fresh path { stroke: var(--fresh); } .map .pele-edge.hop--fresh .pele-marker { fill: var(--fresh); }
+.map .pele-edge.hop--moving path { stroke: var(--moving); } .map .pele-edge.hop--moving .pele-marker { fill: var(--moving); }
+.map .pele-edge.hop--late path { stroke: var(--late); stroke-width: 2.5; } .map .pele-edge.hop--late .pele-marker { fill: var(--late); }
+.map .pele-edge.hop--held path { stroke: var(--held); } .map .pele-edge.hop--held .pele-marker { fill: var(--held); }
+.map .pele-edge.hop--unknown path { stroke: var(--unknown); } .map .pele-edge.hop--unknown .pele-marker { fill: var(--unknown); }
+.map .pele-edge-label rect { fill: var(--nofact-soft); stroke: var(--line); }
+.map .pele-edge-label text { font-weight: 600; fill: var(--ink); }
+.map .pele-edge-label.hop--fresh rect { fill: var(--fresh-soft); stroke: var(--fresh); }
+.map .pele-edge-label.hop--moving rect { fill: var(--moving-soft); stroke: var(--moving); }
+.map .pele-edge-label.hop--late rect { fill: var(--late-soft); stroke: var(--late); }
+.map .pele-edge-label.hop--held rect { fill: var(--held-soft); stroke: var(--held); }
+.map .pele-edge-label.hop--unknown rect { fill: var(--held-soft); stroke: var(--unknown); }
+.map .pele-edge-label a:hover text, .map .pele-edge-label a:focus-visible text { text-decoration: underline; }
+.map .pele-node rect { fill: var(--soft); stroke: var(--ink); stroke-width: 1.25; }
+.map .pele-node.node--no-fact rect { stroke: var(--nofact); stroke-dasharray: 4 3; }
+.map .pele-node.node--no-fact .pele-label { fill: var(--muted); }
+.map .pele-node.node--unknown rect { stroke: var(--unknown); stroke-dasharray: 4 3; }
 @media (max-width: 40rem) { body { font-size: 15px; } table { font-size: 13.5px; } th, td { padding: 8px 6px; } }
 </style>
 </head>
 <body>
 <main>
 <h1>Sync state</h1>
-<p class="lede">What each of Jamie's systems holds right now, how far behind each hop runs, and a receipt for the newest item of each kind. Checked ${esc(central(status.checked_at))}; the probe runs every half hour. The map of the hops is at <a href="/flows/">/flows/</a>.</p>
+<p class="lede">What each of Jamie's systems holds right now, how far behind each hop runs, and a receipt for the newest item of each kind. Checked ${esc(central(status.checked_at))}; the probe runs every half hour. What each hop moves, and how, is at <a href="/flows/">/flows/</a>.</p>
 <ul class="counts">
 <li>${pill('fresh')} ${s.fresh}</li><li>${pill('moving')} ${s.moving}</li><li>${pill('late')} ${s.late}</li><li>${pill('held')} ${s.held}</li><li>${pill('no-fact')} ${s.no_fact}</li><li>${pill('unknown')} ${s.unknown}</li>
 </ul>
+
+<h2>The map</h2>
+<p class="muted">Every hop, coloured by the worst of the kinds it moves; a dashed hop runs on a clock, a solid one live or on a nudge. A dashed box is a system that publishes no fact yet. The map scrolls sideways; a hop's label opens its rows below.</p>
+<div class="map">
+${mapSvg(status)}
+</div>
 
 <h2>Needs a look</h2>
 ${open}

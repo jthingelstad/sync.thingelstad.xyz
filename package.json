@@ -25,6 +25,7 @@
     "@aws-sdk/client-cloudfront": "^3.1156.0",
     "@aws-sdk/client-lambda": "^3.1156.0",
     "@aws-sdk/client-s3": "^3.1156.0",
-    "@aws-sdk/client-sts": "^3.1156.0"
+    "@aws-sdk/client-sts": "^3.1156.0",
+    "pele": "^1.6.0"
   }
 }

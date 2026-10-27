@@ -1,4 +1,4 @@
-// Package the probe for Lambda: src/ and data/flows.json, zipped into
+// Package the probe for Lambda: src/, data/flows.json and data/map.svg, zipped into
 // .build/sync.zip. No bundler: the handler has no dependencies beyond the AWS
 // SDK the Node runtime provides. The zip's key, code/<sha256>.zip, hashes
 // the entries' names and contents rather than the zip's bytes, so the same
@@ -77,6 +77,7 @@ export async function packageProbe() {
   const entries = [
     ...(await Promise.all(sources.map(async (f) => ({ name: `src/${f}`, data: await fs.readFile(path.join(ROOT, 'src', f)) })))),
     { name: 'data/flows.json', data: await fs.readFile(path.join(ROOT, 'data/flows.json')) },
+    { name: 'data/map.svg', data: await fs.readFile(path.join(ROOT, 'data/map.svg')) },
     { name: 'package.json', data: Buffer.from('{"type":"module"}\n') },
   ];
   const archive = zip(entries);

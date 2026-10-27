@@ -15,6 +15,9 @@ test('holds: same id, or published at or after', () => {
   assert.ok(holds({ id: 'b', at: '2026-10-25T00:00:00Z' }, { id: 'a', at: '2026-10-24T12:00:00Z' }));
   assert.ok(!holds({ id: '353', at: '2026-10-17T12:00:00Z' }, { id: '354', at: '2026-10-24T12:00:00Z' }));
   assert.ok(!holds(null, { id: '354' }));
+  // A day-only fact (the podcast corpus) is compared by day, never as midnight.
+  assert.ok(holds({ id: '1', at: '2025-10-05' }, { id: 'https://another.thingelstad.com/2025/10/05/how.html', at: '2025-10-05T14:30:00Z' }));
+  assert.ok(!holds({ id: '1', at: '2025-10-04' }, { id: 'x', at: '2025-10-05T00:30:00Z' }));
 });
 
 test('the fixtures reproduce the WT354 gap: Weekly Thing to Linking Things is late', async () => {
