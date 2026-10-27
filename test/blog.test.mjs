@@ -95,6 +95,31 @@ test('the producer cursor advances only after an entry acknowledgement and retri
  assert.equal(failedWrites.at(-1).queued,null);
 });
 
+test('an outage preserves the selected equal-second post and a newer consumed event can still advance it',()=>{
+ const plan=blogPlan({state:baseline(),fact:fact([b,a,old]),now});
+ let publisher=null;
+ for(const raw of [...plan.events].reverse()) publisher=mergePublished(publisher,publishedEvent(raw),now);
+ const selected=blogPlan({state:plan.state,publisher,fact:fact([b,a,old]),now});
+ const first=observe({flows,facts:{microblog:selected.fact},now});
+ assert.equal(first.journeys.post.item.id,b.id);
+ const outage=blogPlan({state:selected.state,publisher,current:first.journeys.post.item,fact:{error:'Reader failed'},now});
+ assert.equal(outage.fact.publication.item.id,b.id);
+ assert.equal(outage.fact.publication.via,'bus');
+ const failed=observe({flows,facts:{microblog:outage.fact},journeys:first.journeys,history:first.history,now});
+ assert.equal(failed.journeys.post.item.id,b.id);
+ assert.deepEqual(failed.retired,[]);
+ const recovered=blogPlan({state:outage.state,publisher,current:failed.journeys.post.item,fact:fact([b,a,old]),now});
+ const healthy=observe({flows,facts:{microblog:recovered.fact},journeys:failed.journeys,history:failed.history,now});
+ assert.equal(healthy.journeys.post.item.id,b.id);
+ assert.deepEqual(healthy.retired,[]);
+ const newer=post('c','2026-10-28T12:01:00Z');
+ const next=blogPlan({state:baseline(),fact:fact([newer,old]),now}).events[0];
+ publisher=mergePublished(publisher,publishedEvent(next),now);
+ const advanced=blogPlan({state:recovered.state,publisher,current:healthy.journeys.post.item,fact:{error:'Reader failed'},now});
+ assert.equal(advanced.fact.publication.item.id,newer.id);
+ assert.equal(advanced.fact.publication.via,'bus');
+});
+
 test('URL ids get seven distinct follow-ups with a bounded stable name and malformed post events are refused',()=>{
  const raw=blogPlan({state:baseline(),fact:fact([a,old]),now}).events[0];
  const parsed=publishedEvent(raw);

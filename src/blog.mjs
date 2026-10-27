@@ -36,9 +36,12 @@ export function blogPlan({ state = null, publisher = null, fact = {}, current = 
   next.updated_at = now;
   // Equal-second posts may be delivered out of order. The feed chooses the
   // newest identity, but only a matching consumed event can start its journey.
-  const proof = post && ((publisher?.events ?? []).find((e)=>e.kind==='post' && e.id===post.id) ?? (announced?.id===post.id ? announced : null));
-  const publication = proof ? { ...pick(post), at: proof.at } : latest([announced,next.baseline]);
-  const via = proof || (publication && publication.id===announced?.id) ? 'bus' : 'baseline';
+  const consumed = (item) => item && ((publisher?.events ?? []).find((e)=>e.kind==='post' && e.id===item.id) ?? (announced?.id===item.id ? announced : null));
+  const proof = consumed(post);
+  // Keep the selected identity across failed or stale feed reads. A newer
+  // consumed event can advance it; an equal-second delivery cannot undo it.
+  const publication = latest([proof ? { ...pick(post), at: proof.at } : null,current,announced,next.baseline]);
+  const via = consumed(publication) ? 'bus' : 'baseline';
   const visible = { ...fact, publication: { item: pick(publication), via }, source_receipt: sourceReceiptTodo(), extra: { ...fact.extra, publication_state: post && post.id!==publication?.id ? 'feed and consumed publishing receipt name different posts; the journey waits for the bus' : via==='bus' ? 'publication witnessed on the bus' : 'initial observation; no historical send announced' } };
   delete visible.observed_posts;
   return { state: next, events, fact: visible };
