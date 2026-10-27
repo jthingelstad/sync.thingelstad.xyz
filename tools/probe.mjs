@@ -13,6 +13,7 @@ import { flows } from '../src/flows.mjs';
 import { advanceAll } from '../src/journey.mjs';
 import { renderPage } from '../src/page.mjs';
 import { probe } from '../src/probe.mjs';
+import { loadScenario, pageText, renderScenario } from './scenarios.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, '.build/site');
@@ -93,20 +94,33 @@ async function liveContext() {
   };
 }
 
+export async function writeSite(out, { status, journeys, page }) {
+  await fs.mkdir(path.join(out, 'receipts'), { recursive: true });
+  await fs.writeFile(path.join(out, 'index.html'), page);
+  await fs.writeFile(path.join(out, 'page.txt'), pageText(page));
+  await fs.writeFile(path.join(out, 'status.json'), `${JSON.stringify(status, null, 1)}\n`);
+  await fs.writeFile(path.join(out, 'journeys.json'), `${JSON.stringify(journeys, null, 1)}\n`);
+  for (const r of status.receipts) await fs.writeFile(path.join(out, 'receipts', `${r.kind}.json`), `${JSON.stringify(r, null, 1)}\n`);
+  await fs.mkdir(path.join(out, 'flows'), { recursive: true });
+  await fs.copyFile(path.join(ROOT, 'data/flows.html'), path.join(out, 'flows/index.html'));
+}
+
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
-  const ctx = fixtures ? await fixtureContext() : await liveContext();
-  const facts = await collect(ctx, flows.systems.map((s) => s.id));
-  const status = probe({ flows, facts, now: ctx.now, code: fixtures ? 'fixtures' : 'local', trigger: { type: 'manual' } });
-  // Journeys as the page would have them after watching WT354 arrive at the
-  // site two minutes after its website leg (fixtures only).
-  const journeys = fixtures ? advanceAll(JSON.parse(await fs.readFile(path.join(ROOT, 'test/fixtures/journeys.json'), 'utf8')), status) : advanceAll(null, status);
-  await fs.mkdir(path.join(OUT, 'receipts'), { recursive: true });
-  await fs.writeFile(path.join(OUT, 'index.html'), renderPage(status, journeys));
-  await fs.writeFile(path.join(OUT, 'status.json'), `${JSON.stringify(status, null, 1)}\n`);
-  await fs.writeFile(path.join(OUT, 'journeys.json'), `${JSON.stringify(journeys, null, 1)}\n`);
-  for (const r of status.receipts) await fs.writeFile(path.join(OUT, 'receipts', `${r.kind}.json`), `${JSON.stringify(r, null, 1)}\n`);
-  await fs.mkdir(path.join(OUT, 'flows'), { recursive: true });
-  await fs.copyFile(path.join(ROOT, 'data/flows.html'), path.join(OUT, 'flows/index.html'));
-  console.log(JSON.stringify({ out: OUT, ...status.summary }));
+  const at = process.argv.indexOf('--scenario');
+  if (at !== -1 && (!fixtures || !process.argv[at + 1])) throw new Error('--scenario needs --fixtures and a scenario name');
+  const name = at === -1 ? null : process.argv[at + 1];
+  let result;
+  if (name) result = renderScenario(await loadScenario(name));
+  else {
+    const ctx = fixtures ? await fixtureContext() : await liveContext();
+    const facts = await collect(ctx, flows.systems.map((s) => s.id));
+    const status = probe({ flows, facts, now: ctx.now, code: fixtures ? 'fixtures' : 'local', trigger: { type: 'manual' } });
+    const journeys = advanceAll(fixtures ? JSON.parse(await fs.readFile(path.join(ROOT, 'test/fixtures/journeys.json'), 'utf8')) : null, status);
+    result = { status, journeys, page: renderPage(status, journeys) };
+  }
+  const out = name ? path.join(OUT, name) : OUT;
+  await writeSite(out, result);
+  const { status } = result;
+  console.log(JSON.stringify({ out, ...status.summary }));
   for (const h of status.open) console.log(`  ${h.status.padEnd(7)} ${h.id}. ${h.from} -> ${h.to} (${h.kind})${h.why ? `: ${h.why}` : ''}`);
 }

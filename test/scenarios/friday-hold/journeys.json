@@ -1,0 +1,24 @@
+{
+  "issue": {
+    "kind": "issue",
+    "item": {
+      "id": "355",
+      "at": "2026-10-30T19:00:00Z",
+      "url": "https://weekly.thingelstad.com/archive/355/",
+      "title": "WT355"
+    },
+    "origin": "wt-builder",
+    "started_at": "2026-10-30T19:00:00Z",
+    "updated_at": "2026-10-30T19:01:00Z",
+    "arrivals": {
+      "weekly": {
+        "at": "2026-10-30T19:01:00Z",
+        "observed": true
+      },
+      "librarian": {
+        "at": "2026-10-30T19:14:00Z",
+        "observed": true
+      }
+    }
+  }
+}

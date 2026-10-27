@@ -108,7 +108,10 @@ Builder's credentials proves the permission without matching the rule.
   follow-ups. `ReservedConcurrentExecutions` is 1, so an event run and a
   clock run never write the journeys at once (the later one is retried).
 - `tools/probe.mjs` — run it here: live, or `--fixtures` with a fixed clock.
-  Output in `.build/site/`.
+  Output in `.build/site/`. `--fixtures --scenario <name>` reads one of the
+  six `test/scenarios/` sets; `npm run preview` renders them all, offline,
+  with readable `page.txt` beside each page. The map and journey snapshots
+  make a wording change a visible diff before a send.
 - `tools/package.mjs`, `tools/deploy.mjs`, `infra/sync.json`,
   `infra/certificate.json`, `infra/deployment.json` — the cards pattern:
   content-keyed zip, one stack, change set every time, two-step first apply,
@@ -148,6 +151,8 @@ empty name turns every secret-backed fact off. Secret safety rules are in
 
 - Facts only. The page says "no fact yet" rather than guessing, and a reader
   that fails makes its hops "unknown", never "late".
+- Reader errors publish only a status code or a generic failure, never the
+  request URL or response text: the Pinboard URL carries its credential.
 - A hop with no fact at its own source is measured from the next system down
   and says so ("as Weekly Thing has it"); a hop whose only witness is its own
   destination stays no-fact.
