@@ -81,7 +81,7 @@
       "url": "https://buttondown.com/",
       "runs_on": "buttondown.com",
       "fact": "The newest email in the account.",
-      "notes": "The email edition. WT Builder makes a draft; Jamie sends it."
+      "notes": "The email edition. WT Builder makes a draft; Jamie sends it. A signed subscriber-count webhook is prepared in sync-intake, disabled until its key and explicit enable flag are set; it never changes this email-edition fact."
     },
     {
       "id": "cdn",
@@ -303,7 +303,8 @@
       },
       "expected_lag_hours": 0.25,
       "verify": "The draft exists with the issue's subject; the email goes out when Jamie sends it. Its receipt is the published event for the buttondown leg on the bus; the sync page measures the hop from that event's time.",
-      "status": "ok"
+      "status": "ok",
+      "notes": "undefined Step 7 intake: Buttondown subscriber.created and subscriber.unsubscribed may announce source buttondown, detail-type subscriber, with event and intake time only; no address or subscriber id. This is a separate count signal, not an email-send receipt. The /buttondown sender stays off until Jamie adds buttondown_webhook_signing_key to sync-runtime and enables EnableButtondown after configuring the same signing key in Buttondown. HMAC-SHA256 covers the raw body."
     },
     {
       "id": 9,

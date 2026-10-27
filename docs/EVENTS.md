@@ -8,7 +8,8 @@ visitor, a subscriber address or a secret. A new producer or hop changes
 
 The existing `sync-published` rule runs the probe for `published` and
 `received` from the sources below. The ninety-day archive keeps both types.
-`ping` matches neither. The clock and published-event follow-ups still
+The archive also retains Buttondown's `subscriber` count signals; those do
+not match the probe rule. `ping` matches neither. The clock and published-event follow-ups still
 reconcile the public facts.
 
 ## Who may put what
@@ -18,6 +19,7 @@ reconcile the public facts.
 | `wt-builder` | `published` | WT Builder, after recording one send leg | Live |
 | `wt-builder` | `ping` | The same identity, for a permission rehearsal | No subscriber |
 | `microblog` | `published` | The sync probe, after finding a new public post | Public-feed producer; silent initial baseline |
+| `buttondown` | `subscriber` | Signed `/buttondown` webhook through `sync-intake` | Prepared, disabled; no probe subscriber |
 | `weekly` | `received` | Weekly Thing deploy, after the public build holds the item | Sender waits for step 5 |
 | `another` | `received` | Another Thing deploy, after the public build holds the item | Sender waits for step 5 |
 | `librarian` | `received` | Library round, after its pull advances a source | Sender waits for step 5 |

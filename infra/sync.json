@@ -1,6 +1,6 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
-  "Description": "sync.thingelstad.xyz: the publishing bus, the sync probe on a half-hour schedule and on every published event, and the page it publishes",
+  "Description": "sync.thingelstad.xyz: the publishing bus, the scheduled and event-driven sync page, and signed webhook intake",
   "Parameters": {
     "CodeKey": {
       "Type": "String",
@@ -25,7 +25,16 @@
     "RuntimeSecret": {
       "Type": "String",
       "Default": "",
-      "Description": "Name of the sync app's Secrets Manager secret (sync-runtime). Keys: pinboard_token (the Pinboard fact) and microblog_api_key (micro.blog's API, for the readers to come). Empty leaves every fact that needs a secret unread."
+      "Description": "Name of the sync app's Secrets Manager secret (sync-runtime). Keys: pinboard_token, microblog_api_key; optional buttondown_webhook_signing_key resolves only when EnableButtondown is true. Empty disables secret-backed readers and senders."
+    },
+    "EnableButtondown": {
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Description": "Enable the signed Buttondown subscriber webhook only after its sync-runtime signing key exists and the provider is configured."
     }
   },
   "Conditions": {
@@ -85,6 +94,21 @@
               "Ref": "RuntimeSecret"
             },
             ""
+          ]
+        }
+      ]
+    },
+    "HasButtondownKey": {
+      "Fn::And": [
+        {
+          "Condition": "HasRuntimeSecret"
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "EnableButtondown"
+            },
+            "true"
           ]
         }
       ]
@@ -280,7 +304,8 @@
         "EventPattern": {
           "detail-type": [
             "published",
-            "received"
+            "received",
+            "subscriber"
           ],
           "source": [
             "wt-builder",
@@ -289,7 +314,8 @@
             "links",
             "weekly",
             "another",
-            "microblog"
+            "microblog",
+            "buttondown"
           ]
         },
         "RetentionDays": 90
@@ -856,6 +882,181 @@
           ]
         }
       }
+    },
+    "IntakeLogs": {
+      "Type": "AWS::Logs::LogGroup",
+      "Condition": "HasCode",
+      "Properties": {
+        "LogGroupName": {
+          "Fn::Sub": "/aws/lambda/${AWS::StackName}-intake"
+        },
+        "RetentionInDays": 30
+      }
+    },
+    "IntakeRole": {
+      "Type": "AWS::IAM::Role",
+      "Condition": "HasCode",
+      "Properties": {
+        "Description": "Signed webhook intake: own logs and Buttondown count signals on the publishing bus only",
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "sync-intake",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Sid": "OwnLogs",
+                  "Effect": "Allow",
+                  "Action": [
+                    "logs:CreateLogStream",
+                    "logs:PutLogEvents"
+                  ],
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "IntakeLogs",
+                      "Arn"
+                    ]
+                  }
+                },
+                {
+                  "Sid": "ButtondownSubscriberSignals",
+                  "Effect": "Allow",
+                  "Action": "events:PutEvents",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "PublishingBus",
+                      "Arn"
+                    ]
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "events:source": "buttondown",
+                      "events:detail-type": "subscriber"
+                    }
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "IntakeFunction": {
+      "Type": "AWS::Lambda::Function",
+      "Condition": "HasCode",
+      "DependsOn": [
+        "IntakeLogs"
+      ],
+      "Properties": {
+        "FunctionName": {
+          "Fn::Sub": "${AWS::StackName}-intake"
+        },
+        "Description": "Verify webhook raw-body signatures and queue metadata-only events; senders are disabled until explicitly enabled",
+        "Runtime": "nodejs24.x",
+        "Handler": "src/intake-handler.handler",
+        "Architectures": [
+          "arm64"
+        ],
+        "MemorySize": 128,
+        "Timeout": 10,
+        "ReservedConcurrentExecutions": 2,
+        "Role": {
+          "Fn::GetAtt": [
+            "IntakeRole",
+            "Arn"
+          ]
+        },
+        "Code": {
+          "S3Bucket": {
+            "Ref": "CodeBucket"
+          },
+          "S3Key": {
+            "Ref": "CodeKey"
+          },
+          "S3ObjectVersion": {
+            "Fn::If": [
+              "HasCodeVersion",
+              {
+                "Ref": "CodeVersion"
+              },
+              {
+                "Ref": "AWS::NoValue"
+              }
+            ]
+          }
+        },
+        "Environment": {
+          "Variables": {
+            "PUBLISHING_BUS": {
+              "Ref": "PublishingBus"
+            },
+            "ENABLE_BUTTONDOWN": {
+              "Ref": "EnableButtondown"
+            },
+            "BUTTONDOWN_WEBHOOK_SIGNING_KEY": {
+              "Fn::If": [
+                "HasButtondownKey",
+                {
+                  "Fn::Sub": "{{resolve:secretsmanager:${RuntimeSecret}:SecretString:buttondown_webhook_signing_key}}"
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            }
+          }
+        }
+      }
+    },
+    "IntakeUrl": {
+      "Type": "AWS::Lambda::Url",
+      "Condition": "HasCode",
+      "Properties": {
+        "TargetFunctionArn": {
+          "Fn::GetAtt": [
+            "IntakeFunction",
+            "Arn"
+          ]
+        },
+        "AuthType": "NONE",
+        "InvokeMode": "BUFFERED"
+      }
+    },
+    "IntakeUrlInvoke": {
+      "Type": "AWS::Lambda::Permission",
+      "Condition": "HasCode",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "IntakeFunction"
+        },
+        "Action": "lambda:InvokeFunctionUrl",
+        "Principal": "*",
+        "FunctionUrlAuthType": "NONE"
+      }
+    },
+    "IntakeFunctionInvoke": {
+      "Type": "AWS::Lambda::Permission",
+      "Condition": "HasCode",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "IntakeFunction"
+        },
+        "Action": "lambda:InvokeFunction",
+        "Principal": "*",
+        "InvokedViaFunctionUrl": true
+      }
     }
   },
   "Outputs": {
@@ -910,6 +1111,21 @@
       "Value": {
         "Ref": "FollowUps"
       }
+    },
+    "IntakeUrl": {
+      "Value": {
+        "Fn::If": [
+          "HasCode",
+          {
+            "Fn::GetAtt": [
+              "IntakeUrl",
+              "FunctionUrl"
+            ]
+          },
+          ""
+        ]
+      },
+      "Description": "Append /buttondown; the sender is disabled until EnableButtondown is true and its signing key is present."
     }
   }
 }

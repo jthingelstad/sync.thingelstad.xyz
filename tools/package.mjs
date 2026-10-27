@@ -1,4 +1,4 @@
-// Package the probe for Lambda: src/, data/flows.json, shared type and Pele (the one
+// Package the probe and webhook intake: src/, data/flows.json, shared type and Pele (the one
 // package the probe needs beyond the AWS SDK the Node runtime provides: a
 // single self-contained file, copied from node_modules so the map is drawn
 // on every run), zipped into .build/sync.zip. No bundler. The zip's key,

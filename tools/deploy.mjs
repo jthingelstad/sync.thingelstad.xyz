@@ -237,6 +237,9 @@ async function apply(execute_) {
     // The stack remembers the app secret's name; SYNC_RUNTIME_SECRET sets or changes it.
     RuntimeSecret: process.env.SYNC_RUNTIME_SECRET ?? parameter(stack, 'RuntimeSecret'),
     PublisherUser: parameter(stack, 'PublisherUser') || 'wt-archive',
+    // A routine deploy preserves the explicit sender choice. New senders
+    // start off, so a missing key is never resolved during their first deploy.
+    EnableButtondown: process.env.SYNC_ENABLE_BUTTONDOWN ?? (parameter(stack, 'EnableButtondown') || 'false'),
   };
   log(`\nchange set for ${name}`);
   const set = await changeSet(name, template, parameters, true);
@@ -253,6 +256,7 @@ async function apply(execute_) {
   const distributionId = output(stack, 'DistributionId');
   const domain = output(stack, 'DistributionDomain');
   log(`publishing bus ${output(stack, 'PublishingBusArn')}`);
+  if (output(stack, 'IntakeUrl')) log(`webhook intake ${output(stack, 'IntakeUrl')} (Buttondown enabled: ${parameters.EnableButtondown})`);
   await uploadStatic(siteBucket);
   await invokeProbe(functionName);
   await cloudfront.send(

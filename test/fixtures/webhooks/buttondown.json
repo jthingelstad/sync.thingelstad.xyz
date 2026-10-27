@@ -1,0 +1,38 @@
+{
+  "provenance": {
+    "url": "https://docs.buttondown.com/api-webhooks-introduction",
+    "captured_at": "2026-10-27",
+    "note": "Recorded documented payload shape with synthetic private-field canaries and a public fixture signing key. No account webhook or secret was read."
+  },
+  "fixture_key": "public-fixture-key-not-a-credential",
+  "valid": {
+    "version": "2.0",
+    "rawPath": "/buttondown",
+    "requestContext": {
+      "http": {
+        "method": "POST"
+      }
+    },
+    "headers": {
+      "content-type": "application/json",
+      "x-buttondown-signature": "sha256=ef959094f1a770a10ff7243b787aa4694fd8e3b81902f17d4666397bf6793379"
+    },
+    "body": "{\"event_type\":\"subscriber.created\",\"data\":{\"newsletter\":\"13121cd6-0dfc-424c-bb12-988b0a32fcb3\",\"subscriber\":\"ac79483b-cd28-49c1-982e-8a88e846d7e7\",\"email\":\"fixture-reader@example.invalid\"},\"fixture_private\":\"body-canary\"}",
+    "isBase64Encoded": false
+  },
+  "invalid": {
+    "version": "2.0",
+    "rawPath": "/buttondown",
+    "requestContext": {
+      "http": {
+        "method": "POST"
+      }
+    },
+    "headers": {
+      "content-type": "application/json",
+      "x-buttondown-signature": "sha256=ef959094f1a770a10ff7243b787aa4694fd8e3b81902f17d4666397bf6793379"
+    },
+    "body": "{\"event_type\":\"subscriber.created\",\"data\":{\"newsletter\":\"13121cd6-0dfc-424c-bb12-988b0a32fcb3\",\"subscriber\":\"ac79483b-cd28-49c1-982e-8a88e846d7e7\",\"email\":\"fixture-reader@example.invalid\"},\"fixture_private\":\"body-canary\"} ",
+    "isBase64Encoded": false
+  }
+}
