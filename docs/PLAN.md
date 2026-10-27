@@ -39,10 +39,14 @@ Tick a step here in its own PR when it is live, with the date.
   an environment variable by `infra/sync.json`; a PR says which key it
   expects and Jamie adds the value in the console. A session never reads a
   value.
-- **Deploys** run from Jamie's Mac as the cloud-engineer identity
-  (`npm run plan`, `npm run deploy`). A PR built elsewhere stops at "tests
-  pass, change set described"; the deploy is a separate, human-started step.
-  Step 0 changes that if Jamie wants it to.
+- **Deploys** run on Jamie's Mac as the cloud-engineer identity
+  (`npm run plan`, then `npm run deploy`), by whichever agent is working the
+  step, Codex included (Jamie, 2026-10-26: "Codex can run the cloud engineer
+  too."). A deploy happens only after `npm test` passes and the change set
+  has been read; `npm run deploy` checks `health.json` afterwards, and a
+  rollback or a failed health check stops the step and is reported, never
+  retried blind. IAM changes ride inside the stack and are scoped to this
+  stack's own resources; an IAM change outside a deploy is Jamie's call.
 - **Reviews.** Every PR gets a Codex review (`@codex review`) and its findings
   are answered before merge. A finding that changes what readers see is
   Jamie's call, not a fix.
@@ -51,16 +55,13 @@ Tick a step here in its own PR when it is live, with the date.
 
 ## Steps
 
-### 0. Deploy from GitHub Actions (held: needs Jamie's go on an IAM role)
+### 0. Deploy from GitHub Actions (optional; not needed while agents deploy from the Mac)
 
-A `deploy.yml` workflow in this repo that runs `npm test`, `npm run plan` on
-a pull request and `npm run deploy` on a push to `main`, assuming an IAM role
-through GitHub's OIDC provider, scoped to this stack, its bucket, the
-function and the Scheduler group. Until this is live, steps built by Codex
-merge but ship when Claude or Jamie runs the deploy from the Mac.
-Acceptance: a docs-only push to `main` deploys nothing new and the
-workflow is green; a real change rewrites `infra/deployment.json` on the
-branch. Needs: `Approved: create the sync deploy role for GitHub Actions`.
+A `deploy.yml` workflow that runs `npm test` and `npm run plan` on a pull
+request and `npm run deploy` on a push to `main`, through a GitHub OIDC
+role scoped to this stack. Worth building only if Jamie wants merges to ship
+with no Mac involved. Needs: `Approved: create the sync deploy role for
+GitHub Actions`.
 
 ### 1. Scenario fixtures and a page preview
 
@@ -243,6 +244,7 @@ missing event.
 
 ## Log
 
-- 2026-10-26: plan written. Steps 1 to 4 and 6 need no AWS access to build
-  and are the overnight set; 5, 7, 8 need deploys and IAM inside them;
-  0 and 9 wait on Jamie.
+- 2026-10-26: plan written. The overnight set is 1, 2, 3, 4, 6 and 7, each
+  built, reviewed, merged and deployed from the Mac; 5 and 8 open PRs in
+  the other repos but merge there by that repo's rules; 9 waits for two
+  weeks of history; 0 is optional.
