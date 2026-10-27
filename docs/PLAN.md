@@ -198,6 +198,13 @@ hop 19 reads fresh or late with a reason.
 
 ### 7. Webhook intake
 
+Buttondown intake deployed 2026-10-27, [PR #6](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/6),
+with `EnableButtondown=false`. 69 tests and ten previews pass; health serves
+package `72c7029…`, and all three disabled/unbuilt paths answer empty 204 to
+a GET. Jamie adds `buttondown_webhook_signing_key` in `sync-runtime`,
+configures Buttondown and enables it using `docs/WEBHOOKS.md`. GitHub and
+Strava still wait for their own PRs; the step is not complete.
+
 A second function, `sync-intake`, behind a Lambda function URL, turns a
 third party's webhook into a bus event after checking its signature, and
 answers 204. Secrets as keys in `sync-runtime`. First three senders, each
