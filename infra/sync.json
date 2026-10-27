@@ -543,10 +543,7 @@
                   "Effect": "Allow",
                   "Action": "lambda:InvokeFunction",
                   "Resource": {
-                    "Fn::GetAtt": [
-                      "Function",
-                      "Arn"
-                    ]
+                    "Fn::Sub": "arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:${AWS::StackName}"
                   }
                 }
               ]
