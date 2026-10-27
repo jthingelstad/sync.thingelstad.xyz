@@ -152,6 +152,18 @@ arrival and "seen" beside a polled one.
 
 ### 5. Destinations report in
 
+Prepared 2026-10-27: [Weekly #43](https://github.com/jthingelstad/weekly.thingelstad.com/pull/43),
+[Another #14](https://github.com/jthingelstad/another.thingelstad.com/pull/14),
+[Librarian #97](https://github.com/jthingelstad/librarian-thing/pull/97),
+[Thingy #46](https://github.com/jthingelstad/thingy.thingelstad.com/pull/46) and
+[Links #26](https://github.com/jthingelstad/links.thingelstad.xyz/pull/26).
+Their full local gates and reviews pass; all remain unmerged, undeployed and
+off as Jamie requested for this night. Sync [#9](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/9)
+is deployed with every role field empty. Activation, the Librarian's
+administrator-owned boundary update and natural arrival acceptance wait
+for Jamie. Unidentified topics and unmatched link stamps stay unmeasured.
+This step is intentionally unchecked; do not duplicate these proposals.
+
 Each destination that can, puts `received` on the bus, in its own repo,
 behind the flows row for its hop:
 
@@ -229,6 +241,21 @@ signature; the invalid one is dropped with a log line and a 204 (never a
 clue to the sender); nothing from a body reaches the page.
 
 ### 8. Subscribers on the bus
+
+Prepared 2026-10-27: destination [Librarian #98](https://github.com/jthingelstad/librarian-thing/pull/98),
+[Links #27](https://github.com/jthingelstad/links.thingelstad.xyz/pull/27),
+[registry #61](https://github.com/jthingelstad/thingelstad.xyz/pull/61) and
+[WT Builder #10](https://github.com/jthingelstad/wt-builder/pull/10) pass
+tests and clean reviews, and remain unmerged/undeployed. Sync
+[#10](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/10) and
+[#11](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/11) are deployed
+with all four routes, their connections and grants off; 86 tests and ten
+previews pass, both health URLs serve package `1aafe26…`. Hop 13 separates
+repository evidence refresh from verified registry publication into the
+library. Jamie adds repository Actions-token keys, reviews permissions,
+rehearses and approves activation; clocks/nudges remain until natural
+acceptance. Hop 6 also needs his explicit repair decision. This step is
+intentionally unchecked; do not duplicate the proposals.
 
 Rules on the bus that start work, replacing nudges and clocks one hop at a
 time, each behind its flows row:
