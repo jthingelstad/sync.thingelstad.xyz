@@ -3,9 +3,9 @@ import fs from 'node:fs/promises';
 import { test } from 'node:test';
 import { loadScenario, renderScenario, scenarioNames, scenarioSnapshot } from '../tools/scenarios.mjs';
 
-const names = ['after-send', 'friday-hold', 'late-hop', 'quiet-tuesday', 'reader-down', 'send-in-progress'];
+const names = ['after-send', 'friday-hold', 'late-hop', 'quiet-tuesday', 'reader-down', 'send-in-progress', 'superseded'];
 
-test('the six page scenarios are complete and render without a network request', async () => {
+test('every page scenario is complete and renders without a network request', async () => {
   assert.deepEqual(await scenarioNames(), names);
   const before = globalThis.fetch;
   globalThis.fetch = () => { throw new Error('A scenario tried to use the network'); };

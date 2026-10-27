@@ -2,7 +2,7 @@
 // as production, so every change can be read in all six states before a send.
 import fs from 'node:fs/promises';
 import { flows } from '../src/flows.mjs';
-import { advanceAll } from '../src/journey.mjs';
+import { advanceAll, historyFor } from '../src/journey.mjs';
 import { mapSource } from '../src/map.mjs';
 import { renderPage } from '../src/page.mjs';
 import { probe } from '../src/probe.mjs';
@@ -16,13 +16,15 @@ export async function scenarioNames() {
 export async function loadScenario(name) {
   if (!/^[a-z][a-z0-9-]*$/.test(name) || !(await scenarioNames()).includes(name)) throw new Error(`Unknown scenario: ${name}`);
   const read = async (file) => JSON.parse(await fs.readFile(new URL(`${name}/${file}.json`, ROOT), 'utf8'));
-  return { ...(await read('clock')), facts: await read('facts'), journeys: await read('journeys') };
+  const history = await read('history').catch((error) => { if (error.code === 'ENOENT') return null; throw error; });
+  return { ...(await read('clock')), facts: await read('facts'), journeys: await read('journeys'), history };
 }
 
-export function renderScenario({ facts, journeys, now, trigger = { type: 'clock' } }) {
+export function renderScenario({ facts, journeys, history = null, now, trigger = { type: 'clock' } }) {
   const status = probe({ flows, facts, now, code: 'fixtures', trigger });
   const next = advanceAll(journeys, status);
-  return { status, journeys: next, page: renderPage(status, next) };
+  const kept = historyFor(history, journeys, next, now);
+  return { status, journeys: next, history: kept.index, retired: kept.retired, page: renderPage(status, next, kept.index) };
 }
 
 /** Readable rendered text for the snapshots and each PR's send-in-progress page. */
