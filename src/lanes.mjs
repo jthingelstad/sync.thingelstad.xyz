@@ -27,7 +27,7 @@ export function laneModel(journey, history, now) {
 }
 
 function rowText(row) {
-  if (row.lag != null) return `<strong>${esc(duration(row.lag))}</strong> · ${row.state} ${esc(central(row.arrival.at))}${row.arrival.resolution_seconds ? `<span class="muted"> · ${esc(duration(row.arrival.resolution_seconds / 3600))} check interval</span>` : ''}`;
+  if (row.lag != null) return `<strong>${esc(duration(row.lag))}</strong> · ${row.state} ${esc(central(row.arrival.at))}${row.arrival.resolution_seconds ? `<span class="muted"> · ${esc(duration(row.arrival.resolution_seconds / 3600))} ${row.state === 'reported' ? 'resolution' : 'check interval'}</span>` : ''}`;
   if (row.arrival) return `confirmed ${esc(central(row.arrival.at))}<span class="muted"> · arrival unmeasured</span>`;
   if (row.state === 'waiting') return `not yet${row.elapsed == null ? '' : ` · ${esc(duration(row.elapsed))} so far`}`;
   return row.state === 'unknown' ? 'reader unavailable' : 'no fact yet';

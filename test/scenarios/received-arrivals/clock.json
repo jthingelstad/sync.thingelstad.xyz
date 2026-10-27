@@ -1,0 +1,10 @@
+{
+  "now": "2026-10-28T02:45:00Z",
+  "trigger": {
+    "type": "received",
+    "system": "thingy",
+    "kind": "issue",
+    "id": "355",
+    "at": "2026-10-28T02:41:01Z"
+  }
+}

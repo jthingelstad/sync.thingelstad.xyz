@@ -1,0 +1,16 @@
+Each lane is time since publication, with its scale above. A circle says seen in a poll; a square says reported by an event. A dashed marker is the median from finished, measured journeys. Polls give the check interval when known; reports have one-second resolution. First confirmations have no measured lag and no time mark.
+Weekly Thing issue
+WT355
+from WT Builder
+dated Tue Oct 27, 9:02 p.m. CDT · watching since Tue Oct 27, 9:45 p.m. CDT
+Publication 22 min 30 sec 45 min
+Weekly Thing (web)
+1 min 7 sec · reported Tue Oct 27, 9:03 p.m. CDT · 1 sec resolution
+Buttondown
+no fact yet
+Linking Things
+no fact yet
+Librarian
+14 min 10 sec · reported Tue Oct 27, 9:16 p.m. CDT · 1 sec resolution
+Thingy
+39 min 1 sec · reported Tue Oct 27, 9:41 p.m. CDT · 1 sec resolution

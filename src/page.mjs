@@ -105,6 +105,8 @@ export function triggerText(t) {
       return `on the published event for the ${esc(t.leg)} leg of ${esc(shortItem(t.kind, { id: t.id }))}${t.rehearsal ? ' (a rehearsal: nothing recorded)' : ''}`;
     case 'follow-up':
       return `${esc(String(t.minutes))} min after the ${esc(t.leg)} leg of ${esc(shortItem(t.kind, { id: t.id }))} went out`;
+    case 'received':
+      return `on ${esc(systemName(t.system))}'s reported arrival of ${esc(shortItem(t.kind, { id: t.id }))}`;
     case 'deploy':
       return 'by a deploy';
     case 'manual':
@@ -166,7 +168,7 @@ ${mapSvg(status, journeys)}
 </div>
 
 <h2 id="journeys">Journeys</h2>
-<p class="section-note">Each lane is time since publication, with its scale above. A solid dot is an observed arrival; a dashed marker is the median from finished, measured journeys. Polled times say <strong>seen</strong> and give the check interval when known. First confirmations have no measured lag and no time mark.</p>
+<p class="section-note">Each lane is time since publication, with its scale above. A circle says <strong>seen</strong> in a poll; a square says <strong>reported</strong> by an event. A dashed marker is the median from finished, measured journeys. Polls give the check interval when known; reports have one-second resolution. First confirmations have no measured lag and no time mark.</p>
 ${journeysSection(status, journeys, history)}
 
 <h2 id="history">History</h2>
