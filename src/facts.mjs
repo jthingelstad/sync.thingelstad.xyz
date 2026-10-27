@@ -167,8 +167,14 @@ export function parsePublisherFact(stored) {
 
 async function text(ctx, url, init) {
   const response = await ctx.fetch(url, { ...init, signal: AbortSignal.timeout(20_000) });
-  if (!response.ok) throw new Error(`${url} answered ${response.status}`);
+  if (!response.ok) throw Object.assign(new Error('The request failed.'), { status: response.status });
   return response.text();
+}
+
+/** Public reader errors never repeat a URL, response body or credential. */
+export function readerFailure(error) {
+  const code = error?.status ?? error?.$metadata?.httpStatusCode;
+  return Number.isInteger(code) && code >= 100 && code <= 599 ? `The reader failed (HTTP ${code}).` : 'The reader failed.';
 }
 
 async function status(ctx, url, method = 'HEAD') {
@@ -338,7 +344,7 @@ export async function collect(ctx, systems) {
       const fact = await reader(ctx, facts);
       facts[id] = { newest: {}, extra: {}, ...fact, checked_at };
     } catch (error) {
-      facts[id] = { error: error.message, checked_at };
+      facts[id] = { error: readerFailure(error), checked_at };
     }
   };
   await Promise.all(systems.filter((id) => !DEPENDENT.has(id)).map(run));

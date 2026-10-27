@@ -1,0 +1,24 @@
+{
+  "issue": {
+    "kind": "issue",
+    "item": {
+      "id": "354",
+      "at": "2026-10-24T12:00:00Z",
+      "url": "https://weekly.thingelstad.com/archive/354/",
+      "title": "WT354"
+    },
+    "origin": "wt-builder",
+    "started_at": "2026-10-24T12:00:00Z",
+    "updated_at": "2026-10-24T12:01:00Z",
+    "arrivals": {
+      "weekly": {
+        "at": "2026-10-24T12:01:00Z",
+        "observed": true
+      },
+      "librarian": {
+        "at": "2026-10-24T12:14:00Z",
+        "observed": true
+      }
+    }
+  }
+}

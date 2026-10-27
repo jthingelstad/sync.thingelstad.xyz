@@ -1,9 +1,31 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { test } from 'node:test';
-import { parseActivity, parseBlogFeed, parseCorpusFact, parseLibrarianHealth, parseLinksStats, parseLinksSync, parseOgImage, parsePodcast, parseWeeklyFeed } from '../src/facts.mjs';
+import { collect, parseActivity, parseBlogFeed, parseCorpusFact, parseLibrarianHealth, parseLinksStats, parseLinksSync, parseOgImage, parsePodcast, parseWeeklyFeed, readerFailure } from '../src/facts.mjs';
+import { flows } from '../src/flows.mjs';
+import { renderPage } from '../src/page.mjs';
+import { probe } from '../src/probe.mjs';
 
 const fixture = (name) => fs.readFile(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
+
+test('a failed authenticated reader never publishes its request or response contents', async () => {
+  const canary = 'synthetic-credential-for-the-test';
+  for (const fetch of [
+    async () => ({ ok: false, status: 503, text: async () => canary }),
+    async (url) => { throw new Error(`failed ${url} ${canary}`); },
+    async () => ({ ok: true, text: async () => `invalid JSON ${canary}` }),
+  ]) {
+    const now = '2026-10-27T17:00:00Z';
+    const facts = await collect({ now, env: { PINBOARD_API_TOKEN: canary }, fetch }, ['pinboard']);
+    const status = probe({ flows, facts, now });
+    assert.ok(facts.pinboard.error);
+    assert.doesNotMatch(JSON.stringify(status), new RegExp(canary));
+    assert.doesNotMatch(renderPage(status), new RegExp(canary));
+    assert.doesNotMatch(JSON.stringify(status), /auth_token/);
+  }
+  assert.equal(readerFailure({ status: 503 }), 'The reader failed (HTTP 503).');
+  assert.equal(readerFailure({ status: canary, message: canary }), 'The reader failed.');
+});
 
 test('the Weekly Thing feed names the newest issue by number', async () => {
   const { issue } = parseWeeklyFeed(JSON.parse(await fixture('weekly-feed.json')));

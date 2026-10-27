@@ -1,0 +1,185 @@
+{
+  "tinylytics": {
+    "none": "This system publishes no fact the probe can read yet.",
+    "extra": {}
+  },
+  "library-agent": {
+    "none": "This system publishes no fact the probe can read yet.",
+    "extra": {}
+  },
+  "buttondown": {
+    "none": "This system publishes no fact the probe can read yet.",
+    "extra": {}
+  },
+  "pinboard": {
+    "newest": {
+      "link": {
+        "id": "2026-10-26T02:21:57Z",
+        "at": "2026-10-26T02:21:57Z",
+        "url": "https://links.thingelstad.xyz/newest/"
+      }
+    },
+    "extra": {}
+  },
+  "xyz": {
+    "newest": {},
+    "extra": {}
+  },
+  "librarian": {
+    "newest": {
+      "issue": {
+        "id": "354",
+        "at": "2026-10-24T12:00:00Z",
+        "url": "https://weekly.thingelstad.com/archive/354/",
+        "title": "WT354"
+      },
+      "post": {
+        "id": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+        "at": "2026-10-25T20:08:12Z",
+        "url": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+        "title": "WT354 — A museum for nnxyz art"
+      },
+      "episode": {
+        "id": "https://another.thingelstad.com/2025/10/05/how-do-you-start-a.html",
+        "at": "2025-10-05T23:48:44Z",
+        "url": "https://another.thingelstad.com/2025/10/05/how-do-you-start-a.html",
+        "title": "How do you start a podcast?",
+        "audio": "https://another.thingelstad.com/uploads/2025/another-thing-1.mp3"
+      },
+      "link": {
+        "id": "2026-10-26T02:21:57Z",
+        "at": "2026-10-26T02:21:57Z",
+        "url": "https://links.thingelstad.xyz/newest/"
+      }
+    },
+    "extra": {}
+  },
+  "wt-builder": {
+    "newest": {
+      "issue": {
+        "id": "355",
+        "at": "2026-10-28T02:02:00Z",
+        "url": "https://weekly.thingelstad.com/archive/355/",
+        "title": "WT355",
+        "legs": {
+          "website": {
+            "at": "2026-10-28T02:02:00Z",
+            "url": "https://weekly.thingelstad.com/archive/355/"
+          },
+          "buttondown": {
+            "at": "2026-10-28T02:03:00Z",
+            "url": "https://weekly.thingelstad.com/archive/355/"
+          }
+        }
+      }
+    },
+    "extra": {}
+  },
+  "microblog": {
+    "newest": {
+      "post": {
+        "id": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+        "at": "2026-10-25T20:08:12Z",
+        "url": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+        "title": "WT354 — A museum for nnxyz art"
+      }
+    },
+    "extra": {}
+  },
+  "weekly": {
+    "newest": {
+      "issue": {
+        "id": "355",
+        "at": "2026-10-28T02:02:00Z",
+        "url": "https://weekly.thingelstad.com/archive/355/",
+        "title": "WT355"
+      },
+      "audio": {
+        "id": "354",
+        "at": "2026-10-24T12:00:00Z",
+        "url": "https://files.thingelstad.com/weekly-354.mp3",
+        "title": "WT354"
+      }
+    },
+    "extra": {}
+  },
+  "another": {
+    "newest": {
+      "episode": {
+        "id": "https://another.thingelstad.com/2025/10/05/how-do-you-start-a.html",
+        "at": "2025-10-05T23:48:44Z",
+        "url": "https://another.thingelstad.com/2025/10/05/how-do-you-start-a.html",
+        "title": "How do you start a podcast?",
+        "audio": "https://another.thingelstad.com/uploads/2025/another-thing-1.mp3"
+      }
+    },
+    "extra": {}
+  },
+  "links": {
+    "newest": {
+      "link": {
+        "id": "2026-10-26T02:21:57Z",
+        "at": "2026-10-26T02:21:57Z",
+        "url": "https://links.thingelstad.xyz/newest/"
+      },
+      "issue": {
+        "id": "354",
+        "at": "2026-10-17T12:00:00Z",
+        "url": "https://weekly.thingelstad.com/archive/354/",
+        "title": "WT354"
+      }
+    },
+    "extra": {}
+  },
+  "cdn": {
+    "newest": {
+      "audio": {
+        "id": "354",
+        "at": "2026-10-24T12:00:00Z",
+        "url": "https://files.thingelstad.com/weekly-354.mp3",
+        "title": "WT354"
+      }
+    },
+    "extra": {}
+  },
+  "thingy": {
+    "newest": {
+      "issue": {
+        "id": "354",
+        "at": "2026-10-24T12:00:00Z",
+        "url": "https://weekly.thingelstad.com/archive/354/",
+        "title": "WT354"
+      },
+      "post": {
+        "id": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+        "at": "2026-10-25T20:08:12Z",
+        "url": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+        "title": "WT354 — A museum for nnxyz art"
+      },
+      "episode": {
+        "id": "https://another.thingelstad.com/2025/10/05/how-do-you-start-a.html",
+        "at": "2025-10-05T23:48:44Z",
+        "url": "https://another.thingelstad.com/2025/10/05/how-do-you-start-a.html",
+        "title": "How do you start a podcast?",
+        "audio": "https://another.thingelstad.com/uploads/2025/another-thing-1.mp3"
+      },
+      "link": {
+        "id": "2026-10-26T02:21:57Z",
+        "at": "2026-10-26T02:21:57Z",
+        "url": "https://links.thingelstad.xyz/newest/"
+      }
+    },
+    "extra": {}
+  },
+  "cards": {
+    "newest": {
+      "post": {
+        "id": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+        "at": "2026-10-25T20:08:12Z",
+        "url": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+        "title": "WT354 — A museum for nnxyz art"
+      }
+    },
+    "extra": {}
+  }
+}
