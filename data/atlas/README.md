@@ -1,4 +1,4 @@
-# Atlas artwork, v1
+# Atlas artwork, v2
 
 Generated with the built-in image generation tool, 2026-10-27, using the
 approved storybook atlas concept as a style reference. These are production
@@ -8,9 +8,11 @@ illustration assets, not screenshots of UI. They contain no operational data.
   five-column, three-row sheet. SVG symbol viewports select each cell; the
   renderer positions them independently. Original generation:
   `exec-0cef1472-be2b-4ba3-8434-06e18bf10a82.png`.
-- `terrain.webp`: 1564 × 1006, opaque quiet ivory landscape. The renderer
-  sizes it to the schematic world. Original generation:
-  `exec-28d14e2f-f3e1-41fd-b15d-7c440c7c4435.png`.
+- `terrain.webp`: 1855 × 848, opaque ivory landscape with continuous dry
+  land under every building plot. The renderer sizes it to 2240 × 1500 and
+  clips the last 60 units at the world edge. Generation:
+  `exec-db77df33-1f40-4743-9b0e-11b266a33693.png`. Replaces v1's river
+  through the lower building row, following Jamie's review.
 
 The PNG originals remain in the conversation's generated-image folder. These
 WebP encodings were made with cwebp 1.6, quality 86 and 82 respectively,
@@ -71,27 +73,35 @@ Only fifteen isolated objects in the specified equal-cell grid. No words,
 frames, reference UI, arrows, roads, river or labels. Consistent cell order
 and transparent spacing are required for viewport cropping by code.
 
-## Terrain prompt
+Several symbols use tight source viewports because painted planting
+crosses the nominal grid. This removes neighboring facade fragments and
+keeps the workshop's complete wheel. Explicit source clip paths also prevent
+neighbor pixels appearing in a differently proportioned viewport's padding.
+This does not duplicate or edit the raster.
 
-Production asset: only the underlying landscape for the approved storybook
-atlas, no UI. Input image is an art style reference. Wide 14:9 illustrated
-fantasy cartographic landscape: warm ivory paper, delicate sepia ink and pale
-sage/olive watercolor. Remove every building, label, name, number, road,
-dotted route, arrow, signpost, marker and UI element. No architecture,
-people or text. Building sprites and dynamic SVG routes are separate.
+## Revised terrain prompt
 
-Keep about seventy percent as pale ivory meadow and clearings for operational
-labels and curved routes. Specific cartographic details only, no generic
-gradient wallpaper or broad atmospheric brush strokes. Low blue-grey
-mountains and small evergreen groups along the top ten percent. Nearly flat
-center with a few small muted tree clusters near (15%,45%), (55%,42%) and
-(83%,65%); no thick central forest or paths that resemble connections.
+Generate a building-free, road-free terrain background for a code-rendered
+storybook publishing atlas, about 2240 wide by 1440 tall. Reference is style only:
+subtle warm watercolor/ink, fine pines, pale cream meadows and small rocks,
+pale alpine skyline. Remove every building, label, sign, road and arrow.
+Its role is consistent dry land and clear plots beneath live SVG buildings,
+text and paths, not a full infographic.
 
-Along the bottom twelve percent, a gentle blue river and shoreline with
-stones, grass and a few evergreens at the corners, orienting the media
-storehouse region. River below the operational area, no bridges or boat
-routes. Restrained trees and rocks at the extreme sides, large open clearings
-throughout. Ivory around #faf7ed. Refined storybook map-paper texture, no
-aged yellow parchment, stains, burnt edges or ornate border. Consistent
-daylight and line quality. Nothing high contrast behind labels. Landscape
-alone, edge to edge, no device or browser mockup.
+The upper 95 percent is continuous solid dry land. Absolutely no water above the
+bottommost 5 percent. Any blue water is only a narrow edge at the bottom-right,
+below y=1380 of 1440; no water is also acceptable. No inlets, river through
+village rows, ponds or canals. Buildings and labels occupy land down to y=1360.
+
+Three broad pale meadow terraces in an elevated illustrated view. Fine
+slate-blue mountains and treeline only in the top 9 percent. Quiet rocky edges,
+restrained pines, shrubs and warm stones at clearing edges. At least 75 percent
+light nearly ivory soil with gentle pale sage grass. No tall trees in plots,
+repetitive dots, rectangular plots or cloud-shaped islands.
+
+Reserve dry plots near: top row x7,22,46,67,91percent/y16percent; middle
+x10/y55, x38/y44, x51/y36, x74/y54, x92/y53percent; bottom
+x7,24,44,63,82percent/y82percent. Each plot needs roughly 10 percent width and
+15 percent height, with pale label space below. No plot outlines, buildings,
+roads, text, characters, banners, diagrams, gradients, lighting effects or
+AI wisps. Quiet level daylight and continuous cream paper edges.

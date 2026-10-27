@@ -4,6 +4,7 @@
 // geography, and mapSource remains the readable scenario snapshot.
 import { render } from 'pele';
 import { atlasCovers, atlasSvg } from './atlas.mjs';
+import { pocketAtlas } from './pocket.mjs';
 import { flows, systemName } from './flows.mjs';
 import { lagAt } from './journey.mjs';
 import { MATRIX_KINDS, SEVERITY } from './probe.mjs';
@@ -135,7 +136,12 @@ export function pipeMapSvg(status, journeys = {}) {
 }
 
 /** The atlas uses the very same facts and wording as the diagnostic map. */
-export function mapSvg(status, journeys = {}) {
+export function mapSvg(status, journeys = {}, options = {}) {
   if (!atlasCovers(flows)) return pipeMapSvg(status, journeys);
-  return atlasSvg(status, journeys, { edgeText, nodeText, nodeState, hopSummary });
+  return atlasSvg(status, journeys, { edgeText, nodeText, nodeState, hopSummary }, options);
+}
+
+export function pocketMap(status, journeys = {}) {
+  if (!atlasCovers(flows)) return '';
+  return pocketAtlas(status, journeys, { edgeText, nodeText, nodeState, hopSummary, shortItem });
 }

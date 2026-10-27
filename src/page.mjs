@@ -5,8 +5,8 @@ import { historyLanes, journeyLanes } from './lanes.mjs';
 import { itemLabel, KIND_LABEL, movedThisWeek, storyFor } from './stories.mjs';
 import { pageStyles, sharedStyles } from './style.mjs';
 export { itemLabel } from './stories.mjs';
-import { hopSummary, mapSvg, shortItem } from './map.mjs';
-import { atlasNavigation } from './atlas.mjs';
+import { mapSvg, pocketMap, shortItem } from './map.mjs';
+import { atlasArtwork, atlasNavigation } from './atlas.mjs';
 import { age, central } from './time.mjs';
 
 const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -141,6 +141,7 @@ ${f.importer_error ? `<p>${esc(f.importer_error)}</p>` : ''}
 
 export function renderPage(status, journeys = {}, history = null) {
   const s = status.summary;
+  const pocket = pocketMap(status, journeys);
   const open = status.open.length
     ? `<ul class="open">${status.open.map((h) => `<li>${pill(h.status)} <a href="#hops">${h.id}. ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</a>, ${esc(h.kind)}${h.lag_hours != null ? `: ${esc(age(h.lag_hours))} behind, expected ${esc(age(h.expected_lag_hours))}` : ''}${h.why ? ` <span class="muted">${esc(h.why)}</span>` : ''}</li>`).join('\n')}</ul>`
     : '<p>Every hop with a fact on both sides is fresh or moving.</p>';
@@ -168,22 +169,29 @@ ${pageStyles}
 <p class="checked">Checked ${esc(central(status.checked_at))}, ${triggerText(status.trigger)}. A snapshot, refreshed on events and the half-hour clock.</p>
 <nav class="jump" aria-label="On this page"><a href="#map">Map</a><a href="#journeys">Journeys</a><a href="#history">History</a><a href="#receipts">Receipts</a><a href="#hops">Hop details</a></nav>
 </header>
+<section class="atlas-section" id="map" aria-labelledby="map-title">
+<h2 id="map-title">The map, as it is now</h2>
+<p class="section-note atlas-intro">Each place says what it holds. Each road is a real connection, with the item and its status on a signpost.</p>
+${pocket ? atlasArtwork() : ''}
+${pocket}
+<section id="whole-atlas" class="atlas-full${pocket ? '' : ' atlas-full--fallback'}" aria-label="Whole publishing atlas">
+<a class="atlas-back" href="#map">Back to route view ↑</a>
+${status.open.length ? `<p class="atlas-attention"><span class="atlas-attention__label">Needs a look:</span><a href="#place-${esc(status.open[0].to)}">${esc(systemName(status.open[0].from))} → ${esc(systemName(status.open[0].to))}</a><span class="atlas-attention__state">${esc(status.open[0].kind)} ${pill(status.open[0].status)}</span></p>` : ''}
+${atlasNavigation()}
+<div class="map" tabindex="0" role="region" aria-label="Publishing atlas, scroll sideways to explore">
+${mapSvg(status, journeys, { inlineArt: !pocket })}
+</div>
+<p class="atlas-caption">A snapshot, not continuous tracking. Geography and road length are illustrative; times come from receipts. A roof’s colour identifies its place. Choose a signpost for hop details, or a place for its facts.</p>
+</section>
+<details class="atlas-key"><summary>Map key: status, timing and direction</summary><p>A signpost says <strong>in 2 min</strong> only for a measured arrival; <strong>moving</strong> is within the expected lag, <strong>late</strong> is past it. Roads are coloured by the worst of their kinds. Dashed roads run on a clock; solid roads run on an event or nudge. <strong>Held</strong> is waiting by rule, <strong>no fact yet</strong> means there is no readable fact, and <strong>unknown</strong> means the reader failed. Short posts attach signs to their own road; arrows show direction. A signpost’s link opens all its kinds below.</p></details>
+</section>
+
 <h2>The newest stories</h2>
 ${storiesSection(journeys, status.checked_at)}
 ${feedbinSection(status.facts.feedbin)}
 <ul class="counts">
 <li>${pill('fresh')} ${s.fresh}</li><li>${pill('moving')} ${s.moving}</li><li>${pill('late')} ${s.late}</li><li>${pill('held')} ${s.held}</li><li>${pill('no-fact')} ${s.no_fact}</li><li>${pill('unknown')} ${s.unknown}</li>
 </ul>
-
-<h2 id="map">The map, as it is now</h2>
-<p class="section-note atlas-intro">Each place says what it holds. Each road is a real connection, with the item and its status on a signpost.</p>
-${status.open.length ? `<p class="atlas-attention"><span class="atlas-attention__label">Needs a look:</span><a href="#place-${esc(status.open[0].to)}">${esc(systemName(status.open[0].from))} → ${esc(systemName(status.open[0].to))}</a><span class="atlas-attention__state">${esc(status.open[0].kind)} ${pill(status.open[0].status)}</span></p>` : ''}
-${atlasNavigation(status, hopSummary)}
-<div class="map" tabindex="0" role="region" aria-label="Publishing atlas, scroll sideways to explore">
-${mapSvg(status, journeys)}
-</div>
-<p class="atlas-caption">A snapshot, not continuous tracking. Geography and road length are illustrative; times come from receipts. A roof’s colour identifies its place. Choose a signpost for hop details, or a place for its facts.</p>
-<details class="atlas-key"><summary>Map key: status, timing and direction</summary><p>A signpost says <strong>in 2 min</strong> only for a measured arrival; <strong>moving</strong> is within the expected lag, <strong>late</strong> is past it. Roads are coloured by the worst of their kinds. Dashed roads run on a clock; solid roads run on an event or nudge. <strong>Held</strong> is waiting by rule, <strong>no fact yet</strong> means there is no readable fact, and <strong>unknown</strong> means the reader failed. Fine lines attach signposts to roads; arrows show direction. A signpost’s link opens all its kinds below.</p></details>
 
 <h2 id="journeys">Journeys</h2>
 <p class="section-note">Each lane is time since publication, with its scale above. A circle says <strong>seen</strong> in a poll; a square says <strong>reported</strong> by an event. A dashed marker is the median from finished, measured journeys. Polls give the check interval when known; reports have one-second resolution. First confirmations have no measured lag and no time mark.</p>

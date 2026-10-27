@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { atlasCovers, atlasLabels, PLACES, ROADS, WORLD } from '../src/atlas.mjs';
+import { atlasCovers, atlasLabels, PLACES, ROADS, WORLD, roadPoint, wrapLabel } from '../src/atlas.mjs';
 import { flows } from '../src/flows.mjs';
-import { edgeText, mapSvg } from '../src/map.mjs';
+import { edgeText, mapSvg, nodeText, pocketMap } from '../src/map.mjs';
 import { loadScenario, renderScenario, scenarioNames } from '../tools/scenarios.mjs';
 
 const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
@@ -59,7 +59,7 @@ test('the atlas retains late versus failed readings and quotes only measured or 
   assert.notEqual(ROADS[5][2], ROADS[23][2], 'the clock mirror and exact-star arrival remain separate');
 });
 
-test('signposts have stable clear positions, within the world and away from each other and the artwork', () => {
+test('signposts stay beside their own road, clear of artwork and each other', () => {
   const labels = atlasLabels();
   assert.deepEqual(atlasLabels(), labels);
   const rectangles = Object.values(labels);
@@ -68,9 +68,49 @@ test('signposts have stable clear positions, within the world and away from each
     for (const b of rectangles.slice(i + 1)) assert.equal(overlap(a, b), false);
     for (const p of Object.values(PLACES)) {
       assert.equal(overlap(a, { x: p.x - 107, y: p.y - 110, width: 214, height: 195 }), false);
-      assert.equal(overlap(a, { x: p.x - 145, y: p.y + 85, width: 290, height: 150 }), false);
     }
   }
+  for (const [id, b] of Object.entries(labels)) {
+    const nearRoad = Array.from({ length: 101 }, (_, i) => roadPoint(id, i / 100))
+      .some((p) => Math.hypot(p.x - b.anchor.x, p.y - b.anchor.y) < 0.02);
+    assert.equal(nearRoad, true, `hop ${id}: a post must meet its own road`);
+    assert.ok(b.anchor.x >= b.x && b.anchor.x <= b.x + b.width, `hop ${id}: no distant leader`);
+    assert.ok(Math.min(Math.abs(b.anchor.y - b.y), Math.abs(b.anchor.y - b.y - b.height)) <= 30, `hop ${id}: a short roadside post`);
+  }
+});
+
+test('roadside signs leave the actual facts clear in every scenario', async () => {
+  for (const name of await scenarioNames()) {
+    const { status } = renderScenario(await loadScenario(name));
+    for (const [id, b] of Object.entries(atlasLabels())) for (const s of flows.systems) {
+      const p = PLACES[s.id];
+      const lines = wrapLabel(nodeText(s.id, status.facts[s.id]), 25);
+      const text = { x: p.x - 145, y: p.y + 93, width: 290, height: 56 + (lines.length - 1) * 28 };
+      assert.equal(overlap(b, text), false, `${name}: hop ${id} covers ${s.id}'s facts`);
+    }
+  }
+});
+
+test('the pocket atlas keeps every connection selectable and preserves the evidence distinctions', async () => {
+  for (const name of await scenarioNames()) {
+    const { status, journeys, page } = renderScenario(await loadScenario(name));
+    const pocket = pocketMap(status, journeys);
+    for (const h of flows.hops) {
+      assert.ok(pocket.includes(`id="route-${h.id}"`), `${name}: route ${h.id}`);
+      assert.ok(pocket.includes(`href="#route-${h.id}"`));
+      assert.ok(pocket.includes(escape(edgeText(status, journeys, h.id))));
+    }
+    const ids = [...page.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
+    assert.equal(new Set(ids).size, ids.length, `${name}: duplicate fragment target`);
+    assert.equal((page.match(/data:image\/webp;base64,/g) ?? []).length, 2, 'responsive scenes reuse the same two art assets');
+    assert.ok(pocket.includes('href="#whole-atlas"'));
+  }
+  const late = renderScenario(await loadScenario('late-hop'));
+  const down = renderScenario(await loadScenario('reader-down'));
+  const hold = renderScenario(await loadScenario('friday-hold'));
+  assert.match(pocketMap(late.status, late.journeys), /Still waiting at Linking Things/);
+  assert.match(pocketMap(down.status, down.journeys), /A reader is unavailable/);
+  assert.match(pocketMap(hold.status, hold.journeys), /Waiting by rule at Thingy/);
 });
 
 test('direction arrows stop in clear space beside their destination, not beneath its illustration or label', () => {

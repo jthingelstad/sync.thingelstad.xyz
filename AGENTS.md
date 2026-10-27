@@ -147,7 +147,7 @@ This exception does not authorize repairs on any other hop, including WT354.
   arrivals from the index, or its archive once outside the last fifty;
   a fallback must not erase a measured lag.
 - `src/page.mjs` — the HTML. No script, `--jt-` colours, Central time. It
-  opens with this week's journey stories, then the pipe map, arrival lanes
+  opens with the atlas, then this week's journey stories, arrival lanes
   and ten finished journeys per kind; the receipts, matrix, hops and facts
   follow (Jamie, 2026-10-26: "visual and interesting. Pipes and flows."). The
   sites strip and story in the title/description wait for Jamie.
@@ -162,7 +162,7 @@ This exception does not authorize repairs on any other hop, including WT354.
   byte for byte; `style:check` catches drift. The fonts and CSS are inlined
   so opening the page makes no font-service or asset request. Inter is 19px,
   Inter Tight heads use the house scale, and no sans text is italic.
-- `src/map.mjs`, `src/atlas.mjs`, `data/atlas/` — the storybook atlas,
+- `src/map.mjs`, `src/atlas.mjs`, `src/pocket.mjs`, `data/atlas/` — the storybook atlas,
   drawn on every run as SVG over two inline illustration assets from the vendored
   `data/flows.json` and this run's status: one node per system saying what
   it holds ("WT354 · post Oct 25"), one edge per hop saying what is on it and
@@ -174,6 +174,10 @@ This exception does not authorize repairs on any other hop, including WT354.
   or adds or redirects a road the atlas has not drawn yet. `docs/ATLAS.md`
   records the approved direction and preview commands. Art has no labels or
   status; only the generated SVG carries evidence. No browser script.
+  Buildings stand on dry plots. Names sit in clearings; short roadside posts
+  join signs to their actual road. Phones default to an illustrated connection
+  with both ends visible; native fragment links select all 23 connections or
+  open the complete atlas. The two views share facts, evidence words and art.
   Jamie, 2026-10-26: a map drawn at build time "is rather useless… Ideally
   this would show the 'flows' as they actually are, not just a diagram."
 - `src/handler.mjs` — the Lambda: fold a published event into the fact,
@@ -294,8 +298,9 @@ attempt with a 1.2-second deadline so a failure can ask the provider to retry.
   else. A destination report can prove arrival without a send-leg receipt,
   but never supplies a missing send time.
 - Pipes have a fixed width; it is not traffic volume. Words and arrows
-  carry state and direction as well as colour. The map keeps its own size
-  at phone width and scrolls; lane rows stack so their labels stay readable.
+  carry state and direction as well as colour. The optional whole atlas keeps
+  its own size and scrolls on a phone; the default pocket view fits the screen.
+  Lane rows stack so their labels stay readable.
 - Each journey keeps its last holder states and last observed absence. A
   failed reader or a missing fact is not evidence that an item was absent.
   A rehearsal returns before collecting or writing, so it cannot advance

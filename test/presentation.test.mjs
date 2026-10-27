@@ -70,9 +70,10 @@ test('history shows at most ten retired journeys and preserves URL ids in archiv
   assert.equal(archiveUrl('journeys/post/https%3A%2F%2Fexample.com%2Fa.json'), '/journeys/post/https%253A%252F%252Fexample.com%252Fa.json');
 });
 
-test('the page is self-contained, keeps every hop anchor and places stories before map, lanes and history', async () => {
+test('the page is self-contained, keeps every hop anchor and leads with the map before stories, lanes and history', async () => {
   const { page, status } = renderScenario(await loadScenario('send-in-progress'));
-  assert.ok(page.indexOf('The newest stories') < page.indexOf('id="map"'));
+  assert.ok(page.indexOf('id="map"') < page.indexOf('The newest stories'));
+  assert.ok(page.indexOf('The newest stories') < page.indexOf('id="journeys"'));
   assert.ok(page.indexOf('id="map"') < page.indexOf('id="journeys"'));
   assert.ok(page.indexOf('id="journeys"') < page.indexOf('id="history"'));
   assert.ok(page.indexOf('id="history"') < page.indexOf('id="receipts"'));
