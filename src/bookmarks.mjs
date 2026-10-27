@@ -20,7 +20,7 @@ export function captureBookmark(item, post, now) {
 
 /** Inbox write precedes the checkpoint, which precedes the wake-up. A retry
  * may repeat either operation safely. The destination drains the whole inbox,
- * so GitHub's replacement of a pending workflow run cannot lose a bookmark. */
+ * so retries and overlapping wake-ups cannot lose a bookmark. */
 export async function handoffBookmarks({ state, now, pinboard, store, checkpoint, emit, processed = [], remaining = () => Infinity, limit = 10 }) {
   const next = structuredClone(state);
   const report = { captured: 0, private: 0, waiting: 0, announced: false };

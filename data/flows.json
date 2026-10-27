@@ -245,7 +245,7 @@
         "note"
       ],
       "moves": "Every public bookmark, as the year shards under data/links/.",
-      "mechanism": "tools/nightly.sh: sync.py (posts/update, then posts/all if the stamp moved), join, enrichment, validate, commit, push; the push deploys.",
+      "mechanism": "tools/nightly.sh: sync.py (posts/update, then posts/all if the stamp moved), join, enrichment, validate, commit, push. GitHub validates the release and delivers its versioned builder and canonical snapshot to S3; the single AWS publisher builds and deploys it.",
       "trigger": {
         "type": "clock",
         "schedule": "00:30 daily",
@@ -605,16 +605,16 @@
         "star"
       ],
       "moves": "A verified public bookmark associated with a Feedbin star, including its exact Pinboard fields and Feedbin identity.",
-      "mechanism": "A durable public-record capture in the private Linking Things inbox precedes a metadata-only pinboard bookmarks-ready event. A dedicated workflow imports the capture and commits only bookmark data and provenance; the existing tested static deploy publishes it before reporting an exact item arrival. Enrichment remains nightly.",
+      "mechanism": "A durable public-record capture in the private Linking Things inbox precedes a metadata-only pinboard bookmarks-ready event. EventBridge starts one serialized AWS CodeBuild publisher, which combines all captures with the approved canonical snapshot, validates and builds the static site, and reports arrival after exact public readback. Enrichment remains nightly; bookmark arrivals create no Git commits.",
       "trigger": {
         "type": "nudge",
         "event": "pinboard bookmarks-ready",
-        "runs_on": "github-actions"
+        "runs_on": "aws"
       },
       "expected_lag_hours": 0.5,
       "verify": "The exact saved URL and bookmark id are present in the published record and sync-fact.json carries its Feedbin star identity. The destination reports received only after independent public readback; a partial bookmark import never advances the account-wide Pinboard change stamp.",
       "status": "unverified",
-      "notes": "Requested by Jamie on 2026-10-27 to complete one Feedbin -> Pinboard -> Linking Things path. In preparation; no downstream trigger is active yet. The original nightly full mirror (hop 5), enrichment, and the separate WT354 issue join (hop 6) remain in place."
+      "notes": "Approved by Jamie on 2026-10-27: an AWS publisher completes Feedbin -> Pinboard -> Linking Things. GitHub delivers tested code and the canonical snapshot using existing OIDC; content events use IAM and need no GitHub token. The inbox is durable and sync repeats wake-ups until deployed acknowledgements arrive. The original nightly full mirror (hop 5), enrichment, and the separate WT354 issue join (hop 6) remain in place. Activation and real-item acceptance are recorded in the repositories."
     }
   ],
   "fields": [
@@ -792,7 +792,7 @@
     },
     {
       "name": "Linking Things bookmark arrival receipts",
-      "where": "The dedicated bookmark importer, the normal static deploy, and sync",
+      "where": "The AWS bookmark publisher and sync",
       "hops": [
         22,
         23

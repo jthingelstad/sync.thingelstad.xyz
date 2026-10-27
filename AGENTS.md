@@ -104,7 +104,7 @@ This exception does not authorize repairs on any other hop, including WT354.
 - `src/bookmarks.mjs` — public capture outbox to Linking Things. Inbox write,
   journal checkpoint, then bus acknowledgement; retries continue until the
   deployed Links fact acknowledges each capture. `LinksBookmarkMode` is one
-  off/rehearsal/active switch; off resolves no GitHub key.
+  off/active switch. The destination owns its AWS publisher and event rule; no GitHub key is used.
 - `src/feedbin.mjs`, `src/pinboard.mjs` — RSS discovery, the durable additive
   import and a paced Pinboard API client. Feedbin's `star` fact names an exact
   article independently of the existing Pinboard `link` change stamp. The feed
@@ -201,13 +201,11 @@ grants nobody. It does not change trust or bypass a permissions boundary.
 `docs/DESTINATIONS.md` has the activation order. Unknown baselines never
 become measured arrivals.
 
-- The public bookmark subscriber (hop 23) is the stack's one destination
-  starter, with `LinksBookmarkMode` off/rehearsal/active. It pins
-  `sync-bookmarks.yml` on Linking Things main. Its GitHub token resolves
-  only when the mode is not off. The night of 2026-10-26 built four, all off, as twenty
-  dormant resources and ten switches; they came out the next morning at
-  Jamie's ask to keep the stack hobby-sized. `docs/SUBSCRIBERS.md` keeps
-  the shape for the day one is wanted, and git history (987138f) the code.
+- The public bookmark subscriber (hop 23) lives in Linking Things' own
+  `links-publisher` stack: one EventBridge rule starts its serialized CodeBuild
+  project through IAM. `LinksBookmarkMode` controls only Sync's off/active
+  capture producer. This stack owns no GitHub dispatch connection or token.
+
 
 The registry's downstream event is `xyz/refreshed`, a verified public
 document hash, URL and time; its grant is the same `ReceiverRoles` list.
@@ -233,8 +231,7 @@ Secrets Manager secret, `sync-runtime` (the house `<app>-runtime` shape; made
 the sync app not just for this one secret"). Each key is one secret the app
 needs; the template resolves each into its own environment variable with
 `{{resolve:secretsmanager:${RuntimeSecret}:SecretString:<key>}}`, so no value
-enters a session. Keys today: `github_links_actions_token` authorizes the bookmark API
-destination only when enabled; `pinboard_token` → `PINBOARD_API_TOKEN`, the
+enters a session. Keys today: `pinboard_token` → `PINBOARD_API_TOKEN`, the
 Pinboard fact; `microblog_api_key` → `MICROBLOG_API_KEY` (added 2026-10-26 at
 Jamie's ask). The blog producer reads the public feed without it. Its
 authenticated source query waits for the verified identity and write

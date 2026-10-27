@@ -255,7 +255,6 @@ async function apply(execute_) {
       : stack.Parameters?.some((p) => p.ParameterKey === 'FeedbinConfig') ? { UsePreviousValue: true } : { ParameterValue: '' },
   };
   log(`\nchange set for ${name}`);
-  if (parameters.LinksBookmarkMode !== 'off' && !parameters.RuntimeSecret) throw new Error('The bookmark subscriber requires RuntimeSecret.');
   const set = await changeSet(name, template, parameters, true);
   if (!set) log('  no changes');
   else show(set);

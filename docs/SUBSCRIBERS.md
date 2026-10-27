@@ -1,36 +1,24 @@
 # Publishing subscribers
 
-The first active candidate is the public bookmark path (hop 23), requested
-2026-10-27. `LinksBookmarkMode` is `off` until its GitHub key exists,
-`rehearsal` for a `pinboard/ping` dry run, and `active` for the metadata-only
-`pinboard/bookmarks-ready` wake-up to `sync-bookmarks.yml` on `main`.
-Only these four resources return: Connection, ApiDestination, invoke role,
-and rule. `../links.thingelstad.xyz/docs/BOOKMARKS.md` describes the destination
-and acceptance. The nightly mirror and WT354 join are unchanged.
+The first active destination is the public bookmark path (hop 23), approved
+2026-10-27. The destination owns its subscriber: one EventBridge rule in the
+Linking Things `links-publisher` stack matches `pinboard/bookmarks-ready` and
+starts its serialized CodeBuild publisher through IAM. It drains the durable
+private inbox, builds the approved static site, and reports exact public
+arrivals. It requires no GitHub dispatch token or source connection.
 
-A subscriber is a rule on the bus that starts a destination's workflow
-(EventBridge API destination → GitHub `workflow_dispatch`). The night of
-2026-10-26 prepared four, all off, as twenty dormant resources and ten
-parameters; they were removed on 2026-10-27 to keep the stack hobby-sized
-(the code is in git history at 987138f, sync PRs #10 and #11). The
-destination workflows they would call stay merged and inert in their repos.
+Sync's `LinksBookmarkMode=active` enables the capture producer; `off` stops
+future captures and wake-ups. `../links.thingelstad.xyz/docs/BOOKMARKS.md`
+describes the approved source package, activation, receipts and retries.
+The nightly mirror and WT354 join remain in place.
 
-When the first one is wanted, add it as its own PR with its flows row, in
-this shape and nothing more: a Connection whose token is a dynamic
-reference to a key in `sync-runtime` (one fine-grained PAT per repository,
-Actions read/write), an ApiDestination pinned to the repository, workflow
-and `main`, a role that may only invoke that destination, and one rule.
-Rehearse with a `ping` that requests a dry run; enable real work only after
-the dry run succeeds; keep the old nudge or clock until one natural send
-has gone bus → workflow → `received`, then retire it and update the flows
-row.
+A subscriber starts work in a destination. It belongs in that destination's
+stack, with permission to start only its actual worker. The publishing bus
+remains in Sync. A new subscriber needs its own flows row and implementation;
+no switches or resources are reserved for future destinations.
 
-| Hop | Event | Workflow | sync-runtime key |
-| --- | --- | --- | --- |
-| 23 | pinboard bookmarks-ready | links.thingelstad.xyz/sync-bookmarks.yml | github_links_actions_token |
-| 10 | wt-builder published, issue, archive leg | librarian-thing/library-round.yml | github_librarian_actions_token |
-| 6 | wt-builder published, issue, website leg | links.thingelstad.xyz/sync-join.yml | github_links_actions_token |
-| 13 | github pushed, registered public repository | thingelstad.xyz/sync-rebuild.yml | github_registry_actions_token |
-| 13 | xyz refreshed, verified registry revision | librarian-thing/library-round.yml, only=things | github_librarian_actions_token |
-
-Hop 6 stays the WT354 worked example until Jamie decides otherwise.
+The night of 2026-10-26 prepared four dormant GitHub dispatch subscribers as
+twenty resources and ten parameters. They were removed the following morning
+to keep this hobby-sized (git history 987138f). The later token-dependent
+bookmark bridge was replaced by this AWS publisher before activation.
+Hop 6 remains the WT354 worked example until Jamie decides otherwise.
