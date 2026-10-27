@@ -5,7 +5,7 @@ on one bus, with a page that shows each item's journey as it happens. Written
 2026-10-26 (Jamie: "Approved: write docs/PLAN.md in sync.thingelstad.xyz"),
 after the first night: the bus, the WT Builder sender, the probe, the
 journeys, the runtime map, the Pinboard and micro.blog secrets, and the
-Discord activity stream are live. Steps 1 and 2 below are now live; later steps
+Discord activity stream are live. Steps 1, 2 and 3 below are now live; later steps
 remain the work ahead.
 
 Each step is one pull request, small enough for an evening. Any session,
@@ -99,7 +99,12 @@ Acceptance: a scenario where WT356 supersedes WT355 writes WT355 to history
 with its arrivals; the index holds both; `typicalLag` is tested; the public
 files still hold only ids, times and titles.
 
-### 3. The page, second pass
+### 3. [x] The page, second pass
+
+Deployed 2026-10-27, [PR #3](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/3).
+All seven previews render; 48 tests and desktop/phone browser checks pass.
+Public health serves the tested package (`927bd11…`), with 21 scriptless pipes.
+The sites strip and story metadata remain Jamie's decisions in the PR.
 
 The page Jamie wants is "much more compelling" than the first one. Brief:
 
