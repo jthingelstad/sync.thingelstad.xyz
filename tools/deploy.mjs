@@ -32,6 +32,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { packageProbe } from './package.mjs';
+import { feedbinConfig } from '../src/feedbin.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEPLOYMENT = path.join(ROOT, 'infra/deployment.json');
@@ -78,7 +79,7 @@ async function changeSet(name, template, parameters, exists) {
       ChangeSetName,
       ChangeSetType: exists ? 'UPDATE' : 'CREATE',
       TemplateBody: JSON.stringify(JSON.parse(template)),
-      Parameters: Object.entries(parameters).map(([ParameterKey, ParameterValue]) => ({ ParameterKey, ParameterValue })),
+      Parameters: Object.entries(parameters).map(([ParameterKey, value]) => ({ ParameterKey, ...(typeof value === 'object' ? value : { ParameterValue: value }) })),
       Capabilities: ['CAPABILITY_IAM'],
       Tags: tags,
     }),
@@ -211,6 +212,8 @@ async function healthy(domain, code) {
 
 async function apply(execute_) {
   await identity();
+  const feedbinRaw = process.env.SYNC_FEEDBIN_CONFIG_FILE ? (await fs.readFile(process.env.SYNC_FEEDBIN_CONFIG_FILE, 'utf8')).trim() : null;
+  if (feedbinRaw) feedbinConfig({ FEEDBIN_CONFIG: feedbinRaw });
   const name = deployment.stacks.sync;
   const template = await fs.readFile(path.join(ROOT, 'infra/sync.json'), 'utf8');
   const manifest = await packageProbe();
@@ -243,6 +246,12 @@ async function apply(execute_) {
     EnableGitHub: process.env.SYNC_ENABLE_GITHUB ?? (parameter(stack, 'EnableGitHub') || 'false'),
     // One list of the destinations' deploy role names that may report arrivals.
     ReceiverRoles: process.env.SYNC_RECEIVER_ROLES ?? parameter(stack, 'ReceiverRoles'),
+    // This NoEcho connection config includes the unguessable starred-feed
+    // address. Preserve it using UsePreviousValue, never the masked value
+    // DescribeStacks returns, and never print it into the deploy output.
+    FeedbinConfig: process.env.SYNC_FEEDBIN_CONFIG_FILE
+      ? { ParameterValue: feedbinRaw }
+      : stack.Parameters?.some((p) => p.ParameterKey === 'FeedbinConfig') ? { UsePreviousValue: true } : { ParameterValue: '' },
   };
   log(`\nchange set for ${name}`);
   const set = await changeSet(name, template, parameters, true);

@@ -14,6 +14,8 @@
 import { instant, statedInstant } from './time.mjs';
 import { createHash } from 'node:crypto';
 import { sourceReceiptTodo } from './blog.mjs';
+import { FEEDBIN_KEY, feedbinConfig, feedbinFact, readFeedbin } from './feedbin.mjs';
+import { pinboardClient } from './pinboard.mjs';
 
 export const URLS = {
   weeklyFeed: 'https://weekly.thingelstad.com/feed.json',
@@ -253,12 +255,33 @@ const READERS = {
     return { newest, extra: { links: stats.links, site_generated: stats.generated, synced_at: sync.fetched_at, pinboard_stamp: sync.pinboard_stamp } };
   },
 
-  async pinboard(ctx) {
+  async feedbin(ctx) {
+    const config = feedbinConfig(ctx.env);
+    if (!config) return { none: 'No Feedbin starred feed is configured.' };
+    const entries = await readFeedbin(config, ctx.fetch);
+    const state = ctx.env.SITE_BUCKET ? await ctx.s3Get(ctx.env.SITE_BUCKET, FEEDBIN_KEY) : null;
+    const fact = feedbinFact(state, entries, ctx.now, config.initial);
+    fact.extra.mode = config.mode;
+    return fact;
+  },
+
+  async pinboard(ctx, facts) {
     const token = ctx.env.PINBOARD_API_TOKEN;
     if (!token) return { none: 'No Pinboard token is configured (PinboardSecret in the stack).' };
-    const body = JSON.parse(await text(ctx, `${URLS.pinboardUpdate}&auth_token=${encodeURIComponent(token)}`));
+    const api = ctx.pinboard ?? pinboardClient({ token, fetch: ctx.fetch });
+    const body = await api.update();
     const stamp = instant(body.update_time);
-    return { newest: { link: { id: stamp, at: stamp, url: 'https://pinboard.in/' } }, extra: {} };
+    if (!stamp) throw new Error('Invalid Pinboard change stamp.');
+    const fact = { newest: { link: { id: stamp, at: stamp, url: 'https://pinboard.in/' } }, extra: {} };
+    const star = facts.feedbin?.newest?.star;
+    if (star) {
+      try {
+        const found = await api.get(star.url);
+        if (found) fact.newest.star = { ...star };
+        else fact.absent = { star: { id: star.id } };
+      } catch { fact.errors = { star: 'The exact Pinboard bookmark lookup failed.' }; }
+    }
+    return fact;
   },
 
   async xyz(ctx) {
@@ -341,7 +364,7 @@ const READERS = {
   },
 };
 
-const DEPENDENT = new Set(['cdn', 'cards', 'thingy']);
+const DEPENDENT = new Set(['cdn', 'cards', 'thingy', 'pinboard']);
 
 /**
  * Read every system's fact. Returns { <system id>: fact } for every system in

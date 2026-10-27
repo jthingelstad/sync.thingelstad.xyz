@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0" xmlns:dc="http://purl.org/dc/elements/1.1/">
+<channel><title>Starred Articles</title><link>https://feedbin.com/</link>
+<item><title>Old article, newly starred &amp; worth reading</title>
+<description><![CDATA[<p>The entire article is ignored, including <item>markup</item>.</p>]]></description>
+<pubDate>Sat, 25 Jul 2026 11:20:55 +0000</pubDate>
+<link>https://example.com/old?a=1&amp;b=2</link>
+<dc:creator>An author</dc:creator><guid isPermaLink="false">https://feedbin.me/entries/123</guid></item>
+<item><title><![CDATA[A title with <brackets> & an ampersand]]></title>
+<link>https://example.com/recent</link><pubDate>Mon, 26 Oct 2026 12:00:00 +0000</pubDate>
+<guid isPermaLink="false">https://feedbin.me/entries/124</guid></item>
+</channel></rss>

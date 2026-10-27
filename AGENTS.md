@@ -62,6 +62,15 @@ Builder's credentials proves the permission without matching the rule.
 
 ## What it is not
 
+Exception requested by Jamie, 2026-10-27: Feedbin stars are an additive writer
+owned by this stack (hop 22). The half-hour clock journals stars, looks up
+each exact URL in Pinboard, creates only missing public bookmarks with no
+added tags (`replace=no`), and verifies each with a readback. The first run
+imports missing links from the current fifty-item feed. Existing bookmarks
+keep every field; unstars never delete. `src/feedbin.mjs`, `src/pinboard.mjs`
+and `docs/FEEDBIN.md` describe the journal, preview and private connection
+configuration. This exception does not authorize repairs on any other hop.
+
 - It is not the source of a single hop. `data/flows.json` is vendored from
   `../shared/flows.json` (`npm run flows:sync`; `npm run flows:check` fails on
   drift, and `npm test` runs it). A hop is a row in the shared file before it
@@ -87,6 +96,13 @@ Builder's credentials proves the permission without matching the rule.
   version means Thingy serves what the Librarian holds, and a mismatch shows
   as the build Thingy still serves (`build <8 hex>`), so the hop reads moving
   until the redeploy after the upload lands.
+- `src/feedbin.mjs`, `src/pinboard.mjs` — RSS discovery, the durable additive
+  import and a paced Pinboard API client. Feedbin's `star` fact names an exact
+  article independently of the existing Pinboard `link` change stamp. The feed
+  has no star times, so star journeys claim no lag. `FeedbinConfig` is one
+  NoEcho JSON parameter (URL, mode, initial policy, privacy and tags), supplied
+  via a gitignored file with `SYNC_FEEDBIN_CONFIG_FILE`; routine deploys retain
+  its previous value. The existing Pinboard token stays a dynamic reference.
 - `src/probe.mjs` — facts in, status out: fresh / moving / late / held /
   no-fact / unknown per hop and kind; the matrix; the receipts. Pure.
 - `src/events.mjs` — the published event: validation, the fold into the

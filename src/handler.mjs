@@ -18,6 +18,8 @@ import { copyReceived, queueReceived, RECEIVED_KEY, reportedFacts } from './rece
 import { observe } from './observe.mjs';
 import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
 import { acknowledgeBlog, blogPlan, BLOG_PRODUCER_KEY, BLOG_PUBLISHER_KEY } from './blog.mjs';
+import { FEEDBIN_KEY, feedbinConfig, importStars, readFeedbin } from './feedbin.mjs';
+import { pinboardClient } from './pinboard.mjs';
 
 const s3 = new S3Client({});
 const bus = new EventBridgeClient({});
@@ -61,7 +63,7 @@ export function triggerOf(event, published, received = null) {
   return { type: 'manual' };
 }
 
-export async function run({ now = stamp(), env = process.env, trigger = { type: 'clock' }, journeys = null, history = null, received = null, microblog = null, context = null } = {}) {
+export async function run({ now = stamp(), env = process.env, trigger = { type: 'clock' }, journeys = null, history = null, received = null, microblog = null, context = null, pinboard = null } = {}) {
   const ctx = context ?? {
     now,
     env,
@@ -71,6 +73,7 @@ export async function run({ now = stamp(), env = process.env, trigger = { type: 
       return { lastModified: head.LastModified?.toISOString(), metadata: head.Metadata, size: head.ContentLength, versionId: head.VersionId ?? null };
     },
     s3Get,
+    pinboard,
   };
   const facts = await collect(ctx, flows.systems.map((s) => s.id));
   let blog = null;
@@ -172,7 +175,7 @@ export async function handler(event = {}, context = {}) {
   const bucket = process.env.SITE_BUCKET;
   if (!bucket) throw new Error('SITE_BUCKET is not set');
   if (context.invokedFunctionArn && !process.env.PROBE_FUNCTION_ARN) process.env.PROBE_FUNCTION_ARN = context.invokedFunctionArn;
-  const now = stamp();
+  let now = stamp();
   const published = publishedEvent(event);
   const received = receivedEvent(event, now);
   if (published?.error) console.error(JSON.stringify({ published_event: 'rejected', why: published.error }));
@@ -185,6 +188,41 @@ export async function handler(event = {}, context = {}) {
     return report;
   }
   if (published?.error || received?.error) return { checked_at: now, rejected: published?.error ? 'published' : 'received', why: published?.error ?? received.error };
+  let feedbin = null, feedbin_sync = null;
+  try { feedbin = feedbinConfig(process.env); }
+  catch { feedbin_sync = { error: 'The Feedbin connection configuration is invalid.' }; }
+  const pinboard = pinboardClient({ token: process.env.PINBOARD_API_TOKEN });
+  // Read-only inspection runs in the deployed runtime, so the existing
+  // secret never has to be retrieved into a local session. No S3 writes.
+  if (event.feedbin_preview) {
+    if (!feedbin) return { feedbin: 'not configured' };
+    const entries = await readFeedbin(feedbin);
+    const state = await s3Get(bucket, FEEDBIN_KEY);
+    const result = await importStars({ state, entries, now, config: { ...feedbin, mode: 'preview' }, pinboard,
+      checkpoint: async () => { throw new Error('A preview cannot checkpoint.'); },
+      limit: 50, reserve: 20_000, remaining: () => context.getRemainingTimeInMillis?.() ?? Infinity });
+    return { feedbin: result.report, articles_in_feed: entries.length };
+  }
+  // Only the regular clock is an importer. Deploys, rehearsals, receipts,
+  // publishing events and journey follow-ups remain observation only.
+  if (event.clock && feedbin?.mode === 'active') {
+    try {
+      const entries = await readFeedbin(feedbin);
+      const state = await s3Get(bucket, FEEDBIN_KEY);
+      const result = await importStars({ state, entries, now, config: feedbin, pinboard,
+        checkpoint: (next) => put(bucket, FEEDBIN_KEY, JSON.stringify(next, null, 1)),
+        remaining: () => context.getRemainingTimeInMillis?.() ?? Infinity });
+      feedbin_sync = result.report;
+    } catch {
+      // A provider or storage error must not expose a URL or token in a log.
+      // Pending work stays in its last successful checkpoint.
+      feedbin_sync = { error: 'The Feedbin import failed; its saved queue will retry on the next clock.' };
+      console.error(JSON.stringify({ feedbin_sync }));
+    }
+  }
+  // The import can take minutes because Pinboard is paced. Observation
+  // timestamps belong to the collection that follows, not its earlier queue.
+  now = stamp();
   if (published && !published.error) {
     const key = published.source === 'microblog' ? BLOG_PUBLISHER_KEY : PUBLISHER_FACT_KEY;
     const stored = await s3Get(bucket, key);
@@ -202,14 +240,14 @@ export async function handler(event = {}, context = {}) {
   const journeys = await s3Get(bucket, JOURNEYS_KEY);
   const history = await s3Get(bucket, HISTORY_KEY);
   const microblog = process.env.PUBLISHING_BUS ? { producer: await s3Get(bucket, BLOG_PRODUCER_KEY), publisher: await s3Get(bucket, BLOG_PUBLISHER_KEY) } : null;
-  const result = await run({ now, trigger, journeys, history, received: reports, microblog });
+  const result = await run({ now, trigger, journeys, history, received: reports, microblog, pinboard });
   for (const rejection of result.rejected_received) console.error(JSON.stringify({ received_event: 'rejected', ...rejection }));
   const blog_events = await announceBlog(bucket, result.blog, now, process.env.PUBLISHING_BUS);
   await publish(bucket, result);
   let follow_ups = [];
   if (published && !published.error) follow_ups = await scheduleFollowUps(published, now);
   const s = result.status.summary;
-  const report = { checked_at: result.status.checked_at, trigger, ...s, follow_ups, blog_events };
+  const report = { checked_at: result.status.checked_at, trigger, ...s, follow_ups, blog_events, ...(feedbin_sync ? { feedbin_sync } : {}) };
   console.log(JSON.stringify(report));
   return report;
 }

@@ -15,7 +15,8 @@
     "alt": "a blog photo's alt text",
     "featured": "the blog's Featured choice",
     "note": "the note on a saved link",
-    "readers": "Tinylytics view counts"
+    "readers": "Tinylytics view counts",
+    "star": "an article starred in Feedbin"
   },
   "systems": [
     {
@@ -25,7 +26,7 @@
       "url": "https://pinboard.in/",
       "runs_on": "pinboard.in",
       "fact": "posts/update gives the time of the last change; the sync probe reads it with the pinboard_token key of the sync-runtime secret (since 2026-10-26).",
-      "notes": "Jamie's capture tool for links. No webhooks."
+      "notes": "Jamie's bookmark store, downstream of reading and starring in Feedbin as well as manual capture. No webhooks."
     },
     {
       "id": "microblog",
@@ -151,6 +152,15 @@
       "runs_on": "aws",
       "fact": "A card URL returns an image drawn from the post as it is now.",
       "notes": "Draws each post's social card from its h-entry on request; CloudFront caches it."
+    },
+    {
+      "id": "feedbin",
+      "name": "Feedbin",
+      "role": "source",
+      "url": "https://feedbin.com/",
+      "runs_on": "feedbin.com",
+      "fact": "The starred RSS feed names up to fifty articles by Feedbin entry id and article URL. Sync records first observation; the feed supplies article publication dates, never star times. The feed address stays in private deployment configuration.",
+      "notes": "Jamie's reading and discovery origin. Starring an article queues an additive save to Pinboard; unstars and deletions are never propagated."
     }
   ],
   "hops": [
@@ -567,6 +577,25 @@
       "verify": "podcast.xml carries the episode. Its receipt is the published event for the another leg on the bus; the sync page measures the hop from that event's time.",
       "status": "unverified",
       "notes": "Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length. Arrival reporting contract (sync plan step 4): source another, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 6 leaves hand-published episodes with the public podcast feed as their producer. This row remains unverified until the first WT Builder another send announces itself; no episode is invented to change the status. Step 5 sender contract: Another Thing reports source another, received, kind episode, via site-deploy after the public feed matches its build and changes from a known prior episode. An unchanged deploy or unknown baseline sends no arrival. This reporting does not turn the manual producer into a WT Builder send; its proposed sender and delivery-role permission wait for PR review and Jamie's activation."
+    },
+    {
+      "id": 22,
+      "from": "feedbin",
+      "to": "pinboard",
+      "kinds": [
+        "star"
+      ],
+      "moves": "The article URL and title of each newly observed star; creates a bookmark only when that exact URL is missing.",
+      "mechanism": "The sync Lambda polls the starred RSS feed, journals pending saves, reads posts/get for the exact article URL, adds with replace=no, and confirms with another posts/get. Existing notes, tags, privacy and save dates are preserved.",
+      "trigger": {
+        "type": "clock",
+        "schedule": "Every half hour",
+        "runs_on": "aws"
+      },
+      "expected_lag_hours": 0.5,
+      "verify": "An exact posts/get URL lookup confirms the bookmark. A change stamp or an unrelated newer bookmark never proves arrival. Sync exposes the pending count and a receipt for the newest observed star.",
+      "status": "ok",
+      "notes": "Requested by Jamie on 2026-10-27. This is an explicitly authorized additive writer in sync; other hops remain observation only. The first-run import and bookmark privacy are deployment choices. Feed publication dates are never read as star or save times; no starring-to-save lag is claimed. The RSS feed is a fifty-item window, so stars that leave between successful polls cannot be recovered from it."
     }
   ],
   "fields": [
@@ -732,6 +761,15 @@
       ],
       "sees": "Agent closeouts per channel; every CloudWatch alarm state change in the account, routed by alarm-name prefix (weekly-thing-librarian-, thingy-web-, weekly-site-, another-site- to #publishing-log; links-, thingelstad-xyz-, cards- to #sites-log); Codex automations that fired but started no run (activity missed, in the 06:30 brief); each published send leg on the publishing bus, as one post in #publishing-log saying which legs have gone and which are pending (rule projects-activity-published in the projects-activity-alarms stack, since 2026-10-26).",
       "misses": "Lag itself, until the sync alarms exist (step 4, prefix sync-); a leg that never sends (no event, so no post; the sync page shows it moving, then late)."
+    },
+    {
+      "name": "Feedbin to Pinboard sync",
+      "where": "sync Lambda, on its half-hour clock",
+      "hops": [
+        22
+      ],
+      "sees": "Durably queued stars, exact Pinboard URL readbacks, importer failures and pending counts.",
+      "misses": "Stars that disappear from the fifty-item feed before any successful poll. There is no star timestamp in this feed."
     }
   ]
 }
