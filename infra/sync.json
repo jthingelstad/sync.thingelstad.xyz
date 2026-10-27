@@ -25,7 +25,7 @@
     "RuntimeSecret": {
       "Type": "String",
       "Default": "",
-      "Description": "Name of sync-runtime. Reader keys: pinboard_token, microblog_api_key. Optional buttondown_webhook_signing_key and github_webhook_signing_key resolve only when their sender flag is true."
+      "Description": "Name of sync-runtime. Reader keys: pinboard_token, microblog_api_key. Webhook signing keys buttondown_webhook_signing_key, github_webhook_signing_key, strava_webhook_signing_key, and strava_webhook_verify_token resolve only when their sender flag is true."
     },
     "EnableButtondown": {
       "Type": "String",
@@ -44,6 +44,21 @@
         "true"
       ],
       "Description": "Enable signed GitHub push intake only after its sync-runtime key exists and webhooks for registered public source repositories are configured."
+    },
+    "EnableStrava": {
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Description": "Enable Strava only after confirming its signing contract, adding both runtime keys and setting the one permitted athlete id."
+    },
+    "StravaOwnerId": {
+      "Type": "String",
+      "Default": "",
+      "AllowedPattern": "^([1-9][0-9]{0,19})?$",
+      "Description": "Non-secret public Strava athlete id permitted for activity events. Empty refuses every Strava request."
     }
   },
   "Conditions": {
@@ -131,6 +146,21 @@
           "Fn::Equals": [
             {
               "Ref": "EnableGitHub"
+            },
+            "true"
+          ]
+        }
+      ]
+    },
+    "HasStravaKeys": {
+      "Fn::And": [
+        {
+          "Condition": "HasRuntimeSecret"
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "EnableStrava"
             },
             "true"
           ]
@@ -330,7 +360,8 @@
             "published",
             "received",
             "subscriber",
-            "pushed"
+            "pushed",
+            "activity"
           ],
           "source": [
             "wt-builder",
@@ -341,7 +372,8 @@
             "another",
             "microblog",
             "buttondown",
-            "github"
+            "github",
+            "strava"
           ]
         },
         "RetentionDays": 90
@@ -923,7 +955,7 @@
       "Type": "AWS::IAM::Role",
       "Condition": "HasCode",
       "Properties": {
-        "Description": "Signed webhook intake: own logs, Buttondown count signals and registered public GitHub pushes on the publishing bus only",
+        "Description": "Signed webhook intake: own logs and scoped Buttondown, GitHub and Strava metadata on the publishing bus only",
         "AssumeRolePolicyDocument": {
           "Version": "2012-10-17",
           "Statement": [
@@ -989,6 +1021,23 @@
                       "events:detail-type": "pushed"
                     }
                   }
+                },
+                {
+                  "Sid": "StravaActivitySignals",
+                  "Effect": "Allow",
+                  "Action": "events:PutEvents",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "PublishingBus",
+                      "Arn"
+                    ]
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "events:source": "strava",
+                      "events:detail-type": "activity"
+                    }
+                  }
                 }
               ]
             }
@@ -1012,8 +1061,8 @@
         "Architectures": [
           "arm64"
         ],
-        "MemorySize": 128,
-        "Timeout": 10,
+        "MemorySize": 256,
+        "Timeout": 5,
         "ReservedConcurrentExecutions": 2,
         "Role": {
           "Fn::GetAtt": [
@@ -1067,6 +1116,34 @@
                 "HasGitHubKey",
                 {
                   "Fn::Sub": "{{resolve:secretsmanager:${RuntimeSecret}:SecretString:github_webhook_signing_key}}"
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            },
+            "ENABLE_STRAVA": {
+              "Ref": "EnableStrava"
+            },
+            "STRAVA_OWNER_ID": {
+              "Ref": "StravaOwnerId"
+            },
+            "STRAVA_WEBHOOK_SIGNING_KEY": {
+              "Fn::If": [
+                "HasStravaKeys",
+                {
+                  "Fn::Sub": "{{resolve:secretsmanager:${RuntimeSecret}:SecretString:strava_webhook_signing_key}}"
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            },
+            "STRAVA_WEBHOOK_VERIFY_TOKEN": {
+              "Fn::If": [
+                "HasStravaKeys",
+                {
+                  "Fn::Sub": "{{resolve:secretsmanager:${RuntimeSecret}:SecretString:strava_webhook_verify_token}}"
                 },
                 {
                   "Ref": "AWS::NoValue"
@@ -1182,7 +1259,7 @@
           ""
         ]
       },
-      "Description": "Append /buttondown or /github; each sender is disabled until its explicit flag is true and its signing key is present."
+      "Description": "Append /buttondown, /github or /strava; each sender requires its explicit flag and signing key; Strava also requires its verify token and owner id."
     }
   }
 }

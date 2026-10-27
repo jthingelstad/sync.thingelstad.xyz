@@ -77,7 +77,7 @@ test('the page is self-contained, keeps every hop anchor and places stories befo
   assert.ok(page.indexOf('id="journeys"') < page.indexOf('id="history"'));
   assert.ok(page.indexOf('id="history"') < page.indexOf('id="receipts"'));
   for (const id of new Set(status.hops.map((h) => h.id))) { assert.ok(page.includes(`id="hop-${id}"`)); assert.ok(page.includes(`href="#hop-${id}"`)); }
-  assert.equal((page.match(/class="pipe-case"/g) ?? []).length, 21);
+  assert.equal((page.match(/class="pipe-case"/g) ?? []).length, new Set(status.hops.map((h) => h.id)).size);
   assert.doesNotMatch(page, /<script\b|@import/i);
   for (const [, url] of page.matchAll(/url\(([^)]+)\)/g)) assert.ok(url.replace(/^["']/, '').startsWith('data:'), 'CSS assets are inline');
   assert.doesNotMatch(page, /<(?:link|img|iframe)[^>]+(?:src|href)="(?:https?:|\/\/)/i);

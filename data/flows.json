@@ -15,7 +15,8 @@
     "alt": "a blog photo's alt text",
     "featured": "the blog's Featured choice",
     "note": "the note on a saved link",
-    "readers": "Tinylytics view counts"
+    "readers": "Tinylytics view counts",
+    "activity": "a Strava activity event: public id, change type and time only"
   },
   "systems": [
     {
@@ -151,6 +152,23 @@
       "runs_on": "aws",
       "fact": "A card URL returns an image drawn from the post as it is now.",
       "notes": "Draws each post's social card from its h-entry on request; CloudFront caches it."
+    },
+    {
+      "id": "strava",
+      "name": "Strava",
+      "role": "source",
+      "url": "https://www.strava.com/",
+      "runs_on": "strava.com",
+      "fact": "No activity body is published on the sync page. Signed webhooks may carry only the configured athlete's activity id, change type and event time to the private publishing bus.",
+      "notes": "Intake starts disabled. The current official webhook example defines X-Strava-Signature (timestamp and HMAC-SHA256); no activity fetch or post is made."
+    },
+    {
+      "id": "publishing-bus",
+      "name": "Publishing bus",
+      "role": "publisher",
+      "runs_on": "aws",
+      "fact": "thingelstad-publishing carries scoped event metadata in its ninety-day archive. Webhook bodies and athlete/subscriber identities never reach the public sync files.",
+      "notes": "Owned by sync.thingelstad.xyz. Buttondown, GitHub and Strava intake senders each wait for their signing key and explicit enable flag; this node publishes no activity fact."
     }
   ],
   "hops": [
@@ -304,7 +322,7 @@
       "expected_lag_hours": 0.25,
       "verify": "The draft exists with the issue's subject; the email goes out when Jamie sends it. Its receipt is the published event for the buttondown leg on the bus; the sync page measures the hop from that event's time.",
       "status": "ok",
-      "notes": "undefined Step 7 intake: Buttondown subscriber.created and subscriber.unsubscribed may announce source buttondown, detail-type subscriber, with event and intake time only; no address or subscriber id. This is a separate count signal, not an email-send receipt. The /buttondown sender stays off until Jamie adds buttondown_webhook_signing_key to sync-runtime and enables EnableButtondown after configuring the same signing key in Buttondown. HMAC-SHA256 covers the raw body."
+      "notes": "Step 7 intake: Buttondown subscriber.created and subscriber.unsubscribed may announce source buttondown, detail-type subscriber, with event and intake time only; no address or subscriber id. This is a separate count signal, not an email-send receipt. The /buttondown sender stays off until Jamie adds buttondown_webhook_signing_key to sync-runtime and enables EnableButtondown after configuring the same signing key in Buttondown. HMAC-SHA256 covers the raw body."
     },
     {
       "id": 9,
@@ -567,6 +585,25 @@
       "verify": "podcast.xml carries the episode. Its receipt is the published event for the another leg on the bus; the sync page measures the hop from that event's time.",
       "status": "unverified",
       "notes": "Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length. Arrival reporting contract (sync plan step 4): source another, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 6 leaves hand-published episodes with the public podcast feed as their producer. This row remains unverified until the first WT Builder another send announces itself; no episode is invented to change the status."
+    },
+    {
+      "id": 22,
+      "from": "strava",
+      "to": "publishing-bus",
+      "kinds": [
+        "activity"
+      ],
+      "moves": "The configured athlete's activity id, create/update/delete type and event time, never a title, route, owner id or body.",
+      "mechanism": "sync-intake /strava verifies the timestamped X-Strava-Signature over raw bytes, accepts activity objects for the configured owner only, and puts source strava, detail-type activity. No subscriber or content write follows.",
+      "trigger": {
+        "type": "live",
+        "event": "signed activity webhook",
+        "runs_on": "AWS Lambda function URL"
+      },
+      "expected_lag_hours": 0.25,
+      "verify": "A natural signed delivery is acknowledged by EventBridge as metadata { id, type, at }. Fixtures and mocks prove parsing without real activity. The public page contains no webhook body.",
+      "status": "unverified",
+      "notes": "Off until Jamie adds strava_webhook_signing_key and the separate strava_webhook_verify_token to sync-runtime, confirms the signing contract for his app, supplies its owner id and enables EnableStrava. The official API requires a 200 for successful POSTs and the GET challenge; invalid requests still return empty 204. No real activity is manufactured to test it. What consumes these events is Jamie's later decision."
     }
   ],
   "fields": [
