@@ -1,4 +1,12 @@
-# Subscribers: none yet
+# Publishing subscribers
+
+The first active candidate is the public bookmark path (hop 23), requested
+2026-10-27. `LinksBookmarkMode` is `off` until its GitHub key exists,
+`rehearsal` for a `pinboard/ping` dry run, and `active` for the metadata-only
+`pinboard/bookmarks-ready` wake-up to `sync-bookmarks.yml` on `main`.
+Only these four resources return: Connection, ApiDestination, invoke role,
+and rule. `../links.thingelstad.xyz/docs/BOOKMARKS.md` describes the destination
+and acceptance. The nightly mirror and WT354 join are unchanged.
 
 A subscriber is a rule on the bus that starts a destination's workflow
 (EventBridge API destination → GitHub `workflow_dispatch`). The night of
@@ -19,6 +27,7 @@ row.
 
 | Hop | Event | Workflow | sync-runtime key |
 | --- | --- | --- | --- |
+| 23 | pinboard bookmarks-ready | links.thingelstad.xyz/sync-bookmarks.yml | github_links_actions_token |
 | 10 | wt-builder published, issue, archive leg | librarian-thing/library-round.yml | github_librarian_actions_token |
 | 6 | wt-builder published, issue, website leg | links.thingelstad.xyz/sync-join.yml | github_links_actions_token |
 | 13 | github pushed, registered public repository | thingelstad.xyz/sync-rebuild.yml | github_registry_actions_token |

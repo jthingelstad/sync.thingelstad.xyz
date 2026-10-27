@@ -16,6 +16,27 @@ const fixture = () => fs.readFile(new URL('./fixtures/feedbin/starred.xml', impo
 const article = (id = '123') => ({ id, url: `https://example.com/${id}`, title: `Article ${id}`, article_at: '2005-01-01T00:00:00Z' });
 const present = (url) => ({ url, saved_at: '2026-10-01T12:00:00Z', shared: 'no' });
 
+test('Linking Things independently proves the exact starred article and distinguishes absence from failure', async () => {
+  const xml = await fixture();
+  const stats = await fs.readFile(new URL('./fixtures/links-stats.jsonrpc', import.meta.url), 'utf8');
+  const sync = await fs.readFile(new URL('./fixtures/links-sync.json', import.meta.url), 'utf8');
+  for (const mode of ['present', 'absent', 'failed', 'different']) {
+    const facts = await collect({ now, env: { FEEDBIN_CONFIG: JSON.stringify(config) }, s3Get: async () => null,
+      fetch: async (url) => {
+        if (url === config.url) return { ok: true, text: async () => xml };
+        if (url.endsWith('/mcp')) return { ok: true, text: async () => stats };
+        if (url.includes('raw.githubusercontent')) return { ok: true, text: async () => sync };
+        if (mode === 'absent') return { ok: false, status: 404 };
+        if (mode === 'failed') throw new Error('unavailable');
+        const id = new URL(url).pathname.split('/').at(-1).slice(0, -5);
+        return { ok: true, json: async () => ({ id, url: mode === 'different' ? 'https://example.com/other' : 'https://example.com/old?a=1&b=2' }) };
+      } }, ['feedbin', 'links']);
+    if (mode === 'present') assert.equal(facts.links.newest.star.id, '123');
+    else if (mode === 'absent') assert.equal(facts.links.absent.star.id, '123');
+    else { assert.ok(facts.links.errors.star); assert.equal(facts.links.absent, undefined); }
+  }
+});
+
 test('RSS uses the article URL, ignores bodies, and never mistakes publication for star time', async () => {
   const entries = parseFeedbin(await fixture());
   assert.equal(entries.length, 2);

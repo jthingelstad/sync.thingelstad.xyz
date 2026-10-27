@@ -86,3 +86,21 @@ empty string to remove the configuration. Setting `mode` back to `preview`
 pauses saves while retaining the journal. A rehearsal returns before even
 reading the configuration. The feed URL and API errors never enter public
 output; logs and failures use generic messages or HTTP status codes.
+
+## Continuing to Linking Things
+
+Jamie requested the next leg on 2026-10-27. Hop 23 captures only confirmed
+explicitly public Pinboard records into Links' private S3 inbox. The public
+journal stores only a digest pointer, link id and capture time. A metadata-only
+`pinboard/bookmarks-ready` event wakes `sync-bookmarks.yml`; it keeps the
+Pinboard credential and private raw account export out of GitHub.
+`docs/SUBSCRIBERS.md` describes the off/rehearsal/active switch and GitHub key.
+Invoke `{"bookmarks_preview":true}` for a read-only five-record API contract
+check in the deployed runtime; it returns counts only.
+
+The Links build combines its additive ledger with the nightly full snapshot,
+with canonical fields and newer snapshots taking precedence. Sync verifies
+the current star through the exact public JSON twin, independently of the
+account-wide change stamp. A star remains untimed, even when all three
+systems hold it. Pending wake-ups retry each half-hour until the deployed
+Links fact acknowledges the captures. This exception changes no other hop.

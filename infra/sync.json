@@ -55,6 +55,16 @@
       "Default": "",
       "NoEcho": true,
       "Description": "Private JSON connection configuration for the Feedbin starred-feed importer: url, mode (preview or active), initial (import or future), shared (boolean), tags (array). Empty disables it. The Pinboard credential remains a Secrets Manager dynamic reference."
+    },
+    "LinksBookmarkMode": {
+      "Type": "String",
+      "Default": "off",
+      "AllowedValues": [
+        "off",
+        "rehearsal",
+        "active"
+      ],
+      "Description": "Pinboard public bookmark subscriber: off resolves no key, rehearsal dispatches only a dry run, active captures public bookmarks and starts their publication."
     }
   },
   "Conditions": {
@@ -175,6 +185,33 @@
             ""
           ]
         }
+      ]
+    },
+    "HasLinksBookmarks": {
+      "Fn::And": [
+        {
+          "Condition": "HasRuntimeSecret"
+        },
+        {
+          "Fn::Not": [
+            {
+              "Fn::Equals": [
+                {
+                  "Ref": "LinksBookmarkMode"
+                },
+                "off"
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "ActiveLinksBookmarks": {
+      "Fn::Equals": [
+        {
+          "Ref": "LinksBookmarkMode"
+        },
+        "active"
       ]
     }
   },
@@ -372,7 +409,8 @@
             "subscriber",
             "pushed",
             "activity",
-            "refreshed"
+            "refreshed",
+            "bookmarks-ready"
           ],
           "source": [
             "wt-builder",
@@ -384,7 +422,8 @@
             "microblog",
             "buttondown",
             "github",
-            "xyz"
+            "xyz",
+            "pinboard"
           ]
         },
         "RetentionDays": 90
@@ -513,6 +552,42 @@
                       "events:detail-type": "published"
                     }
                   }
+                },
+                {
+                  "Fn::If": [
+                    "HasLinksBookmarks",
+                    {
+                      "Sid": "CapturePublicBookmarks",
+                      "Effect": "Allow",
+                      "Action": "s3:PutObject",
+                      "Resource": {
+                        "Fn::Sub": "arn:${AWS::Partition}:s3:::links-storage-inbox-${AWS::AccountId}/bookmarks/*"
+                      }
+                    },
+                    {
+                      "Ref": "AWS::NoValue"
+                    }
+                  ]
+                },
+                {
+                  "Sid": "AnnounceCapturedPublicBookmarks",
+                  "Effect": "Allow",
+                  "Action": "events:PutEvents",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "PublishingBus",
+                      "Arn"
+                    ]
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "events:source": "pinboard",
+                      "events:detail-type": [
+                        "bookmarks-ready",
+                        "ping"
+                      ]
+                    }
+                  }
                 }
               ]
             }
@@ -610,6 +685,17 @@
                 "HasFeedbin",
                 {
                   "Ref": "FeedbinConfig"
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            },
+            "LINKS_BOOKMARK_INBOX": {
+              "Fn::If": [
+                "ActiveLinksBookmarks",
+                {
+                  "Fn::Sub": "links-storage-inbox-${AWS::AccountId}"
                 },
                 {
                   "Ref": "AWS::NoValue"
@@ -1208,6 +1294,137 @@
             }
           ]
         }
+      }
+    },
+    "LinksBookmarkConnection": {
+      "Type": "AWS::Events::Connection",
+      "Condition": "HasLinksBookmarks",
+      "Properties": {
+        "AuthorizationType": "API_KEY",
+        "AuthParameters": {
+          "ApiKeyAuthParameters": {
+            "ApiKeyName": "Authorization",
+            "ApiKeyValue": {
+              "Fn::Sub": "Bearer {{resolve:secretsmanager:${RuntimeSecret}:SecretString:github_links_actions_token}}"
+            }
+          }
+        }
+      }
+    },
+    "LinksBookmarkDestination": {
+      "Type": "AWS::Events::ApiDestination",
+      "Condition": "HasLinksBookmarks",
+      "Properties": {
+        "ConnectionArn": {
+          "Fn::GetAtt": [
+            "LinksBookmarkConnection",
+            "Arn"
+          ]
+        },
+        "HttpMethod": "POST",
+        "InvocationEndpoint": "https://api.github.com/repos/jthingelstad/links.thingelstad.xyz/actions/workflows/sync-bookmarks.yml/dispatches",
+        "InvocationRateLimitPerSecond": 1
+      }
+    },
+    "LinksBookmarkInvokeRole": {
+      "Type": "AWS::IAM::Role",
+      "Condition": "HasLinksBookmarks",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole"
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "invoke-links-bookmarks",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "events:InvokeApiDestination",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "LinksBookmarkDestination",
+                      "Arn"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "LinksBookmarkRule": {
+      "Type": "AWS::Events::Rule",
+      "Condition": "HasLinksBookmarks",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-links-bookmarks"
+        },
+        "EventBusName": {
+          "Ref": "PublishingBus"
+        },
+        "State": "ENABLED",
+        "EventPattern": {
+          "source": [
+            "pinboard"
+          ],
+          "detail-type": {
+            "Fn::If": [
+              "ActiveLinksBookmarks",
+              [
+                "bookmarks-ready"
+              ],
+              [
+                "ping"
+              ]
+            ]
+          }
+        },
+        "Targets": [
+          {
+            "Id": "links-bookmarks",
+            "Arn": {
+              "Fn::GetAtt": [
+                "LinksBookmarkDestination",
+                "Arn"
+              ]
+            },
+            "RoleArn": {
+              "Fn::GetAtt": [
+                "LinksBookmarkInvokeRole",
+                "Arn"
+              ]
+            },
+            "Input": {
+              "Fn::If": [
+                "ActiveLinksBookmarks",
+                "{\"ref\":\"main\",\"inputs\":{\"dry_run\":\"false\"}}",
+                "{\"ref\":\"main\",\"inputs\":{\"dry_run\":\"true\"}}"
+              ]
+            },
+            "HttpParameters": {
+              "HeaderParameters": {
+                "Accept": "application/vnd.github+json",
+                "X-GitHub-Api-Version": "2026-03-10"
+              }
+            },
+            "RetryPolicy": {
+              "MaximumEventAgeInSeconds": 3600,
+              "MaximumRetryAttempts": 10
+            }
+          }
+        ]
       }
     }
   },

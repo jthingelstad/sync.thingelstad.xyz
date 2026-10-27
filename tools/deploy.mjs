@@ -246,6 +246,7 @@ async function apply(execute_) {
     EnableGitHub: process.env.SYNC_ENABLE_GITHUB ?? (parameter(stack, 'EnableGitHub') || 'false'),
     // One list of the destinations' deploy role names that may report arrivals.
     ReceiverRoles: process.env.SYNC_RECEIVER_ROLES ?? parameter(stack, 'ReceiverRoles'),
+    LinksBookmarkMode: process.env.SYNC_LINKS_BOOKMARK_MODE ?? (parameter(stack, 'LinksBookmarkMode') || 'off'),
     // This NoEcho connection config includes the unguessable starred-feed
     // address. Preserve it using UsePreviousValue, never the masked value
     // DescribeStacks returns, and never print it into the deploy output.
@@ -254,6 +255,7 @@ async function apply(execute_) {
       : stack.Parameters?.some((p) => p.ParameterKey === 'FeedbinConfig') ? { UsePreviousValue: true } : { ParameterValue: '' },
   };
   log(`\nchange set for ${name}`);
+  if (parameters.LinksBookmarkMode !== 'off' && !parameters.RuntimeSecret) throw new Error('The bookmark subscriber requires RuntimeSecret.');
   const set = await changeSet(name, template, parameters, true);
   if (!set) log('  no changes');
   else show(set);

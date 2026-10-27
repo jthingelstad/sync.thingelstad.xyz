@@ -28,6 +28,14 @@ export function pinboardClient({ token, fetch: request = fetch, wait = sleep, cl
   };
   return {
     update: () => call('posts/update'),
+    async capture(url) {
+      const body = await call('posts/get', { url, meta: 'yes' });
+      if (!Array.isArray(body?.posts)) throw new Error('Pinboard returned an invalid bookmark lookup.');
+      const post = body.posts.find((p) => p.href === url);
+      if (post && !['yes', 'no'].includes(post.shared)) throw new Error('Pinboard did not state bookmark privacy.');
+      // Only an explicit public flag may cross the boundary to another app.
+      return post?.shared === 'yes' ? post : null;
+    },
     async get(url) {
       const body = await call('posts/get', { url });
       if (!Array.isArray(body?.posts)) throw new Error('Pinboard returned an invalid bookmark lookup.');
