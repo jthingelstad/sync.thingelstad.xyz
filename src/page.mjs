@@ -29,7 +29,7 @@ function receiptCard(r) {
   const title = r.item.url ? `<a href="${esc(r.item.url)}">${esc(itemLabel(r.kind, r.item))}</a>` : esc(itemLabel(r.kind, r.item));
   return `<section class="receipt">
 <h3>${esc(KIND_LABEL[r.kind] ?? r.kind)}</h3>
-<p class="receipt__item">${title}${r.item.title && r.kind !== 'post' && r.kind !== 'episode' ? ` <span class="muted">${esc(r.item.title.replace(new RegExp(`^${itemLabel(r.kind, r.item)}\\s*[—–-]?\\s*`), ''))}</span>` : ''}</p>
+<p class="receipt__item">${title}${r.item.title && !['post', 'episode', 'star'].includes(r.kind) ? ` <span class="muted">${esc(r.item.title.replace(new RegExp(`^${itemLabel(r.kind, r.item)}\\s*[—–-]?\\s*`), ''))}</span>` : ''}</p>
 <p class="muted">${r.item.at ? `${esc(central(r.item.at))}, ${esc(age(r.age_hours))} ago` : 'undated'} · from ${esc(systemName(r.origin))}</p>
 <ul class="holders">
 ${rows}
@@ -126,6 +126,15 @@ function storiesSection(journeys, now) {
   return recent.length ? '<div class="stories">' + recent.map((j) => '<section class="story"><h3>' + esc(KIND_LABEL[j.kind] ?? j.kind) + '</h3><p>' + esc(storyFor(j)) + '</p></section>').join('\n') + '</div>' : '<p class="empty">No recent publication or measured arrival this week. The map below shows the latest facts.</p>';
 }
 
+function feedbinSection(fact) {
+  if (!fact?.extra?.mode) return '';
+  const f = fact.extra;
+  return `<section class="receipt" aria-label="Feedbin to Pinboard"><h2>Feedbin → Pinboard</h2>
+<p>${f.mode === 'preview' ? 'Preview: saves are off. ' : ''}<strong>${esc(f.pending)} pending</strong> · ${esc(f.confirmed)} confirmed · ${esc(f.articles_in_feed)} articles in the feed.</p>
+${f.importer_error ? `<p>${esc(f.importer_error)}</p>` : ''}
+<p class="muted">${f.last_import_at ? `Last import check ${esc(central(f.last_import_at))}. ` : ''}Existing bookmarks keep their notes, tags and dates. The feed does not give star times.</p></section>`;
+}
+
 export function renderPage(status, journeys = {}, history = null) {
   const s = status.summary;
   const open = status.open.length
@@ -157,6 +166,7 @@ ${pageStyles}
 </header>
 <h2>The newest stories</h2>
 ${storiesSection(journeys, status.checked_at)}
+${feedbinSection(status.facts.feedbin)}
 <ul class="counts">
 <li>${pill('fresh')} ${s.fresh}</li><li>${pill('moving')} ${s.moving}</li><li>${pill('late')} ${s.late}</li><li>${pill('held')} ${s.held}</li><li>${pill('no-fact')} ${s.no_fact}</li><li>${pill('unknown')} ${s.unknown}</li>
 </ul>

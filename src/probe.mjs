@@ -15,7 +15,7 @@ import { age, centralWeekday, hoursBetween } from './time.mjs';
 
 // Kinds the matrix and receipts cover: the ones some system publishes a fact
 // for. The other kinds in the flows file show in the hops table only.
-export const MATRIX_KINDS = ['issue', 'post', 'link', 'episode', 'audio'];
+export const MATRIX_KINDS = ['issue', 'post', 'link', 'episode', 'audio', 'star'];
 
 // Where each kind starts. A hop whose source has no fact for the kind is
 // measured from the first system here that has one (the publisher has no
@@ -26,6 +26,7 @@ export const ORIGINS = {
   link: ['pinboard', 'links'],
   episode: ['wt-builder', 'another'],
   audio: ['wt-builder', 'weekly'],
+  star: ['feedbin'],
 };
 
 // A receipt for one kind also asks these systems about a related kind.
@@ -44,7 +45,7 @@ const HOLD_DAYS = new Set(['Fri', 'Sat']);
 const onHold = (hop, now) => Boolean(hop.hold) && HOLD_DAYS.has(centralWeekday(now));
 
 const newest = (facts, system, kind) => facts[system]?.newest?.[kind] ?? null;
-const errorFor = (fact, kind, want) => fact?.reported?.[kind] && String(fact.reported[kind].id) === String(want?.id) ? null : fact?.error;
+const errorFor = (fact, kind, want) => fact?.reported?.[kind] && String(fact.reported[kind].id) === String(want?.id) ? null : fact?.errors?.[kind] ?? fact?.error;
 
 /** The newest item of a kind at its origin, and which system said so. */
 export function origin(facts, kind) {
@@ -65,6 +66,7 @@ export function holds(have, want) {
   if (!have || !want) return false;
   if (String(have.id) === String(want.id)) return true;
   if (have.url && want.url && have.url === want.url) return true;
+  if (want.exact) return false;
   if (!have.at || !want.at) return false;
   const dayOnly = (at) => /^\d{4}-\d{2}-\d{2}$/.test(at);
   if (dayOnly(have.at) || dayOnly(want.at)) return have.at.slice(0, 10) >= want.at.slice(0, 10);
@@ -87,7 +89,7 @@ function hopStatus(hop, kind, facts, now) {
   if (fromError || toError) return { status: 'unknown', why: fromError ? `${hop.from}: ${fromError}` : `${hop.to}: ${toError}` };
   const target = newest(facts, hop.to, kind);
   if (!source) return { status: 'no-fact', why: `${hop.from} publishes no fact for ${kind}` };
-  if (!target) return { status: 'no-fact', why: `${hop.to} publishes no fact for ${kind}`, source, measured_from: measuredFrom };
+  if (!target && String(toFact?.absent?.[kind]?.id) !== String(source.id)) return { status: 'no-fact', why: `${hop.to} publishes no fact for ${kind}`, source, measured_from: measuredFrom };
   const report = toFact?.reported?.[kind];
   if (report && String(report.id) === String(source.id) && holds(target, source)) return { status: 'fresh', source, target, measured_from: measuredFrom, lag_hours: 0, reported_at: report.at, why: `reported via ${report.via} at ${report.at}` };
   const leg = measuredFrom === hop.from && source.legs ? LEGS[hop.to] : null;
@@ -103,7 +105,7 @@ function hopStatus(hop, kind, facts, now) {
     source = { ...source, at: sent.at, leg };
   }
   if (holds(target, source)) return { status: 'fresh', source, target, measured_from: measuredFrom, lag_hours: 0, ...(leg ? { leg } : {}) };
-  const lag = source.at ? hoursBetween(source.at, now) : null;
+  const lag = source.at || source.observed_at ? hoursBetween(source.at ?? source.observed_at, now) : null;
   if (onHold(hop, now)) return { status: 'held', source, target, measured_from: measuredFrom, lag_hours: lag, why: hop.hold, ...(leg ? { leg } : {}) };
   if (lag === null) return { status: 'late', source, target, measured_from: measuredFrom, lag_hours: null, why: 'the ids differ and the source item has no time', ...(leg ? { leg } : {}) };
   const status = lag > hop.expected_lag_hours ? 'late' : 'moving';
@@ -189,7 +191,8 @@ export function probe({ flows, facts, now, code = null, trigger = { type: 'clock
 function holder(facts, system, kind, want, label) {
   const fact = facts[system];
   const have = newest(facts, system, kind);
-  if (errorFor(fact, kind, want)) return { system, kind, label, state: 'unknown', why: fact.error };
+  if (errorFor(fact, kind, want)) return { system, kind, label, state: 'unknown', why: errorFor(fact, kind, want) };
+  if (String(fact?.absent?.[kind]?.id) === String(want.id)) return { system, kind, label, state: 'behind' };
   if (!have) return { system, kind, label, state: 'no-fact', why: fact?.none ?? 'no fact for this kind' };
   if (holds(have, want)) return { system, kind, label, state: 'has', newest: have };
   return { system, kind, label, state: 'behind', newest: have };

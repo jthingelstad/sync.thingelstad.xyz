@@ -3,7 +3,7 @@
 import { systemName } from './flows.mjs';
 import { central, centralDay, hoursBetween } from './time.mjs';
 
-export const KIND_LABEL = { issue: 'Weekly Thing issue', post: 'Blog post', link: 'Saved link', episode: 'Podcast episode', audio: 'Audio edition' };
+export const KIND_LABEL = { issue: 'Weekly Thing issue', post: 'Blog post', link: 'Saved link', episode: 'Podcast episode', audio: 'Audio edition', star: 'Feedbin star' };
 
 export function itemLabel(kind, item) {
   if (!item) return '';
@@ -41,7 +41,7 @@ export function storyFor(journey) {
     ? journey.origin === 'wt-builder'
       ? `${title} left ${systemName(journey.origin)} ${central(journey.item.at)}.`
       : `${title}, from ${systemName(journey.origin)}, is dated ${central(journey.item.at)}.`
-    : `${title} is being watched from ${systemName(journey.origin)}; its publication time is unknown.`;
+    : `${title} is being watched from ${systemName(journey.origin)}; ${journey.kind === 'star' ? 'the feed does not give its star time' : 'its publication time is unknown'}.`;
   const measured = [];
   const unmeasured = [];
   for (const [system, arrival] of Object.entries(journey.arrivals ?? {}).sort(([, a], [, b]) => Date.parse(a.at) - Date.parse(b.at))) {

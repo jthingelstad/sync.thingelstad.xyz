@@ -49,6 +49,12 @@
       "Type": "CommaDelimitedList",
       "Default": "",
       "Description": "Role names (not ARNs) of the destinations' own deploy roles, comma separated, that may put received and ping events on this bus. Empty grants nobody. One list, one policy: the hobby-scale shape."
+    },
+    "FeedbinConfig": {
+      "Type": "String",
+      "Default": "",
+      "NoEcho": true,
+      "Description": "Private JSON connection configuration for the Feedbin starred-feed importer: url, mode (preview or active), initial (import or future), shared (boolean), tags (array). Empty disables it. The Pinboard credential remains a Secrets Manager dynamic reference."
     }
   },
   "Conditions": {
@@ -153,6 +159,18 @@
                   "Ref": "ReceiverRoles"
                 }
               ]
+            },
+            ""
+          ]
+        }
+      ]
+    },
+    "HasFeedbin": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "FeedbinConfig"
             },
             ""
           ]
@@ -519,7 +537,7 @@
         ],
         "Handler": "src/handler.handler",
         "MemorySize": 256,
-        "Timeout": 120,
+        "Timeout": 300,
         "Role": {
           "Fn::GetAtt": [
             "ExecutionRole",
@@ -581,6 +599,17 @@
                 "HasRuntimeSecret",
                 {
                   "Fn::Sub": "{{resolve:secretsmanager:${RuntimeSecret}:SecretString:microblog_api_key}}"
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            },
+            "FEEDBIN_CONFIG": {
+              "Fn::If": [
+                "HasFeedbin",
+                {
+                  "Ref": "FeedbinConfig"
                 },
                 {
                   "Ref": "AWS::NoValue"
