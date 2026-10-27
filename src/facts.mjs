@@ -11,7 +11,9 @@
 // that system, not here.
 //
 // The parsers are pure and tested on fixtures; the readers fetch.
-import { instant } from './time.mjs';
+import { instant, statedInstant } from './time.mjs';
+import { createHash } from 'node:crypto';
+import { sourceReceiptTodo } from './blog.mjs';
 
 export const URLS = {
   weeklyFeed: 'https://weekly.thingelstad.com/feed.json',
@@ -79,7 +81,22 @@ export function parsePodcast(xml) {
 export function parseBlogFeed(feed) {
   const item = newestBy(feed.items ?? [], (i) => i.date_published);
   if (!item) return {};
-  return { post: { id: item.url, at: instant(item.date_published), url: item.url, title: item.title } };
+  return { post: blogItem(item) };
+}
+
+const blogItem = (item) => {
+  let url;
+  try { url = new URL(item.url); } catch { throw new Error('The blog permalink is invalid'); }
+  if(url.protocol!=='https:'||url.username||url.password||url.search||url.hash) throw new Error('The blog permalink is invalid');
+  const at=statedInstant(item.date_published);
+  if(!at) throw new Error('The blog publication time is invalid');
+  return { id: item.url, at, url: item.url, title: item.title ?? null,
+    ...(Array.isArray(item.tags) ? { categories: item.tags.filter((t)=>typeof t==='string').map((title)=>({id:createHash('sha256').update(title).digest('hex').slice(0,16),title})) } : {}) };
+};
+
+/** Public metadata only: no body, author, photo alt or private source value. */
+export function parseBlogPosts(feed) {
+  return (feed.items ?? []).filter((i)=>typeof i.url==='string' && instant(i.date_published)).map(blogItem);
 }
 
 /** The links_stats tool's result from the Linking Things MCP (JSON-RPC). */
@@ -153,7 +170,7 @@ export function parseLibrarianHealth(body) {
  */
 export function parsePublisherFact(stored) {
   const newest = {};
-  for (const kind of ['issue', 'episode']) {
+  for (const kind of ['issue', 'episode', 'post']) {
     const item = stored?.newest?.[kind];
     if (!item?.id) continue;
     newest[kind] = { id: String(item.id), at: instant(item.at), url: item.url ?? null, title: item.title ?? null, legs: item.legs ?? {} };
@@ -206,7 +223,7 @@ const READERS = {
 
   async microblog(ctx) {
     const feed = JSON.parse(await text(ctx, URLS.blogFeed));
-    return { newest: parseBlogFeed(feed), extra: { posts_in_feed: feed.items?.length ?? 0 } };
+    return { newest: parseBlogFeed(feed), observed_posts: parseBlogPosts(feed), source_receipt: sourceReceiptTodo(), extra: { posts_in_feed: feed.items?.length ?? 0 } };
   },
 
   async another(ctx) {

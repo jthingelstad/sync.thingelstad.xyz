@@ -1,0 +1,46 @@
+{
+  "producer": {
+    "version": 1,
+    "baseline": {
+      "id": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+      "at": "2026-10-25T20:08:12Z",
+      "url": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+      "title": "WT354 — A museum for nnxyz art"
+    },
+    "queued": {
+      "id": "https://www.thingelstad.com/2026/10/28/the-next-public-post.html",
+      "url": "https://www.thingelstad.com/2026/10/28/the-next-public-post.html",
+      "at": "2026-10-28T02:06:00Z",
+      "title": "The next public post"
+    },
+    "seen": [
+      "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+      "https://www.thingelstad.com/2026/10/28/the-next-public-post.html"
+    ],
+    "updated_at": "2026-10-28T02:06:01Z"
+  },
+  "publisher": {
+    "newest": {
+      "post": {
+        "id": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+        "at": "2026-10-25T20:08:12Z",
+        "url": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+        "title": "WT354 — A museum for nnxyz art",
+        "legs": {
+          "website": {
+            "at": "2026-10-25T20:08:12Z",
+            "url": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html"
+          }
+        }
+      }
+    },
+    "events": [
+      {
+        "kind": "post",
+        "id": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+        "leg": "website",
+        "at": "2026-10-25T20:08:12Z"
+      }
+    ]
+  }
+}

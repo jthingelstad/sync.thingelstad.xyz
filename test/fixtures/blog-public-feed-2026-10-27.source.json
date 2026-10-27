@@ -1,0 +1,8 @@
+{
+  "url": "https://www.thingelstad.com/feed.json",
+  "captured_at": "2026-10-27T06:30:33.037Z",
+  "sha256": "4e4122212ac172d9439698971c1222867869cbc85f33ff956e4dd30435003d59",
+  "authentication": "none",
+  "items": 25,
+  "note": "Unmodified public HTTP response. No Micropub source query or secret was read."
+}

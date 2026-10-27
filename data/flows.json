@@ -204,7 +204,8 @@
       },
       "expected_lag_hours": 0,
       "verify": "The post is a Journal item with the current text.",
-      "status": "ok"
+      "status": "ok",
+      "notes": "Sync plan step 6: the sync probe observes the public JSON feed and announces a newly observed post as source microblog, detail-type published, kind post, website leg, on thingelstad-publishing. Existing posts establish a baseline; retries do not manufacture another send. A post journey advances when the bus event is consumed. The captured public feed has tags but no independent numeric Micropub uid or modification time: authenticated q=source stays behind that explicit reader TODO. Hop 19 stays no-fact until an independent source identity and Library Agent write receipt can support a stored/rendered comparison; a destination-only witness never makes it fresh or late."
     },
     {
       "id": 4,
@@ -222,7 +223,8 @@
       },
       "expected_lag_hours": 0,
       "verify": "q=source for the post shows the edit.",
-      "status": "ok"
+      "status": "ok",
+      "notes": "Sync plan step 6: the sync probe observes the public JSON feed and announces a newly observed post as source microblog, detail-type published, kind post, website leg, on thingelstad-publishing. Existing posts establish a baseline; retries do not manufacture another send. A post journey advances when the bus event is consumed. The captured public feed has tags but no independent numeric Micropub uid or modification time: authenticated q=source stays behind that explicit reader TODO. Hop 19 stays no-fact until an independent source identity and Library Agent write receipt can support a stored/rendered comparison; a destination-only witness never makes it fresh or late."
     },
     {
       "id": 5,
@@ -362,7 +364,7 @@
       "expected_lag_hours": 26,
       "verify": "latest_content source_kind blog lists the post; the library's blog fingerprint moved.",
       "status": "ok",
-      "notes": "Two runners for one round means two answers to 'when did it last run'. blog-published, podcast-published and things-published are declared in library-round.yml and sent by no one (checked 2026-10-26). Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
+      "notes": "Two runners for one round means two answers to 'when did it last run'. blog-published, podcast-published and things-published are declared in library-round.yml and sent by no one (checked 2026-10-26). Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Sync plan step 6: the sync probe observes the public JSON feed and announces a newly observed post as source microblog, detail-type published, kind post, website leg, on thingelstad-publishing. Existing posts establish a baseline; retries do not manufacture another send. A post journey advances when the bus event is consumed. The captured public feed has tags but no independent numeric Micropub uid or modification time: authenticated q=source stays behind that explicit reader TODO. Hop 19 stays no-fact until an independent source identity and Library Agent write receipt can support a stored/rendered comparison; a destination-only witness never makes it fresh or late."
     },
     {
       "id": 12,
@@ -524,7 +526,7 @@
       "expected_lag_hours": 26,
       "verify": "q=source shows the edit, and the rendered page shows it after micro.blog rebuilds.",
       "status": "gap",
-      "notes": "First write round, 2026-10-22: 20 edits accepted by Micropub, 4 missing from the rendered pages after the rebuild. The read-back checks Micropub, not the page, so the round was green. A write needs a receipt: written, rendered, pulled back (hop 11)."
+      "notes": "First write round, 2026-10-22: 20 edits accepted by Micropub, 4 missing from the rendered pages after the rebuild. The read-back checks Micropub, not the page, so the round was green. A write needs a receipt: written, rendered, pulled back (hop 11). Sync plan step 6: the sync probe observes the public JSON feed and announces a newly observed post as source microblog, detail-type published, kind post, website leg, on thingelstad-publishing. Existing posts establish a baseline; retries do not manufacture another send. A post journey advances when the bus event is consumed. The captured public feed has tags but no independent numeric Micropub uid or modification time: authenticated q=source stays behind that explicit reader TODO. Hop 19 stays no-fact until an independent source identity and Library Agent write receipt can support a stored/rendered comparison; a destination-only witness never makes it fresh or late."
     },
     {
       "id": 20,
@@ -542,7 +544,8 @@
       },
       "expected_lag_hours": 0,
       "verify": "The card URL draws the post as it is now.",
-      "status": "ok"
+      "status": "ok",
+      "notes": "Sync plan step 6: the sync probe observes the public JSON feed and announces a newly observed post as source microblog, detail-type published, kind post, website leg, on thingelstad-publishing. Existing posts establish a baseline; retries do not manufacture another send. A post journey advances when the bus event is consumed. The captured public feed has tags but no independent numeric Micropub uid or modification time: authenticated q=source stays behind that explicit reader TODO. Hop 19 stays no-fact until an independent source identity and Library Agent write receipt can support a stored/rendered comparison; a destination-only witness never makes it fresh or late."
     },
     {
       "id": 21,
@@ -562,7 +565,7 @@
       "expected_lag_hours": 0.25,
       "verify": "podcast.xml carries the episode. Its receipt is the published event for the another leg on the bus; the sync page measures the hop from that event's time.",
       "status": "unverified",
-      "notes": "Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length. Arrival reporting contract (sync plan step 4): source another, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
+      "notes": "Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length. Arrival reporting contract (sync plan step 4): source another, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 6 leaves hand-published episodes with the public podcast feed as their producer. This row remains unverified until the first WT Builder another send announces itself; no episode is invented to change the status."
     }
   ],
   "fields": [
@@ -638,7 +641,7 @@
         20,
         21
       ],
-      "sees": "Whether the destination of each hop holds the newest item of its kind, measured from the published event or the next fact down; each item's journey, system by system, with the time it was first seen at each. The received contract accepts destination-reported arrival times, labelled reported; unmatched item ids wait at most one hour. Destination senders wait for their own step-5 PRs.",
+      "sees": "Whether the destination of each hop holds the newest item of its kind, measured from the published event or the next fact down; each item's journey, system by system, with the time it was first seen at each. The received contract accepts destination-reported arrival times, labelled reported; unmatched item ids wait at most one hour. Destination senders wait for their own step-5 PRs. New public blog posts are announced by the sync function as microblog published events; a first baseline is observation, not a historical send. Stored-source/Library Agent receipt fields remain an explicit TODO, with no destination-only inference for hop 19.",
       "misses": "A hop whose ends publish no fact (Buttondown, Tinylytics); whether the content is right."
     },
     {

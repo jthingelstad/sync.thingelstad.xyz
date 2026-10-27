@@ -1,7 +1,7 @@
 // Words from journey evidence only. A first confirmation has no measured
 // lag; a failed reader says nothing about whether the item arrived.
 import { systemName } from './flows.mjs';
-import { central, hoursBetween } from './time.mjs';
+import { central, centralDay, hoursBetween } from './time.mjs';
 
 export const KIND_LABEL = { issue: 'Weekly Thing issue', post: 'Blog post', link: 'Saved link', episode: 'Podcast episode', audio: 'Audio edition' };
 
@@ -9,6 +9,7 @@ export function itemLabel(kind, item) {
   if (!item) return '';
   if (kind === 'issue' || kind === 'audio') return /^\d+$/.test(String(item.id)) ? `WT${item.id}` : String(item.id);
   if (kind === 'link') return item.at ? `saved ${central(item.at)}` : String(item.id);
+  if (kind === 'post' && !String(item.title ?? '').trim()) return item.at ? `post ${centralDay(item.at)}` : String(item.id);
   return item.title ?? String(item.id);
 }
 

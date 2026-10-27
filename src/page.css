@@ -40,6 +40,7 @@ strong { font-weight:600; }
 .story { border-left:3px solid var(--jt-line); padding-left:1rem; }
 .story:first-child { border-color:var(--jt-moving); }
 .story p { font-size:var(--jt-size-ui); margin:0; }
+.story,.journey__heading h3 { overflow-wrap:anywhere; }
 .story h3 { font-size:var(--jt-size-h3); }
 .section-note { max-width:72ch; font-size:var(--jt-size-small); color:var(--jt-text-muted); }
 .map { margin:1.25rem calc(50% - 50vw); padding:1.5rem; overflow-x:auto; border-block:1px solid var(--jt-line); background:radial-gradient(var(--jt-line) 0.65px,transparent 0.65px) 0 0 / 20px 20px; }

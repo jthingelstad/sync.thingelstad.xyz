@@ -17,6 +17,7 @@ reconcile the public facts.
 | --- | --- | --- | --- |
 | `wt-builder` | `published` | WT Builder, after recording one send leg | Live |
 | `wt-builder` | `ping` | The same identity, for a permission rehearsal | No subscriber |
+| `microblog` | `published` | The sync probe, after finding a new public post | Public-feed producer; silent initial baseline |
 | `weekly` | `received` | Weekly Thing deploy, after the public build holds the item | Sender waits for step 5 |
 | `another` | `received` | Another Thing deploy, after the public build holds the item | Sender waits for step 5 |
 | `librarian` | `received` | Library round, after its pull advances a source | Sender waits for step 5 |
@@ -56,7 +57,7 @@ One event per leg, after that send has been recorded:
 }
 ```
 
-`kind` is `issue` or `episode`. `id` is its public short token, at most 64
+WT Builder's `kind` is `issue` or `episode`. `id` is its public short token, at most 64
 characters. `leg` is `website`, `buttondown`, `podcast`, `archive` or
 `another`. `at` is the send instant, with seconds and a zone. Older senders
 may omit it and use the envelope's `time`; an explicitly invalid `at` does
@@ -70,8 +71,18 @@ send. A leg retains its earliest send time. A late event for an older number
 cannot replace a newer item. A new item cannot borrow the previous item's
 title or URL. The audio edition is the issue's podcast leg.
 
+The blog uses the same envelope from source `microblog`, kind `post`,
+product `blog`, and leg `website`. Its id and url are the same public HTTPS
+permalink, at most 2048 characters, without credentials, query or fragment.
+`facts/microblog.json` holds the consumed receipt; the probe role may put
+only this source and `published` on the bus. Its separate producer cursor
+does not start a journey. The first observation is a silent baseline;
+later new posts must be consumed from the bus before the journey advances.
+`docs/MICROBLOG.md` records the feed window and deferred source receipt.
+
 The probe follows each published leg at 2, 5, 10, 15, 30, 45 and 60 minutes.
-Follow-up names make retries idempotent. A missing send-leg receipt remains
+Follow-up names make retries idempotent; URL ids use a stable hash to fit
+Scheduler's name limit. A missing send-leg receipt remains
 moving/late, unless the destination independently reports having the item;
 that is arrival evidence, not an invented send time.
 

@@ -1,0 +1,66 @@
+Each lane is time since publication, with its scale above. A circle says seen in a poll; a square says reported by an event. A dashed marker is the median from finished, measured journeys. Polls give the check interval when known; reports have one-second resolution. First confirmations have no measured lag and no time mark.
+Weekly Thing issue
+WT355
+from WT Builder
+dated Tue Oct 27, 9:02 p.m. CDT · watching since Tue Oct 27, 9:02 p.m. CDT
+Publication 7 min 30 sec 15 min
+Weekly Thing (web)
+1 min · seen Tue Oct 27, 9:03 p.m. CDT
+Buttondown
+no fact yet
+Linking Things
+not yet · 5 min so far
+Librarian
+not yet · 5 min so far
+Thingy
+not yet · 5 min so far
+Blog post
+The next public post
+from micro.blog
+dated Tue Oct 27, 9:06 p.m. CDT · watching since Tue Oct 27, 9:07 p.m. CDT
+Publication 7 min 30 sec 15 min
+WT Builder
+no fact yet
+Librarian
+not yet · 1 min so far
+Thingy
+not yet · 1 min so far
+cards.thingelstad.com
+not yet · 1 min so far
+Saved link
+saved Sun Oct 25, 9:21 p.m. CDT
+from Pinboard
+dated Sun Oct 25, 9:21 p.m. CDT · watching since Tue Oct 27, 9:07 p.m. CDT
+Publication 7 min 30 sec 15 min
+WT Builder
+no fact yet
+Linking Things
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
+Librarian
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
+Thingy
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
+Podcast episode
+How do you start a podcast?
+from Another Thing
+dated Sun Oct 5, 6:48 p.m. CDT · watching since Tue Oct 27, 9:07 p.m. CDT
+Publication 7 min 30 sec 15 min
+Librarian
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
+Thingy
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
+Audio edition
+WT354
+from Weekly Thing (web)
+dated Sat Oct 24, 7:00 a.m. CDT · watching since Tue Oct 27, 9:07 p.m. CDT
+Publication 7 min 30 sec 15 min
+files.thingelstad.com
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
+Another Thing
+no fact yet

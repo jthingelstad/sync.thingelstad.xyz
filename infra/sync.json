@@ -288,7 +288,8 @@
             "thingy",
             "links",
             "weekly",
-            "another"
+            "another",
+            "microblog"
           ]
         },
         "RetentionDays": 90
@@ -400,6 +401,23 @@
                     "s3:GetObject"
                   ],
                   "Resource": "arn:aws:s3:::weekly-thing-librarian/artifacts/*"
+                },
+                {
+                  "Sid": "AnnounceNewPublicBlogPosts",
+                  "Effect": "Allow",
+                  "Action": "events:PutEvents",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "PublishingBus",
+                      "Arn"
+                    ]
+                  },
+                  "Condition": {
+                    "StringEquals": {
+                      "events:source": "microblog",
+                      "events:detail-type": "published"
+                    }
+                  }
                 }
               ]
             }
@@ -519,7 +537,8 @@
             "thingy",
             "links",
             "weekly",
-            "another"
+            "another",
+            "microblog"
           ]
         },
         "State": "ENABLED",

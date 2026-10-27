@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import { test } from 'node:test';
 import { loadScenario, renderScenario, scenarioNames, scenarioSnapshot } from '../tools/scenarios.mjs';
 
-const names = ['after-send', 'friday-hold', 'late-hop', 'quiet-tuesday', 'reader-down', 'received-arrivals', 'send-in-progress', 'superseded'];
+const names = ['after-send', 'blog-awaiting-event', 'blog-event-arrived', 'friday-hold', 'late-hop', 'quiet-tuesday', 'reader-down', 'received-arrivals', 'send-in-progress', 'superseded'];
 
 test('every page scenario is complete and renders without a network request', async () => {
   assert.deepEqual(await scenarioNames(), names);
@@ -37,5 +37,8 @@ test('the scenarios exercise fresh, pending legs, behind builds, late, failed an
   assert.equal(row('late-hop', 6).source.id, '354');
   assert.equal(row('reader-down', 6).status, 'unknown');
   assert.equal(row('friday-hold', 16).status, 'held');
+  assert.notEqual(scenarios['blog-awaiting-event'].journeys.post.item.id,scenarios['blog-awaiting-event'].status.facts.microblog.newest.post.id);
+  assert.equal(scenarios['blog-event-arrived'].journeys.post.item.id,scenarios['blog-event-arrived'].status.facts.microblog.newest.post.id);
+  assert.equal(scenarios['blog-event-arrived'].status.facts.microblog.publication.via,'bus');
   await assert.rejects(loadScenario('../fixtures'), /Unknown scenario/);
 });
