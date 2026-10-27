@@ -205,6 +205,13 @@ a GET. Jamie adds `buttondown_webhook_signing_key` in `sync-runtime`,
 configures Buttondown and enables it using `docs/WEBHOOKS.md`. GitHub and
 Strava still wait for their own PRs; the step is not complete.
 
+GitHub intake deployed 2026-10-27, [PR #7](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/7),
+with both sender flags false. 73 tests and ten previews pass; both health
+URLs serve package `b4f253a…` at 2:40 a.m. CDT. The same intake URL stays
+live, with the reviewed 44-repository public allowlist. Jamie adds
+`github_webhook_signing_key`, configures the desired repositories and
+enables the flag using `docs/WEBHOOKS.md`; step 8 adds the rebuild rule.
+
 A second function, `sync-intake`, behind a Lambda function URL, turns a
 third party's webhook into a bus event after checking its signature, and
 answers 204. Secrets as keys in `sync-runtime`. First three senders, each
