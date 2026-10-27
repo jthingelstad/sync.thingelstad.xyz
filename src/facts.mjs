@@ -260,7 +260,7 @@ const READERS = {
     if (!config) return { none: 'No Feedbin starred feed is configured.' };
     const entries = await readFeedbin(config, ctx.fetch);
     const state = ctx.env.SITE_BUCKET ? await ctx.s3Get(ctx.env.SITE_BUCKET, FEEDBIN_KEY) : null;
-    const fact = feedbinFact(state, entries, ctx.now);
+    const fact = feedbinFact(state, entries, ctx.now, config.initial);
     fact.extra.mode = config.mode;
     return fact;
   },

@@ -52,6 +52,10 @@ test('bad feeds and connection settings fail without exposing the feed address o
 });
 
 test('first-run future policy is durable, while later stars include old articles and reordered feeds', () => {
+  const initialFact = feedbinFact(null, [article()], now, 'future');
+  assert.deepEqual(initialFact.newest, {}, 'deploy observation ignores the initial feed before any clock checkpoint');
+  assert.equal(initialFact.extra.pending, 0);
+  assert.equal(advanceAll(null, probe({ flows, facts: { feedbin: initialFact }, now })).star, undefined);
   const one = queueStars(null, [article()], now, 'future');
   assert.equal(Object.values(one.items)[0].state, 'baseline');
   assert.deepEqual(feedbinFact(one, [article()], now).newest, {});
@@ -60,6 +64,14 @@ test('first-run future policy is durable, while later stars include old articles
   assert.equal(feedbinFact(two, [article(), article('124')], now).newest.star.id, '124');
   assert.deepEqual(Object.values(one.items).map((i) => i.state), ['baseline']);
   assert.throws(() => queueStars({ version: 2 }, [], now, 'import'), /Unsupported/);
+});
+
+test('the source reader honors a future-only baseline even before the journal exists', async () => {
+  const facts = await collect({ now, env: { SITE_BUCKET: 'fixture', FEEDBIN_CONFIG: JSON.stringify({ ...config, initial: 'future' }) },
+    fetch: async () => ({ ok: true, text: fixture }), s3Get: async () => null }, ['feedbin']);
+  assert.equal(facts.feedbin.extra.pending, 0);
+  assert.deepEqual(facts.feedbin.newest, {});
+  assert.equal(advanceAll(null, probe({ flows, facts, now })).star, undefined);
 });
 
 test('missing bookmarks are created without replacing existing ones and only confirmed readbacks finish', async () => {

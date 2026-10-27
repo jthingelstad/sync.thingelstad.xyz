@@ -106,8 +106,8 @@ export function queueStars(state, entries, now, initial) {
   return next;
 }
 
-export function feedbinFact(state, entries, now) {
-  const next = queueStars(state, entries, now, 'import');
+export function feedbinFact(state, entries, now, initial = 'import') {
+  const next = queueStars(state, entries, now, initial);
   const selected = next.items[next.latest];
   const latest = selected?.state === 'baseline' ? null : selected;
   const rows = Object.values(next.items);
