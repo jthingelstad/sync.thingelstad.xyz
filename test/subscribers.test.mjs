@@ -18,6 +18,7 @@ test('subscriber fixtures select only the intended source and send leg', () => {
   assert.equal(dispatchRequest(SUBSCRIBERS[2], {source:'github','detail-type':'pushed',detail:{repository:'private/unknown'}},registry.repositories),null);
   assert.equal(dispatchRequest(SUBSCRIBERS[2], {source:'github','detail-type':'pushed',detail:{repository:'jthingelstad/thingelstad.xyz'}},registry.repositories),null);
   assert.equal(dispatchRequest(SUBSCRIBERS[0], {...fixtures[0],detail:{...fixtures[0].detail,id:'bad'}},registry.repositories),null);
+  assert.equal(dispatchRequest(SUBSCRIBERS[3], {...fixtures[3],detail:{...fixtures[3].detail,id:'bad'}},registry.repositories),null);
 });
 
 test('ping bodies always request credential-free dry runs and cannot start an issue', () => {
@@ -59,4 +60,20 @@ test('each role invokes only its pinned API destination, with finite retry and a
   const transformer=generated.Resources.RegistrySubscriberWorkRule.Properties.Targets[0].InputTransformer;
   assert.deepEqual(JSON.parse(transformer.InputTemplate.replace('<repository>',JSON.stringify('jthingelstad/wt-builder'))),fixtures[2].request);
   assert.ok(!JSON.stringify(generated).includes('GetSecretValue'));
+});
+
+test('registry publication has an independent things-only consumer and an empty source-scoped publisher grant', async () => {
+  const template=await read('../infra/sync.json');
+  const request=JSON.parse(generated.Resources.RegistryLibrarySubscriberWorkRule.Properties.Targets[0].Input);
+  assert.deepEqual(request,fixtures[3].request);
+  assert.equal(template.Parameters.RegistryPublisherRole.Default,'');
+  const policy=template.Resources.RegistryPublisherPolicy;
+  assert.equal(policy.Condition,'HasRegistryPublisher');
+  const [statement]=policy.Properties.PolicyDocument.Statement;
+  assert.equal(statement.Action,'events:PutEvents');
+  assert.deepEqual(statement.Resource,{'Fn::GetAtt':['PublishingBus','Arn']});
+  assert.deepEqual(statement.Condition.StringEquals,{'events:source':'xyz','events:detail-type':['refreshed','ping']});
+  assert.ok(template.Resources.PublishingArchive.Properties.EventPattern.source.includes('xyz'));
+  assert.ok(template.Resources.PublishingArchive.Properties.EventPattern['detail-type'].includes('refreshed'));
+  assert.ok(!template.Resources.PublishedRule.Properties.EventPattern['detail-type'].includes('refreshed'));
 });

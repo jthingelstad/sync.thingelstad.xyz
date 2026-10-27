@@ -11,6 +11,7 @@ No application dependency is added.
 | 10 | wt-builder published, issue, archive leg | librarian-thing/library-round.yml | github_librarian_actions_token |
 | 6 | wt-builder published, issue, website leg | links.thingelstad.xyz/sync-join.yml | github_links_actions_token |
 | 13 | github pushed, registered public repository | thingelstad.xyz/sync-rebuild.yml | github_registry_actions_token |
+| 13 | xyz refreshed, verified public registry revision | librarian-thing/library-round.yml, only=things | github_librarian_actions_token |
 
 All parameters default false. ConfigureLibrarianSubscriber (or Links,
 Registry) creates that connection, scoped invocation role, ping rule and
@@ -31,6 +32,17 @@ The registry excludes its own repository's pushes: publishing already
 deploys that site, and collecting a collector commit again would loop.
 Each accepted push refreshes only that registered repository and its commit
 evidence; it does not repeat Wayback, screenshots, website or Tinylytics reads.
+Its downstream RegistryLibrary route is separate: only a verified changed
+public document wakes the library. It reuses the Librarian repository token
+key through its own independently gated connection and role. A document
+revision does not invent individual thing publication dates or journeys.
+ConfigureRegistryLibrarySubscriber and EnableRegistryLibrarySubscriber
+default false; environment overrides are
+SYNC_CONFIGURE_REGISTRY_LIBRARY_SUBSCRIBER and
+SYNC_ENABLE_REGISTRY_LIBRARY_SUBSCRIBER. The existing registry deployer
+gets no permission unless RegistryPublisherRole is explicitly supplied
+(SYNC_REGISTRY_PUBLISHER_ROLE); the grant is xyz refreshed/ping only.
+The destination's SYNC_PUBLISHING_BUS is also empty by default.
 
 ## Jamie's activation order
 

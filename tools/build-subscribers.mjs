@@ -1,5 +1,5 @@
 import fs from 'node:fs/promises';
-import { subscriberTemplate } from '../src/subscribers.mjs';
+import { SUBSCRIBERS, subscriberTemplate } from '../src/subscribers.mjs';
 
 const base = new URL('../', import.meta.url);
 const template = JSON.parse(await fs.readFile(new URL('infra/sync.json', base)));
@@ -8,4 +8,4 @@ const registry = JSON.parse(await fs.readFile(new URL('data/github-repositories.
 const generated = subscriberTemplate(flows, registry.repositories);
 for (const section of ['Parameters', 'Conditions', 'Resources']) Object.assign(template[section], generated[section]);
 await fs.writeFile(new URL('infra/sync.json', base), `${JSON.stringify(template, null, 2)}\n`);
-console.log('Three opt-in subscriber connections, scoped roles and separate rehearsal rules rendered.');
+console.log(`${SUBSCRIBERS.length} opt-in subscriber connections, scoped roles and separate rehearsal rules rendered.`);

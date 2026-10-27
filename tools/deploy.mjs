@@ -247,6 +247,9 @@ async function apply(execute_) {
       `${prefix}${route}Subscriber`, process.env[`SYNC_${prefix.toUpperCase()}_${route.toUpperCase()}_SUBSCRIBER`] ?? (parameter(stack, `${prefix}${route}Subscriber`) || 'false'),
     ]))),
     ApproveLinksJoinRepair: process.env.SYNC_APPROVE_LINKS_JOIN_REPAIR ?? (parameter(stack, 'ApproveLinksJoinRepair') || 'false'),
+    ConfigureRegistryLibrarySubscriber: process.env.SYNC_CONFIGURE_REGISTRY_LIBRARY_SUBSCRIBER ?? (parameter(stack, 'ConfigureRegistryLibrarySubscriber') || 'false'),
+    EnableRegistryLibrarySubscriber: process.env.SYNC_ENABLE_REGISTRY_LIBRARY_SUBSCRIBER ?? (parameter(stack, 'EnableRegistryLibrarySubscriber') || 'false'),
+    RegistryPublisherRole: process.env.SYNC_REGISTRY_PUBLISHER_ROLE ?? parameter(stack, 'RegistryPublisherRole'),
     ...Object.fromEntries(['Weekly', 'Another', 'Librarian', 'Thingy', 'Links'].map((name) => [
       `${name}ReceiverRole`, process.env[`SYNC_${name.toUpperCase()}_RECEIVER_ROLE`] ?? parameter(stack, `${name}ReceiverRole`),
     ])),

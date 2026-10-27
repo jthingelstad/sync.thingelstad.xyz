@@ -152,6 +152,30 @@
         "true"
       ],
       "Description": "Explicit Jamie approval to repair the WT354 join example. Keep false until that decision."
+    },
+    "RegistryPublisherRole": {
+      "Type": "String",
+      "Default": "",
+      "AllowedPattern": "^[A-Za-z0-9_+=,.@-]{0,64}$",
+      "Description": "Existing registry deployment role name; empty attaches nothing. Only xyz refreshed/ping on this bus."
+    },
+    "ConfigureRegistryLibrarySubscriber": {
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Description": "Create registry-library's connection and ping-only rehearsal rule after its runtime token and destination workflow exist."
+    },
+    "EnableRegistryLibrarySubscriber": {
+      "Type": "String",
+      "Default": "false",
+      "AllowedValues": [
+        "false",
+        "true"
+      ],
+      "Description": "Enable real registry-library work only after rehearsal and operator approval."
     }
   },
   "Conditions": {
@@ -428,6 +452,51 @@
         },
         {
           "Condition": "HasRegistrySubscriber"
+        },
+        {
+          "Condition": "HasRegistryLibrarySubscriber"
+        }
+      ]
+    },
+    "HasRegistryPublisher": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "RegistryPublisherRole"
+            },
+            ""
+          ]
+        }
+      ]
+    },
+    "HasRegistryLibrarySubscriber": {
+      "Fn::And": [
+        {
+          "Condition": "HasRuntimeSecret"
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "ConfigureRegistryLibrarySubscriber"
+            },
+            "true"
+          ]
+        }
+      ]
+    },
+    "RunsRegistryLibrarySubscriber": {
+      "Fn::And": [
+        {
+          "Condition": "HasRegistryLibrarySubscriber"
+        },
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "EnableRegistryLibrarySubscriber"
+            },
+            "true"
+          ]
         }
       ]
     }
@@ -625,7 +694,8 @@
             "received",
             "subscriber",
             "pushed",
-            "activity"
+            "activity",
+            "refreshed"
           ],
           "source": [
             "wt-builder",
@@ -637,7 +707,8 @@
             "microblog",
             "buttondown",
             "github",
-            "strava"
+            "strava",
+            "xyz"
           ]
         },
         "RetentionDays": 90
@@ -2423,6 +2494,12 @@
                     },
                     {
                       "Fn::Sub": "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${PublishingBus}/${AWS::StackName}-registry-ping"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${PublishingBus}/${AWS::StackName}-registry-library-work"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${PublishingBus}/${AWS::StackName}-registry-library-ping"
                     }
                   ]
                 }
@@ -2430,6 +2507,264 @@
             }
           ]
         }
+      }
+    },
+    "RegistryPublisherPolicy": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Condition": "HasRegistryPublisher",
+      "Properties": {
+        "Roles": [
+          {
+            "Ref": "RegistryPublisherRole"
+          }
+        ],
+        "PolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Action": "events:PutEvents",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "PublishingBus",
+                  "Arn"
+                ]
+              },
+              "Condition": {
+                "StringEquals": {
+                  "events:source": "xyz",
+                  "events:detail-type": [
+                    "refreshed",
+                    "ping"
+                  ]
+                }
+              }
+            }
+          ]
+        }
+      }
+    },
+    "RegistryLibrarySubscriberConnection": {
+      "Type": "AWS::Events::Connection",
+      "Condition": "HasRegistryLibrarySubscriber",
+      "Properties": {
+        "AuthorizationType": "API_KEY",
+        "Description": "Reviewed workflow dispatch for librarian-thing; no runtime secret reader.",
+        "AuthParameters": {
+          "ApiKeyAuthParameters": {
+            "ApiKeyName": "Authorization",
+            "ApiKeyValue": {
+              "Fn::Sub": "Bearer {{resolve:secretsmanager:${RuntimeSecret}:SecretString:github_librarian_actions_token}}"
+            }
+          }
+        }
+      }
+    },
+    "RegistryLibrarySubscriberDestination": {
+      "Type": "AWS::Events::ApiDestination",
+      "Condition": "HasRegistryLibrarySubscriber",
+      "Properties": {
+        "ConnectionArn": {
+          "Fn::GetAtt": [
+            "RegistryLibrarySubscriberConnection",
+            "Arn"
+          ]
+        },
+        "HttpMethod": "POST",
+        "InvocationRateLimitPerSecond": 1,
+        "InvocationEndpoint": "https://api.github.com/repos/jthingelstad/librarian-thing/actions/workflows/library-round.yml/dispatches"
+      }
+    },
+    "RegistryLibrarySubscriberRole": {
+      "Type": "AWS::IAM::Role",
+      "Condition": "HasRegistryLibrarySubscriber",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Version": "2012-10-17",
+          "Statement": [
+            {
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com"
+              },
+              "Action": "sts:AssumeRole",
+              "Condition": {
+                "StringEquals": {
+                  "aws:SourceAccount": {
+                    "Ref": "AWS::AccountId"
+                  }
+                },
+                "ArnEquals": {
+                  "aws:SourceArn": [
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${PublishingBus}/${AWS::StackName}-registry-library-work"
+                    },
+                    {
+                      "Fn::Sub": "arn:${AWS::Partition}:events:${AWS::Region}:${AWS::AccountId}:rule/${PublishingBus}/${AWS::StackName}-registry-library-ping"
+                    }
+                  ]
+                }
+              }
+            }
+          ]
+        },
+        "Policies": [
+          {
+            "PolicyName": "InvokeOneReviewedWorkflow",
+            "PolicyDocument": {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "events:InvokeApiDestination",
+                  "Resource": {
+                    "Fn::GetAtt": [
+                      "RegistryLibrarySubscriberDestination",
+                      "ArnForPolicy"
+                    ]
+                  }
+                }
+              ]
+            }
+          }
+        ]
+      }
+    },
+    "RegistryLibrarySubscriberWorkRule": {
+      "Type": "AWS::Events::Rule",
+      "Condition": "HasRegistryLibrarySubscriber",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-registry-library-work"
+        },
+        "EventBusName": {
+          "Ref": "PublishingBus"
+        },
+        "State": {
+          "Fn::If": [
+            "RunsRegistryLibrarySubscriber",
+            "ENABLED",
+            "DISABLED"
+          ]
+        },
+        "EventPattern": {
+          "source": [
+            "xyz"
+          ],
+          "detail-type": [
+            "refreshed"
+          ],
+          "detail": {
+            "id": [
+              {
+                "exists": true
+              }
+            ],
+            "url": [
+              "https://thingelstad.xyz/things.json"
+            ]
+          }
+        },
+        "Targets": [
+          {
+            "Id": "registry-library-work",
+            "Arn": {
+              "Fn::GetAtt": [
+                "RegistryLibrarySubscriberDestination",
+                "Arn"
+              ]
+            },
+            "RoleArn": {
+              "Fn::GetAtt": [
+                "RegistryLibrarySubscriberRole",
+                "Arn"
+              ]
+            },
+            "HttpParameters": {
+              "HeaderParameters": {
+                "Accept": "application/vnd.github+json",
+                "Content-Type": "application/json",
+                "X-GitHub-Api-Version": "2026-03-10"
+              }
+            },
+            "RetryPolicy": {
+              "MaximumEventAgeInSeconds": 3600,
+              "MaximumRetryAttempts": 10
+            },
+            "DeadLetterConfig": {
+              "Arn": {
+                "Fn::GetAtt": [
+                  "SubscriberDeadLetters",
+                  "Arn"
+                ]
+              }
+            },
+            "Input": "{\"ref\":\"main\",\"inputs\":{\"dry_run\":\"false\",\"only\":\"things\",\"issue\":\"\"}}"
+          }
+        ]
+      }
+    },
+    "RegistryLibrarySubscriberPingRule": {
+      "Type": "AWS::Events::Rule",
+      "Condition": "HasRegistryLibrarySubscriber",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-registry-library-ping"
+        },
+        "EventBusName": {
+          "Ref": "PublishingBus"
+        },
+        "State": "ENABLED",
+        "EventPattern": {
+          "source": [
+            "xyz"
+          ],
+          "detail-type": [
+            "ping"
+          ],
+          "detail": {
+            "subscriber": [
+              "registry-library"
+            ]
+          }
+        },
+        "Targets": [
+          {
+            "Id": "registry-library-ping",
+            "Arn": {
+              "Fn::GetAtt": [
+                "RegistryLibrarySubscriberDestination",
+                "Arn"
+              ]
+            },
+            "RoleArn": {
+              "Fn::GetAtt": [
+                "RegistryLibrarySubscriberRole",
+                "Arn"
+              ]
+            },
+            "HttpParameters": {
+              "HeaderParameters": {
+                "Accept": "application/vnd.github+json",
+                "Content-Type": "application/json",
+                "X-GitHub-Api-Version": "2026-03-10"
+              }
+            },
+            "RetryPolicy": {
+              "MaximumEventAgeInSeconds": 3600,
+              "MaximumRetryAttempts": 10
+            },
+            "DeadLetterConfig": {
+              "Arn": {
+                "Fn::GetAtt": [
+                  "SubscriberDeadLetters",
+                  "Arn"
+                ]
+              }
+            },
+            "Input": "{\"ref\":\"main\",\"inputs\":{\"dry_run\":\"true\",\"only\":\"things\",\"issue\":\"\"}}"
+          }
+        ]
       }
     }
   },
