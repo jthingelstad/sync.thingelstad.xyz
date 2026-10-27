@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { test } from 'node:test';
-import { receivedEvent } from '../src/received.mjs';
+import { receivedEvent, reportArrival } from '../src/received.mjs';
 
 test('every prepared destination uses the registered arrival contract and has an opt-in bus-only grant', async () => {
   const events = JSON.parse(await fs.readFile(new URL('./fixtures/destination-receipts.json', import.meta.url)));
@@ -20,4 +20,11 @@ test('every prepared destination uses the registered arrival contract and has an
     assert.deepEqual(statement.Resource, { 'Fn::GetAtt': ['PublishingBus', 'Arn'] });
     assert.deepEqual(statement.Condition.StringEquals, { 'events:source': event.source, 'events:detail-type': ['received', 'ping'] });
   }
+});
+
+test('a hand-published episode never measures an arrival at its own producer', () => {
+  const journey = { kind: 'episode', origin: 'another', item: { id: '2', at: '2026-10-28T02:00:00Z' }, arrivals: {}, observations: {} };
+  const event = { system: 'another', kind: 'episode', id: '2', at: '2026-10-28T02:04:00Z', via: 'site-deploy' };
+  assert.equal(reportArrival(journey, event, event.at), null);
+  assert.equal(reportArrival({ ...journey, origin: 'wt-builder' }, event, event.at).arrivals.another.observed, true);
 });
