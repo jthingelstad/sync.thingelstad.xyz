@@ -27,6 +27,8 @@ encrypted private queue for fourteen days. No alarm is added (step 9 is
 held). Delivery is at least once; conditional archive uploads, workflow
 concurrency and unchanged-output checks absorb duplicates. An accepted HTTP
 request is not proof that a workflow completed.
+The registry excludes its own repository's pushes: publishing already
+deploys that site, and collecting a collector commit again would loop.
 
 ## Jamie's activation order
 

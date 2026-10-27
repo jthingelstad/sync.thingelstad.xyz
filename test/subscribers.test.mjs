@@ -16,6 +16,7 @@ test('subscriber fixtures select only the intended source and send leg', () => {
     assert.equal(dispatchRequest(route, {...event,source:'untrusted'}, registry.repositories),null);
   }
   assert.equal(dispatchRequest(SUBSCRIBERS[2], {source:'github','detail-type':'pushed',detail:{repository:'private/unknown'}},registry.repositories),null);
+  assert.equal(dispatchRequest(SUBSCRIBERS[2], {source:'github','detail-type':'pushed',detail:{repository:'jthingelstad/thingelstad.xyz'}},registry.repositories),null);
   assert.equal(dispatchRequest(SUBSCRIBERS[0], {...fixtures[0],detail:{...fixtures[0].detail,id:'bad'}},registry.repositories),null);
 });
 
@@ -54,5 +55,6 @@ test('each role invokes only its pinned API destination, with finite retry and a
   }
   assert.equal(generated.Resources.SubscriberDeadLetters.Properties.SqsManagedSseEnabled,true);
   assert.equal(generated.Resources.SubscriberDeadLetters.DeletionPolicy,'Retain');
+  assert.ok(!generated.Resources.RegistrySubscriberWorkRule.Properties.EventPattern.detail.repository.includes('jthingelstad/thingelstad.xyz'));
   assert.ok(!JSON.stringify(generated).includes('GetSecretValue'));
 });

@@ -12,7 +12,7 @@ export function dispatchRequest(route, event, repositories) {
   if (!dry) {
     if (event['detail-type'] !== route.type || !detail) return null;
     if (route.leg && (detail.product !== 'weekly-thing' || detail.kind !== 'issue' || detail.leg !== route.leg || !/^[1-9][0-9]*$/.test(String(detail.id)))) return null;
-    if (!route.leg && !repositories.includes(detail.repository)) return null;
+    if (!route.leg && (!repositories.includes(detail.repository) || detail.repository === 'jthingelstad/thingelstad.xyz')) return null;
   } else if (detail?.subscriber !== route.slug) return null;
   return {
     ref: 'main',
@@ -62,7 +62,7 @@ export function subscriberTemplate(flows, repositories) {
       Resources[`${route.name}Subscriber${dry ? 'Ping' : 'Work'}Rule`] = { Type: 'AWS::Events::Rule', Condition: condition, Properties: {
         Name: sub(`\${AWS::StackName}-${route.slug}-${dry ? 'ping' : 'work'}`), EventBusName: ref('PublishingBus'),
         State: dry ? 'ENABLED' : { 'Fn::If': [`Runs${route.name}Subscriber`, 'ENABLED', 'DISABLED'] },
-        EventPattern: { source: [route.source], 'detail-type': [dry ? 'ping' : route.type], detail: dry ? { subscriber: [route.slug] } : route.leg ? { product: ['weekly-thing'], kind: ['issue'], leg: [route.leg], id: [{ exists: true }] } : { repository: repositories } },
+        EventPattern: { source: [route.source], 'detail-type': [dry ? 'ping' : route.type], detail: dry ? { subscriber: [route.slug] } : route.leg ? { product: ['weekly-thing'], kind: ['issue'], leg: [route.leg], id: [{ exists: true }] } : { repository: repositories.filter((repo) => repo !== 'jthingelstad/thingelstad.xyz') } },
         Targets: [target],
       } };
     }
