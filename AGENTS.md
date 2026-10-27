@@ -221,9 +221,13 @@ npm run deploy      # apply, upload /flows/, invoke the probe, check health.json
 npm run certificate # create sync-certificate, print the validation CNAME
 ```
 
-Namecheap holds the DNS; Jamie adds the CNAMEs the certificate command
-prints. Once the certificate is issued, `npm run deploy` puts the alias on
-the distribution.
+DNS for `thingelstad.xyz` is a Route 53 zone (moved from Namecheap on
+2026-10-27; Namecheap is still the registrar). Every record, including `sync`
+and its ACM validation CNAME, is code in the `dns-thingelstad-xyz` stack
+(`config/dns-thingelstad-xyz-stack.yaml` in projects-sysadmin): a new record
+the certificate command prints goes there by pull request and deploy, never
+into a console. Once the certificate is issued, `npm run deploy` puts the
+alias on the distribution.
 
 Secrets. The stack's `RuntimeSecret` parameter names the sync app's one
 Secrets Manager secret, `sync-runtime` (the house `<app>-runtime` shape; made
