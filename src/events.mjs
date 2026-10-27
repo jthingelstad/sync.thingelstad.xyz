@@ -1,5 +1,5 @@
 // The publishing bus: what a `published` event is, and how one becomes
-// WT Builder's fact. Pure; the handler reads and writes the stored fact.
+// a publisher's fact. Pure; the handler reads and writes the stored fact.
 //
 // A publisher puts one event on the bus (EventBridge, `thingelstad-publishing`,
 // in the sync stack) each time a send leg goes out:
@@ -8,22 +8,28 @@
 //   detail-type  published
 //   detail       { product, kind, id, title, url, leg, leg_url, at, legs }
 //
-// where kind is a kind in the flows file (issue, episode), id is the item's
+// where kind is a kind in the flows file (issue, episode, post), id is the item's
 // public id (an issue number, an episode number), leg is the leg that just
 // went out (website, buttondown, podcast, archive, another), at is when it
 // did, and legs is every leg sent so far, each with its at and url. The
 // event is the publisher's receipt: the hop from WT Builder to the leg's
 // destination is measured from the leg's time, and the item's journey
 // starts there.
+// The probe also announces new public posts as source microblog, kind post,
+// website leg, with the public permalink as id; its first poll is silent.
 import { statedInstant } from './time.mjs';
+import { createHash } from 'node:crypto';
 export { receivedEvent } from './received.mjs';
 
 export const DETAIL_TYPE = 'published';
-export const KINDS = new Set(['issue', 'episode']);
+export const KINDS = new Set(['issue', 'episode', 'post']);
 export const LEGS = new Set(['website', 'buttondown', 'podcast', 'archive', 'another']);
 
 /** Minutes after a published event at which the probe runs again, to watch the item move. */
 export const FOLLOW_UP_MINUTES = [2, 5, 10, 15, 30, 45, 60];
+const publicUrl = (value) => {
+  try { const u=new URL(value); return typeof value==='string' && u.protocol==='https:' && !u.username && !u.password && !u.search && !u.hash; } catch { return false; }
+};
 
 /**
  * The published event in a Lambda invocation, or null when the invocation is
@@ -35,10 +41,16 @@ export function publishedEvent(raw) {
   const d = raw.detail;
   if (!d || typeof d !== 'object') return { error: 'published event with no detail' };
   const problems = [];
-  if (raw.source !== 'wt-builder') problems.push('source is not a registered publisher');
-  if (!KINDS.has(d.kind)) problems.push(`kind is not one of ${[...KINDS].join(', ')}`);
-  if (!d.id || !/^[\w.-]{1,64}$/.test(String(d.id))) problems.push('id is missing or not a short token');
+  const blog = raw.source === 'microblog';
+  if (raw.source !== 'wt-builder' && !blog) problems.push('source is not a registered publisher');
+  if (!KINDS.has(d.kind) || (blog ? d.kind !== 'post' : d.kind === 'post')) problems.push(`kind is not one of the source's registered kinds`);
+  if (blog) {
+    try { const url=new URL(d.id); if(typeof d.id!=='string'||url.protocol!=='https:'||url.username||url.password||url.search||url.hash||String(d.id).length>2048||d.url!==d.id) problems.push('post id must be its public HTTPS permalink'); }
+    catch { problems.push('post id must be its public HTTPS permalink'); }
+    if(d.leg!=='website') problems.push('a blog post has the website leg');
+  } else if (!d.id || !/^[\w.-]{1,64}$/.test(String(d.id))) problems.push('id is missing or not a short token');
   if (!LEGS.has(d.leg)) problems.push(`leg is not one of ${[...LEGS].join(', ')}`);
+  if ([d.url,d.leg_url].some((u)=>u!=null&&!publicUrl(u))) problems.push('URLs must be public HTTPS permalinks without credentials or query');
   const at = statedInstant(d.at == null ? raw.time : d.at);
   if (!at) problems.push('at is not a time');
   if (problems.length) return { error: problems.join('; ') };
@@ -46,8 +58,10 @@ export function publishedEvent(raw) {
   for (const [name, leg] of Object.entries(d.legs ?? {})) {
     if (!LEGS.has(name) || !leg || typeof leg !== 'object') continue;
     const legAt = statedInstant(leg.at);
+    if (!legAt || (leg.url!=null&&!publicUrl(leg.url))) problems.push('a supplied leg has an invalid time or permalink');
     if (legAt) legs[name] = { at: legAt, ...(typeof leg.url === 'string' ? { url: leg.url } : {}) };
   }
+  if (problems.length) return { error: problems.join('; ') };
   legs[d.leg] = { at, ...(typeof d.leg_url === 'string' ? { url: d.leg_url } : legs[d.leg]?.url ? { url: legs[d.leg].url } : {}) };
   return {
     source: typeof raw.source === 'string' ? raw.source : null,
@@ -100,8 +114,9 @@ export function mergePublished(stored, event, receivedAt) {
 /** The follow-up schedules a published event asks for: when, and what to say to the probe. */
 export function followUps(event, now) {
   const base = Date.parse(now);
+  const id = /^[\w.-]{1,32}$/.test(event.id) ? event.id : createHash('sha256').update(event.id).digest('hex').slice(0,24);
   return FOLLOW_UP_MINUTES.map((minutes) => ({
-    name: `${event.kind}-${event.id}-${event.leg}-${minutes}m`.replace(/[^\w.-]/g, '_').slice(0, 64),
+    name: `${event.kind}-${id}-${event.leg}-${minutes}m`,
     at: new Date(base + minutes * 60_000).toISOString().replace(/\.\d{3}Z$/, ''),
     input: { follow_up: { kind: event.kind, id: event.id, leg: event.leg, minutes } },
   }));

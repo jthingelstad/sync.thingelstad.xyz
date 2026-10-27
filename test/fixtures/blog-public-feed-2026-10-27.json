@@ -1,0 +1,211 @@
+{
+	"version": "https://jsonfeed.org/version/1",
+	"title": "Jamie Thingelstad",
+	"icon": "https://avatars.micro.blog/avatars/2025/14/1545.jpg",
+	"home_page_url": "https://www.thingelstad.com/",
+	"feed_url": "https://www.thingelstad.com/feed.json",
+	"items": [
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/25/wt-a-museum-for-nnxyz.html",
+				"title": "WT354 — A museum for nnxyz art",
+				"content_html": "<p>In this issue:</p>\n<ul>\n<li>How employment is changing at Anthropic (anthropic.com)</li>\n<li>How tech workers are feeling in 2026: a workforce splitting in two (lennysnewsletter.com)</li>\n<li>Deciphering Glyph :: Programming Isn’t Special (blog.glyph.im)</li>\n<li>Claude Duet | Your personal AI assistant (claude.com)</li>\n<li>Announcing AWS Lambda Web Functions (aws.amazon.com)</li>\n<li>Pele · Mermaid diagrams as themeable SVG (pele.run)</li>\n<li>The people holding up the internet | Data Drop (sheets.works)</li>\n</ul>\n<p>Plus 16 more links, 14 journal posts, a photo, and a 19-minute audio edition.</p>\n<p><a href=\"https://weekly.thingelstad.com/archive/354/?ref=blog-wt354\">Weekly Thing 354</a></p>\n",
+				
+				"date_published": "2026-10-25T15:08:12-05:00",
+				"url": "https://www.thingelstad.com/2026/10/25/wt-a-museum-for-nnxyz.html",
+				"tags": ["Weekly Thing"]
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/24/making-candles-for-the-things.html",
+				
+				"content_html": "<p>Making candles for the 2026 <a href=\"https://things4good.xyz\">Things 4 Good</a> Candle Fundraiser!</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/94a7d036-973b-40fa-9d92-0ee138e3e158.jpg\" width=\"600\" height=\"450\" alt=\"\">\n",
+				
+				"date_published": "2026-10-24T20:23:28-05:00",
+				"url": "https://www.thingelstad.com/2026/10/24/making-candles-for-the-things.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/24/release-notes-on-a-map.html",
+				"title": "Release Notes on a map!",
+				"content_html": "<p>I&rsquo;m enjoying using and building <a href=\"https://notes.yourversionnumber.com/\">Release Notes</a> so much I added some great location features today and polished up the user experience!</p>\n<ul>\n<li>Notes can save where you are with one tap, and name the café or park you’re in</li>\n<li>iPhone photos bring their place and time with them, HEIC included</li>\n<li>Notes without a place of their own show that day’s city</li>\n<li>A new Map page shows every note with a place, filtered by words, tag or release</li>\n<li>Place links in notes and emails open on Release Notes’ own map</li>\n<li>A design pass across every page: You, Settings, Activity, Badges, Pause, Delete and Connect</li>\n<li>Every email polished to match, with dark mode for the account emails</li>\n</ul>\n<p>If you are looking for a journaling experience that is similar to what I&rsquo;m looking for — you can sign up and use it too!</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/screenshot-2026-10-24-at-8.19.40pm.png\" alt=\"\">\n",
+				
+				"date_published": "2026-10-24T20:19:54-05:00",
+				"url": "https://www.thingelstad.com/2026/10/24/release-notes-on-a-map.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/24/gratitude-wall-at-falls-coffee.html",
+				
+				"content_html": "<p>Gratitude wall at <a href=\"https://fallscoffee.com\">Falls Coffee</a>. Nice.</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/6c652435-c3b7-4669-b027-fd2c277b31a1.jpg\" width=\"600\" height=\"600\" alt=\"\">\n",
+				
+				"date_published": "2026-10-24T14:26:39-05:00",
+				"url": "https://www.thingelstad.com/2026/10/24/gratitude-wall-at-falls-coffee.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/24/it-make-me-irrationally-annoyed.html",
+				
+				"content_html": "<p>It make me irrationally annoyed when the junk drawer has toothpicks all over the place. Printed this little box and problem solved!</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/b23190e8f5.jpg\" width=\"600\" height=\"450\" alt=\"\">\n",
+				
+				"date_published": "2026-10-24T13:21:00-05:00",
+				"url": "https://www.thingelstad.com/2026/10/24/it-make-me-irrationally-annoyed.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/24/red-leaves.html",
+				
+				"content_html": "<p>Red leaves. 🍂</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/c7b137d7-aec7-4f60-9b97-63794fc68a87.jpg\" width=\"600\" height=\"450\" alt=\"\">\n",
+				
+				"date_published": "2026-10-24T12:11:02-05:00",
+				"url": "https://www.thingelstad.com/2026/10/24/red-leaves.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/24/melting-wax-to-pour-some.html",
+				
+				"content_html": "<p>Melting wax to pour some candles. I&rsquo;ve made over a thousand candles at this point but because we only do it once a year I always feel like I have no idea what I&rsquo;m doing when we start pouring. Good thing I learned to keep good notes with weights! Let the candle making begin!</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/95552a65d5.jpg\" width=\"600\" height=\"600\" alt=\"\">\n",
+				
+				"date_published": "2026-10-24T11:47:33-05:00",
+				"url": "https://www.thingelstad.com/2026/10/24/melting-wax-to-pour-some.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/24/after-flipping-to-my-own.html",
+				
+				"content_html": "<p>After flipping to my own custom theme for <a href=\"https://www.thingelstad.com\">my blog</a> I was able to ship something I&rsquo;ve wanted for a very long time: all of my personal sites are now connected with a navigation header at the very top of the page. For the first time it is easy to jump from site to site!</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/screenshot-2026-10-24-at-11.36.01am.png\" width=\"600\" height=\"41\" alt=\"\">\n",
+				
+				"date_published": "2026-10-24T11:38:09-05:00",
+				"url": "https://www.thingelstad.com/2026/10/24/after-flipping-to-my-own.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/24/phishing-fear.html",
+				"title": "Phishing Fear",
+				"content_html": "<p>Well done phishing campaign just landed in my inbox. This one gave me a pause and smartly goes after a &ldquo;fear&rdquo; motive. Did someone just compromise my account? That anxiety could lead to a quick login attempt and complete takeover. The <code>info@rumpunch.io</code> from address was easy to spot though. The other mistake was the &ldquo;New York&rdquo; with a Norway flag. Also seems their link was taken down with a 404.</p>\n<pre tabindex=\"0\"><code>jamie ~ % curl --head &#39;https://track.pstmrk.it/3s/securemai.custredir91224.com%2F[…]&#39;\nHTTP/2 404 \nserver: awselb/2.0\ndate: Sat, 24 Oct 2026 16:18:48 GMT\ncontent-type: application/text\ncontent-length: 0\nx-robots-tag: noindex\n</code></pre><p>Stay safe out there! 🤞</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/screenshot-2026-10-24-at-11.17.16am.png\" width=\"600\" height=\"565\" alt=\"\">\n",
+				
+				"date_published": "2026-10-24T11:21:34-05:00",
+				"url": "https://www.thingelstad.com/2026/10/24/phishing-fear.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/24/release-notes-gets-badges.html",
+				"title": "Release Notes gets Badges",
+				"content_html": "<p>I decided to have some fun and I added <strong><a href=\"https://notes.yourversionnumber.com/badges/\">badges</a></strong> to my Your Version Number: <a href=\"https://notes.yourversionnumber.com/\">Release Notes</a> project.</p>\n<p>Some specifics on how they work:</p>\n<ul>\n<li>Your birthday is a release and every day is a patch, so badges speak release engineering, with tiers from <code>alpha</code> through <code>beta</code>, <code>rc</code> and <code>stable</code> to <code>LTS</code>.</li>\n<li>Four tracks reward consistency, not perfection: days in a row, steady weeks, total days with notes, and how much of each year of life you cover.</li>\n<li>Firsts point you at features you might not know about, like replying to the email, adding a voice memo or filling in a day you missed.</li>\n<li>Collectibles live in the version number itself: round numbers, palindromes, your birthday, and a few secret ones.</li>\n<li>Every birthday starts a new album, so there&rsquo;s always something new to collect.</li>\n<li>Nothing is ever taken away. A missed day is never called out, and there are no points, leaderboards or &ldquo;at risk&rdquo; warnings.</li>\n<li>If badges aren&rsquo;t your thing, one &ldquo;Show badges&rdquo; setting turns them all off.</li>\n</ul>\n<p>I didn&rsquo;t know that I would have so much fun building my own journaling app! 🤩</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/screenshot-2026-10-24-at-10.47.49am.png\" alt=\"\">\n",
+				
+				"date_published": "2026-10-24T10:48:20-05:00",
+				"url": "https://www.thingelstad.com/2026/10/24/release-notes-gets-badges.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/24/my-agent-otto-started-on.html",
+				
+				"content_html": "<p>My agent Otto started on OpenClaw and is now running on ChatGPT dot. I asked the dot instance if it wanted to update it&rsquo;s profile photo. The dot version is lighter and a bit more friendly. Otto also shed the black leather jacket for a cardigan.</p>\n<p><img src=\"https://cdn.uploads.micro.blog/890/2026/828e7a46d4.jpg\" width=\"600\" height=\"600\" alt=\"\"><img src=\"https://cdn.uploads.micro.blog/890/2026/chatgpt-image-oct-3-2026-01-12-38-pm.png\" width=\"600\" height=\"600\" alt=\"\"></p>\n",
+				
+				"date_published": "2026-10-24T10:14:35-05:00",
+				"url": "https://www.thingelstad.com/2026/10/24/my-agent-otto-started-on.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/24/im-happy-with-how-linking.html",
+				
+				"content_html": "<p>I&rsquo;m happy with how <a href=\"https://links.thingelstad.xyz/\">Linking Things</a> turned out. I&rsquo;ve tried this effort before and it never landed right, this one did. See more <a href=\"https://links.thingelstad.xyz/about/\">about it</a>. I also <a href=\"https://links.thingelstad.xyz/mcp\">gave it an MCP server</a> so I can have Claude dig around in my links. And <a href=\"https://thingy.thingelstad.com/c/shr_xO8QDCUwbQvJcnKKzzZGAChcJPOrVp0-5HA5TvfI86s\">Thingy has them too</a>.</p>\n<p><img src=\"https://cdn.uploads.micro.blog/890/2026/screenshot-2026-10-24-at-7.41.37am.png\" width=\"600\" height=\"442\" alt=\"\"><img src=\"https://cdn.uploads.micro.blog/890/2026/screenshot-2026-10-24-at-7.46.07am.png\" width=\"600\" height=\"442\" alt=\"\"></p>\n",
+				
+				"date_published": "2026-10-24T07:46:42-05:00",
+				"url": "https://www.thingelstad.com/2026/10/24/im-happy-with-how-linking.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/23/worked-with-claude-today-and.html",
+				
+				"content_html": "<p>Worked with Claude today and created <a href=\"https://links.thingelstad.xyz\">Linking Things</a>! I publish links every week in the <a href=\"https://weekly.thingelstad.com\">Weekly Thing</a> but I&rsquo;ve never had a site that provides my entire archive of over 16,000 links to search and browse. Plus the <a href=\"https://links.thingelstad.xyz/stats/\">stats</a> page is awesome. 😎 Also see the <a href=\"https://thingelstad.xyz/things/linking-things/\">project page</a>.</p>\n",
+				
+				"date_published": "2026-10-23T21:26:02-05:00",
+				"url": "https://www.thingelstad.com/2026/10/23/worked-with-claude-today-and.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/18/it-is-fun-to-explore.html",
+				
+				"content_html": "<p>It is fun to explore new card shops in different cities so we stopped by <a href=\"https://www.ripcitymn.com\">RipCity</a> as we were passing through St. Cloud. We found some nice cards. Recommended!</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/bcb72fb740.jpg\" width=\"600\" height=\"450\" alt=\"Selfie of a man in a plaid shirt and cap beside a teen in a Bayern jersey outside a trading card store with an open sign.\">\n",
+				
+				"date_published": "2026-10-18T14:00:00-05:00",
+				"url": "https://www.thingelstad.com/2026/10/18/it-is-fun-to-explore.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/18/this-weekend-marked-the-rd.html",
+				
+				"content_html": "<p>This weekend marked the 23rd annual Olson Family Vacation! It was our year to plan it and Tammy put together a wonderful weekend of fun including a ghost hunt, walk to the fire tower, the Grandpa Don games, Rafferty&rsquo;s pizza, exploring Nisswa and Baxter, &ldquo;The Game&rdquo;, and me bartending!</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/12baf707f9.jpg\" width=\"600\" height=\"400\" alt=\"About twenty adults and children of several ages pose on leaf-covered grass beside a brown log house and yellow-leafed tree.\">\n",
+				
+				"date_published": "2026-10-18T14:00:00-05:00",
+				"url": "https://www.thingelstad.com/2026/10/18/this-weekend-marked-the-rd.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/17/card-shop-stop-for-pokmon.html",
+				
+				"content_html": "<p>Card shop stop for Pokémon at <a href=\"https://spittyscards.com\">Spitty’s Cards</a>.</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/dc6ef240-9725-4986-95a9-068d0a17c5b1.jpg\" width=\"600\" height=\"450\" alt=\"Six people smile outside Spitty's Cards, a boy in front holding a Pokémon card box\">\n",
+				
+				"date_published": "2026-10-17T14:24:30-05:00",
+				"url": "https://www.thingelstad.com/2026/10/17/card-shop-stop-for-pokmon.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/17/morning-coffee-with-a-nice.html",
+				
+				"content_html": "<p>Morning coffee with a nice fire.</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/75f92b59-a3df-413a-bcd7-372904f3aaaf.jpg\" width=\"600\" height=\"450\" alt=\"Hand holding a Sunrise Coffee Stop cup beside a glowing fire pit, with picnic tables and a red food trailer on the lawn\">\n",
+				
+				"date_published": "2026-10-17T09:08:13-05:00",
+				"url": "https://www.thingelstad.com/2026/10/17/morning-coffee-with-a-nice.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/16/im-bartending-tonight.html",
+				
+				"content_html": "<p>I’m bartending tonight.</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/49724fcc-5741-4a56-a723-1319a458ec76.jpg\" width=\"600\" height=\"450\" alt=\"Home cocktail bar on a granite counter with liquor bottles, citrus fruit, shakers, jiggers, and a printed drink menu\">\n",
+				
+				"date_published": "2026-10-16T19:24:31-05:00",
+				"url": "https://www.thingelstad.com/2026/10/16/im-bartending-tonight.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/16/fire-tower-walk-in-pequot.html",
+				
+				"content_html": "<p>Fire tower walk in Pequot Lakes. My fear of heights kept me firmly on the ground.</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/cd615603fe.jpg\" width=\"450\" height=\"600\" alt=\"Steel lattice tower with switchback wooden stairs rising to a small cab, seen from below behind a black iron fence and pines.\">\n",
+				
+				"date_published": "2026-10-16T15:00:00-05:00",
+				"url": "https://www.thingelstad.com/2026/10/16/fire-tower-walk-in-pequot.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/16/tammy-had-these-amazing-trophies.html",
+				
+				"content_html": "<p>Tammy had these amazing trophies made for the inaugural Grandpa Don games at this weekend&rsquo;s Olson Family Vacation. 🧡</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/aa254ac9-cbfa-4c34-b582-c0b3f36f9161.jpg\" width=\"600\" height=\"450\" alt=\"Three identical bobblehead trophies of a bald man with glasses holding a gold cup, on blue gift boxes in a wood cabin\">\n",
+				
+				"date_published": "2026-10-16T13:10:22-05:00",
+				"url": "https://www.thingelstad.com/2026/10/16/tammy-had-these-amazing-trophies.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/15/i-added-a-new-upcoming.html",
+				
+				"content_html": "<p>I added a new Upcoming feature to <a href=\"https://notes.yourversionnumber.com\">Release Notes</a>:</p>\n<blockquote>\n<p>Release Notes now has a new section for what&rsquo;s coming next. In Upcoming you can save birthdays, anniversaries, trips, and one-time events. You can choose when you would like these events to show up in your Release Notes. Trips include a destination with a start and end date. All of these upcoming events are private to only you.</p>\n</blockquote>\n<p>I’m having a lot of fun journaling each day&rsquo;s version.</p>\n",
+				
+				"date_published": "2026-10-15T21:21:12-05:00",
+				"url": "https://www.thingelstad.com/2026/10/15/i-added-a-new-upcoming.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/15/the-nnxyz-rooms.html",
+				"title": "The nnxyz rooms",
+				"content_html": "<p>Years ago I discovered the work of nnxyz on nifty.ink. I acquired a few of his pieces and grew to like it more and more. I ended up collecting four complete collections of hundreds of pieces. I had always wished to create a gallery like experience for anyone to experience. With the help of AI I was able to make that vision a reality.</p>\n<p><strong>Check out <a href=\"https://nnxyz.thingelstad.xyz\">the nnxyz rooms</a>.</strong></p>\n<p>Some highlights of what the website has.</p>\n<ul>\n<li><strong>Every drawing can be watched being made.</strong> The 574 Nifty Ink works are rebuilt from their archived brush strokes as native vector images, and each one replays stroke by stroke, with the recorded order, widths, colors and transparency.</li>\n<li><strong>Hung like a museum, not a feed.</strong> Six wings, 28 rooms, 626 works. Every work hangs in exactly one room, rooms hold 20 to 30 works, and each room is hung in the order the works were drawn, so a walk through a room is a walk through a few weeks of drawing.</li>\n<li><strong>Wall text in a museum voice.</strong> Each room has an introduction, chapters, labels, one-line notes, explained comparisons and a closing.</li>\n<li><strong>An audio tour in every room.</strong> Press play and a voice reads the room while each work comes on screen, about seven minutes a room, with pause, skip and a progress line.</li>\n<li><strong>A screen saver that draws.</strong> One work at a time, drawn stroke by stroke on black, held with its caption, then the next. Fullscreen, with your choice of drawing speed and hold time, and it can be limited to one room.</li>\n<li><strong>A map of the building.</strong> The collection as a three-floor museum map, rooms sized by how many works they hold, colored by collection, with doors between consecutive rooms and stairs between floors.</li>\n<li><strong>Readable by machines too.</strong> <code>/llms.txt</code> indexes the site for language models and <code>/llms-full.txt</code> carries the complete gallery text in one file.</li>\n<li><strong>Light or dark.</strong> A white gallery by default, black by choice, remembered across visits. The artwork itself is never altered.</li>\n<li><strong>Everything downloadable.</strong> Each artwork page offers the native SVG, the original PNG and the archived metadata and provenance records, with a link to the collected NFT.</li>\n</ul>\n<p>I hope you like browsing and experiencing nnxyz&rsquo;s work as much as I do. I feel like it has real movement and energy in it. nnxyz himself uses the term &ldquo;thrash-art&rdquo; — I dig it! I&rsquo;ve never liked the VR gallery experiences online and I think this museum walk through, particularly with audio guidance, is a better way to experience it.</p>\n",
+				
+				"date_published": "2026-10-15T21:11:13-05:00",
+				"url": "https://www.thingelstad.com/2026/10/15/the-nnxyz-rooms.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/14/we-saw-sting-tonight-at.html",
+				
+				"content_html": "<p>We saw Sting tonight at the Orpheum. It was really cool to see a music legend in such a small venue. It was a great show including a wide range of his catalog. According to Wikipedia he is 75 years old but doesn&rsquo;t seem like it!</p>\n<p><img src=\"https://cdn.uploads.micro.blog/890/2026/7ca3831a25.jpg\" width=\"600\" height=\"450\" alt=\"Sting plays bass under purple light beside a drummer, a giant screen of him behind them and audience silhouettes below.\"><img src=\"https://cdn.uploads.micro.blog/890/2026/1e701e5dcd.jpg\" width=\"600\" height=\"450\" alt=\"Guitarist, bassist, and drummer perform on stage under white light beams and red patterned projections above a crowd.\"></p>\n",
+				
+				"date_published": "2026-10-14T22:00:00-05:00",
+				"url": "https://www.thingelstad.com/2026/10/14/we-saw-sting-tonight-at.html"
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/13/years-ago-i-purchased-three.html",
+				
+				"content_html": "<p>Years ago I purchased three collections of art by <a href=\"https://nifty.ink/artist/0x9410bc26732ed9480833cb3a4a0f377908e261e2\">nnxyz</a> on <a href=\"https://nifty.ink\">nifty.ink</a>. I&rsquo;ve now archived them in better detail than they were ever before available on my <a href=\"https://nnxyz.thingelstad.xyz\">nnxyz collection</a> site. Nifty.ink captured all art in dots and strokes so I used that to render SVG versions of all the art. Lovely. 🎨</p>\n",
+				
+				"date_published": "2026-10-13T21:07:22-05:00",
+				"url": "https://www.thingelstad.com/2026/10/13/years-ago-i-purchased-three.html",
+				"tags": ["Crypto","Technology"]
+			},
+			{
+				"id": "http://jthingelstad.micro.blog/2026/10/13/cold-and-rainy-weather-put.html",
+				
+				"content_html": "<p>Cold and rainy weather put a damper on the evening but it was still cool to watch John Munson play with Steve Sutherland and I&rsquo;m not remembering the guitar player&rsquo;s name in a backyard show.</p>\n<img src=\"https://cdn.uploads.micro.blog/890/2026/93742da76e.jpg\" width=\"600\" height=\"450\" alt=\"Guitarist in a cap, drummer, and singing bassist in red plaid play on a lit backyard stage at night before a wooden fence.\">\n",
+				
+				"date_published": "2026-10-13T21:00:00-05:00",
+				"url": "https://www.thingelstad.com/2026/10/13/cold-and-rainy-weather-put.html"
+			}
+	]
+}

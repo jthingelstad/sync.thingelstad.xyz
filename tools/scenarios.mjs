@@ -4,9 +4,11 @@ import fs from 'node:fs/promises';
 import { flows } from '../src/flows.mjs';
 import { mapSource } from '../src/map.mjs';
 import { renderPage } from '../src/page.mjs';
-import { receivedEvent } from '../src/events.mjs';
+import { mergePublished, publishedEvent, receivedEvent } from '../src/events.mjs';
 import { queueReceived } from '../src/received.mjs';
 import { observe } from '../src/observe.mjs';
+import { blogPlan } from '../src/blog.mjs';
+import { parsePublisherFact } from '../src/facts.mjs';
 
 const ROOT = new URL('../test/scenarios/', import.meta.url);
 
@@ -19,18 +21,32 @@ export async function loadScenario(name) {
   const read = async (file) => JSON.parse(await fs.readFile(new URL(`${name}/${file}.json`, ROOT), 'utf8'));
   const history = await read('history').catch((error) => { if (error.code === 'ENOENT') return null; throw error; });
   const events = await read('events').catch((error) => { if (error.code === 'ENOENT') return []; throw error; });
-  return { ...(await read('clock')), facts: await read('facts'), journeys: await read('journeys'), history, events };
+  const microblog = await read('microblog').catch((error) => { if (error.code === 'ENOENT') return null; throw error; });
+  return { ...(await read('clock')), facts: await read('facts'), journeys: await read('journeys'), history, events, microblog };
 }
 
-export function renderScenario({ facts, journeys, history = null, events = [], now, trigger = { type: 'clock' } }) {
+export function renderScenario({ facts, journeys, history = null, events = [], microblog = null, now, trigger = { type: 'clock' } }) {
+  facts = structuredClone(facts);
+  microblog = structuredClone(microblog);
   let received = null;
   for (const raw of events) {
+    const published = publishedEvent(raw);
+    if (published) {
+      if(published.error) throw new Error('A scenario published event is invalid');
+      if(published.source==='microblog') {
+        microblog ??= { producer:null,publisher:null };
+        microblog.publisher=mergePublished(microblog.publisher,published,now);
+      } else facts['wt-builder']={newest:parsePublisherFact(mergePublished(facts['wt-builder'],published,now))};
+      continue;
+    }
     const parsed = receivedEvent(raw, now);
     if (!parsed || parsed.error) throw new Error('A scenario received event is invalid');
     received = queueReceived(received, parsed, now);
   }
+  const blog=microblog?blogPlan({state:microblog.producer,publisher:microblog.publisher,fact:facts.microblog,current:journeys?.post?.item,now}):null;
+  if(blog) facts.microblog=blog.fact;
   const result = observe({ flows, facts, journeys, history, received, now, code: 'fixtures', trigger });
-  return { ...result, page: renderPage(result.status, result.journeys, result.history) };
+  return { ...result, blog, page: renderPage(result.status, result.journeys, result.history) };
 }
 
 /** Readable rendered text for the snapshots and each PR's send-in-progress page. */

@@ -2,7 +2,7 @@
 // the page, status.json, the receipts and the journeys to the site bucket.
 // Clock, bus and deploy runs share the observation round. A published event
 // on the publishing bus (src/events.mjs) is
-// first folded into WT Builder's fact and then followed by its own one-off
+// first folded into its publisher's fact and then followed by its own one-off
 // schedules at 2, 5, 10, 15, 30, 45 and 60 minutes ({follow_up: {...}}), so
 // the item is watched as it moves. A received event journals an arrival;
 // the half-hour clock reconciles both. A deploy uses {deploy: true}. An event
@@ -16,8 +16,11 @@ import { renderPage } from './page.mjs';
 import { probe } from './probe.mjs';
 import { copyReceived, queueReceived, RECEIVED_KEY, reportedFacts } from './received.mjs';
 import { observe } from './observe.mjs';
+import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
+import { acknowledgeBlog, blogPlan, BLOG_PRODUCER_KEY, BLOG_PUBLISHER_KEY } from './blog.mjs';
 
 const s3 = new S3Client({});
+const bus = new EventBridgeClient({});
 // The Scheduler client is loaded when a published event needs it, so a
 // runtime without it still runs the clock; a rehearsal reports whether it
 // is there.
@@ -58,7 +61,7 @@ export function triggerOf(event, published, received = null) {
   return { type: 'manual' };
 }
 
-export async function run({ now = stamp(), env = process.env, trigger = { type: 'clock' }, journeys = null, history = null, received = null, context = null } = {}) {
+export async function run({ now = stamp(), env = process.env, trigger = { type: 'clock' }, journeys = null, history = null, received = null, microblog = null, context = null } = {}) {
   const ctx = context ?? {
     now,
     env,
@@ -70,6 +73,11 @@ export async function run({ now = stamp(), env = process.env, trigger = { type: 
     s3Get,
   };
   const facts = await collect(ctx, flows.systems.map((s) => s.id));
+  let blog = null;
+  if (microblog) {
+    blog = blogPlan({ state: microblog.producer, publisher: microblog.publisher, fact: facts.microblog, current: journeys?.post?.item, now });
+    facts.microblog = blog.fact;
+  }
   const initial = probe({ flows, facts: reportedFacts(facts, journeys), now, code: env.SYNC_CODE ?? null, trigger });
   const recorded = copyHistory(history, journeys);
   const queue = copyReceived(received);
@@ -90,7 +98,28 @@ export async function run({ now = stamp(), env = process.env, trigger = { type: 
     }
   }
   const result = observe({ flows, facts, now, code: env.SYNC_CODE ?? null, trigger, journeys, history: recorded, received: queue });
-  return { ...result, page: renderPage(result.status, result.journeys, result.history) };
+  return { ...result, blog, page: renderPage(result.status, result.journeys, result.history) };
+}
+
+const emitBlog = (event, eventBus) => bus.send(new PutEventsCommand({ Entries: [{ EventBusName: eventBus, Source: event.source, DetailType: event['detail-type'], Detail: JSON.stringify(event.detail), Time: new Date(event.detail.at) }] }));
+
+/** A cursor moves only after a successful per-entry bus acknowledgement.
+ * The consumed bus fact, not this cursor, advances the public journey. */
+export async function announceBlog(bucket, blog, now, eventBus, emit = emitBlog, write = put) {
+  if (!blog) return [];
+  let state = blog.state;
+  await write(bucket, BLOG_PRODUCER_KEY, JSON.stringify(state, null, 1));
+  const made = [];
+  for (const event of blog.events) {
+    let response;
+    try { response = await emit(event, eventBus); }
+    catch { throw new Error('The micro.blog publishing event could not be queued'); }
+    if (!response || response.FailedEntryCount !== 0 || response.Entries?.length !== 1 || !response.Entries[0].EventId || response.Entries[0].ErrorCode) throw new Error('The micro.blog publishing event was not acknowledged');
+    state = acknowledgeBlog(state, event, now);
+    await write(bucket, BLOG_PRODUCER_KEY, JSON.stringify(state, null, 1));
+    made.push({ id: event.detail.id, at: event.detail.at, event_id: response.Entries[0].EventId });
+  }
+  return made;
 }
 
 export async function publish(bucket, { status, journeys, history, retired = [], received, page }, write = put) {
@@ -122,7 +151,7 @@ export async function scheduleFollowUps(published, now, env = process.env) {
         new CreateScheduleCommand({
           Name: f.name,
           GroupName: group,
-          Description: `sync probe ${f.input.follow_up.minutes} min after the ${published.leg} leg of ${published.kind} ${published.id}`,
+          Description: `sync probe follow-up ${f.name}`,
           ScheduleExpression: `at(${f.at})`,
           ScheduleExpressionTimezone: 'UTC',
           FlexibleTimeWindow: { Mode: 'OFF' },
@@ -157,9 +186,10 @@ export async function handler(event = {}, context = {}) {
   }
   if (published?.error || received?.error) return { checked_at: now, rejected: published?.error ? 'published' : 'received', why: published?.error ?? received.error };
   if (published && !published.error) {
-    const stored = await s3Get(bucket, PUBLISHER_FACT_KEY);
+    const key = published.source === 'microblog' ? BLOG_PUBLISHER_KEY : PUBLISHER_FACT_KEY;
+    const stored = await s3Get(bucket, key);
     const fact = mergePublished(stored, published, now);
-    await put(bucket, PUBLISHER_FACT_KEY, JSON.stringify(fact, null, 1));
+    await put(bucket, key, JSON.stringify(fact, null, 1));
     console.log(JSON.stringify({ published_event: 'recorded', kind: published.kind, id: published.id, leg: published.leg, at: published.at, event_id: published.event_id }));
   }
   const trigger = triggerOf(event, published, received);
@@ -171,13 +201,15 @@ export async function handler(event = {}, context = {}) {
   }
   const journeys = await s3Get(bucket, JOURNEYS_KEY);
   const history = await s3Get(bucket, HISTORY_KEY);
-  const result = await run({ now, trigger, journeys, history, received: reports });
+  const microblog = process.env.PUBLISHING_BUS ? { producer: await s3Get(bucket, BLOG_PRODUCER_KEY), publisher: await s3Get(bucket, BLOG_PUBLISHER_KEY) } : null;
+  const result = await run({ now, trigger, journeys, history, received: reports, microblog });
   for (const rejection of result.rejected_received) console.error(JSON.stringify({ received_event: 'rejected', ...rejection }));
+  const blog_events = await announceBlog(bucket, result.blog, now, process.env.PUBLISHING_BUS);
   await publish(bucket, result);
   let follow_ups = [];
   if (published && !published.error) follow_ups = await scheduleFollowUps(published, now);
   const s = result.status.summary;
-  const report = { checked_at: result.status.checked_at, trigger, ...s, follow_ups };
+  const report = { checked_at: result.status.checked_at, trigger, ...s, follow_ups, blog_events };
   console.log(JSON.stringify(report));
   return report;
 }

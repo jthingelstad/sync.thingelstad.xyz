@@ -49,7 +49,7 @@ const errorFor = (fact, kind, want) => fact?.reported?.[kind] && String(fact.rep
 /** The newest item of a kind at its origin, and which system said so. */
 export function origin(facts, kind) {
   for (const system of ORIGINS[kind] ?? []) {
-    const item = newest(facts, system, kind);
+    const item = kind === 'post' && system === 'microblog' && facts[system]?.publication ? facts[system].publication.item : newest(facts, system, kind);
     if (item) return { system, item };
   }
   return null;
@@ -117,7 +117,7 @@ export function probe({ flows, facts, now, code = null, trigger = { type: 'clock
   for (const hop of flows.hops) {
     for (const kind of hop.kinds) {
       if (!MATRIX_KINDS.includes(kind)) {
-        hops.push({ id: hop.id, from: hop.from, to: hop.to, kind, status: 'no-fact', why: `no system publishes a fact for ${kind} yet`, expected_lag_hours: hop.expected_lag_hours });
+        hops.push({ id: hop.id, from: hop.from, to: hop.to, kind, status: 'no-fact', why: hop.id===19 && facts.microblog?.source_receipt ? facts.microblog.source_receipt.why : `no system publishes a fact for ${kind} yet`, expected_lag_hours: hop.expected_lag_hours });
         continue;
       }
       hops.push({ id: hop.id, from: hop.from, to: hop.to, kind, expected_lag_hours: hop.expected_lag_hours, ...hopStatus(hop, kind, facts, now) });

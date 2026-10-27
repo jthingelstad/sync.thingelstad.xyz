@@ -1,0 +1,10 @@
+{
+  "now": "2026-10-28T02:07:00Z",
+  "trigger": {
+    "type": "event",
+    "kind": "post",
+    "id": "https://www.thingelstad.com/2026/10/28/the-next-public-post.html",
+    "leg": "website",
+    "at": "2026-10-28T02:06:00Z"
+  }
+}

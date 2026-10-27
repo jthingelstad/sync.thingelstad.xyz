@@ -90,6 +90,12 @@ Builder's credentials proves the permission without matching the rule.
 - `src/events.mjs` — the published event: validation, the fold into the
   publisher fact, the follow-up times. Retried legs are one send; older
   items never replace a newer number or lend it a title or URL. Pure.
+- `src/blog.mjs` — the public feed's producer. A first observation is a
+  silent baseline; later posts announce their website leg. The cursor in
+  `facts/microblog-producer.json` advances only on a bus acknowledgement;
+  `facts/microblog.json` advances only when the event is consumed. A queued
+  post never starts a journey. Hop 19 stays no-fact until the independent
+  source identity and write receipt in `docs/MICROBLOG.md` are verified.
 - `src/received.mjs` — destination receipts: validation, a one-hour wait
   for unknown ids, and exact reported arrivals. `facts/received.json` is the
   pending journal; a retry keeps its first deadline. It is cleared only
@@ -176,8 +182,10 @@ needs; the template resolves each into its own environment variable with
 `{{resolve:secretsmanager:${RuntimeSecret}:SecretString:<key>}}`, so no value
 enters a session. Keys today: `pinboard_token` → `PINBOARD_API_TOKEN`, the
 Pinboard fact; `microblog_api_key` → `MICROBLOG_API_KEY` (added 2026-10-26 at
-Jamie's ask, ahead of the readers that will use it: the Micropub source query
-for hop 19's render receipt, and a blog producer for the bus). To add a secret: add the key in the console, add the resolve
+Jamie's ask). The blog producer reads the public feed without it. Its
+authenticated source query waits for the verified identity and write
+receipt named in `docs/MICROBLOG.md`; no write is allowed. To add a secret:
+add the key in the console, add the resolve
 line to the Function's environment, deploy. The stack remembers the name; run
 the deploy once with `SYNC_RUNTIME_SECRET=<name>` to set or change it, and an
 empty name turns every secret-backed fact off. Secret safety rules are in
