@@ -133,3 +133,38 @@ test('history is bounded at fifty per kind and lag statistics exclude active, un
   assert.equal(kept.index.kinds.issue[0].item.id, '55');
   assert.equal(kept.index.kinds.issue.at(-1).item.id, '6');
 });
+
+test('a partially published index retires its stale active row and keeps the measured sample', () => {
+  const a = advance(null, receipt([['weekly', 'has']]), '2026-10-31T12:00:13Z');
+  const r = receipt([['weekly', 'behind']]);
+  r.item = { ...r.item, id: '356', at: '2026-11-07T12:00:00Z' };
+  let b = advance(a, r, '2026-11-07T12:00:13Z');
+  r.holders[0].state = 'has';
+  b = advance(b, r, '2026-11-07T12:02:00Z');
+  const savedIndex = historyFor(null, { issue: a }, { issue: b }, b.updated_at).index;
+  // journeys.json still holds A after a failed public-file write. Its
+  // origin is also temporarily the reader fallback on the recovery run.
+  const recovery = historyFor(savedIndex, { issue: a }, { issue: a }, '2026-11-07T12:03:00Z');
+  assert.deepEqual(recovery.index.kinds.issue.map((j) => [j.item.id, j.active]), [['355', true], ['356', false]]);
+  const archived = recovery.retired.find((r) => r.key === 'journeys/issue/356.json');
+  assert.equal(archived.journey.arrivals.weekly.observed, true);
+  assert.equal(recovery.index.kinds.issue[1].archive, archived.key);
+  assert.equal(typicalLag(recovery.index, 'issue', 'weekly'), 2 / 60);
+  const again = historyFor(recovery.index, { issue: a }, { issue: a }, '2026-11-07T12:04:00Z');
+  assert.equal(again.retired.length, 0);
+  assert.equal(again.index.kinds.issue.filter((j) => j.active).length, 1);
+});
+
+test('the current journey keeps a slot even when its restored start predates all fifty history rows', () => {
+  const old = advance(null, receipt([['weekly', 'behind']]), '2026-10-01T12:00:00Z');
+  const rows = Array.from({ length: 50 }, (_, i) => summarise({ ...old, item: { ...old.item, id: String(400 + i) }, started_at: new Date(Date.UTC(2026, 10, i + 1)).toISOString() }));
+  const kept = historyFor({ version: 1, kinds: { issue: rows } }, {}, { issue: old }, '2026-12-25T12:00:00Z');
+  assert.equal(kept.index.kinds.issue.length, 50);
+  assert.equal(kept.index.kinds.issue[0].item.id, '355');
+  assert.equal(kept.index.kinds.issue[0].active, true);
+  assert.equal(kept.index.kinds.issue[0].started_at, old.started_at);
+  assert.equal(kept.index.kinds.issue.at(-1).item.id, '401');
+  const arrived = advance(old, receipt([['weekly', 'has']]), '2026-12-25T12:02:00Z');
+  const next = historyFor(kept.index, { issue: old }, { issue: arrived }, arrived.updated_at);
+  assert.equal(next.index.kinds.issue[0].arrivals.weekly.observed, true);
+});

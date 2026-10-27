@@ -119,16 +119,27 @@ export function historyFor(index, previous, current, now) {
   if (index && (index.version !== 1 || !index.kinds || typeof index.kinds !== 'object' || Array.isArray(index.kinds))) throw new Error('Unsupported journey history index');
   const next = restoreKnown(current, index);
   const retired = retire(restoreKnown(previous, index), next);
+  // The index can land before journeys.json during a failed publish. Its
+  // formerly active row still needs an archive when the next run chooses a
+  // different item; active is derived from this run, never carried forward.
+  for (const [kind, rows] of Object.entries(index?.kinds ?? {})) {
+    for (const j of rows) {
+      if (!j.active || String(j.item.id) === String(next[kind]?.item?.id)) continue;
+      const key = archiveKey(kind, j.item.id);
+      if (!retired.some((r) => r.key === key)) retired.push({ key, journey: remembered(j, j) });
+    }
+  }
   const kinds = {};
   const named = new Set([...Object.keys(index?.kinds ?? {}), ...Object.keys(next)]);
   for (const kind of named) {
     const entries = new Map();
-    for (const j of index?.kinds?.[kind] ?? []) entries.set(String(j.item.id), summarise(j, { active: Boolean(j.active) }));
+    for (const j of index?.kinds?.[kind] ?? []) entries.set(String(j.item.id), summarise(j));
     for (const r of retired.filter((r) => r.journey.kind === kind)) entries.set(String(r.journey.item.id), summarise(r.journey));
     if (next[kind]) entries.set(String(next[kind].item.id), summarise(next[kind], { active: true }));
-    kinds[kind] = [...entries.values()]
+    const historical = [...entries.values()].filter((j) => !j.active)
       .sort((a, b) => Date.parse(b.started_at) - Date.parse(a.started_at) || (String(a.item.id) < String(b.item.id) ? -1 : 1))
-      .slice(0, 50);
+      .slice(0, next[kind] ? 49 : 50);
+    kinds[kind] = next[kind] ? [entries.get(String(next[kind].item.id)), ...historical] : historical;
   }
   return { index: { version: 1, updated_at: now, kinds }, retired, journeys: next };
 }
