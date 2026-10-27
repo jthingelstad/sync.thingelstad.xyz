@@ -263,14 +263,14 @@
       "Type": "AWS::Events::EventBus",
       "Properties": {
         "Name": "thingelstad-publishing",
-        "Description": "Every send announces itself here: a published event per leg, from WT Builder; the sync probe listens"
+        "Description": "Public publishing and destination arrival receipts; the sync probe listens"
       }
     },
     "PublishingArchive": {
       "Type": "AWS::Events::Archive",
       "Properties": {
         "ArchiveName": "thingelstad-publishing",
-        "Description": "Ninety days of published events, replayable",
+        "Description": "Ninety days of published and received events, replayable",
         "SourceArn": {
           "Fn::GetAtt": [
             "PublishingBus",
@@ -279,7 +279,16 @@
         },
         "EventPattern": {
           "detail-type": [
-            "published"
+            "published",
+            "received"
+          ],
+          "source": [
+            "wt-builder",
+            "librarian",
+            "thingy",
+            "links",
+            "weekly",
+            "another"
           ]
         },
         "RetentionDays": 90
@@ -307,6 +316,15 @@
                   "PublishingBus",
                   "Arn"
                 ]
+              },
+              "Condition": {
+                "StringEquals": {
+                  "events:source": "wt-builder",
+                  "events:detail-type": [
+                    "published",
+                    "ping"
+                  ]
+                }
               }
             }
           ]
@@ -486,13 +504,22 @@
         "Name": {
           "Fn::Sub": "${AWS::StackName}-published"
         },
-        "Description": "A published event runs the sync probe",
+        "Description": "Published and received events run the sync probe",
         "EventBusName": {
           "Ref": "PublishingBus"
         },
         "EventPattern": {
           "detail-type": [
-            "published"
+            "published",
+            "received"
+          ],
+          "source": [
+            "wt-builder",
+            "librarian",
+            "thingy",
+            "links",
+            "weekly",
+            "another"
           ]
         },
         "State": "ENABLED",
@@ -527,6 +554,9 @@
             "PublishedRule",
             "Arn"
           ]
+        },
+        "SourceAccount": {
+          "Ref": "AWS::AccountId"
         }
       }
     },

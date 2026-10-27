@@ -5,7 +5,8 @@ each hop runs, a receipt for the newest item of each kind, and the journey
 each item is on. One Lambda probe writes a scriptless HTML page, `status.json`,
 `receipts/<kind>.json`, `journeys.json` and `facts/wt-builder.json` into a
 private S3 bucket that CloudFront serves. It runs on a half-hour EventBridge
-schedule, on every `published` event on the publishing bus, and then again
+schedule and on `published` and `received` events. After each published send
+leg it runs again
 at 2, 5, 10, 15, 30, 45 and 60 minutes after the event (one-off Scheduler
 schedules it makes for itself), so an item is watched as it moves. Public by
 design (Jamie, 2026-10-26: "seems fine if that is public"): it holds ids and
@@ -33,11 +34,15 @@ logged and dropped, never guessed at) and folds it into
 `facts/wt-builder.json`, WT Builder's fact: the newest item of each kind with
 its legs, and the last fifty events. A hop out of WT Builder is measured from
 the leg that reaches its destination (`LEGS` in `src/probe.mjs`) and reads
-"moving: the archive leg has not sent" until that leg goes. The audio edition
+"moving: the archive leg has not sent" until that leg goes or its destination
+independently reports the arrival. The audio edition
 is the issue's podcast leg. The bus has a ninety-day archive (replayable), a
-rule for `published` that invokes the probe, and a managed policy attached to the
+rule for `published` and `received` that invokes the probe, and a managed policy attached to the
 `PublisherUser` parameter's IAM user (`wt-archive`, the user WT Builder's
-`.env` names) allowing `events:PutEvents` on the bus and nothing else.
+`.env` names) allowing `events:PutEvents` on this bus from source `wt-builder`
+for `published` or `ping`, and nothing else. Destination senders wait for
+their own PRs; this stack grants them nothing yet. `docs/EVENTS.md` is the
+contract, including the source each existing identity may use.
 
 The sender side lives in wt-builder (`src/server/integrations/publishing.ts`):
 each leg announces itself after its send is recorded, and a failure to
@@ -83,7 +88,18 @@ Builder's credentials proves the permission without matching the rule.
 - `src/probe.mjs` — facts in, status out: fresh / moving / late / held /
   no-fact / unknown per hop and kind; the matrix; the receipts. Pure.
 - `src/events.mjs` — the published event: validation, the fold into the
-  publisher fact, the follow-up times. Pure.
+  publisher fact, the follow-up times. Retried legs are one send; older
+  items never replace a newer number or lend it a title or URL. Pure.
+- `src/received.mjs` — destination receipts: validation, a one-hour wait
+  for unknown ids, and exact reported arrivals. `facts/received.json` is the
+  pending journal; a retry keeps its first deadline. It is cleared only
+  after its journey files land. A receipt for an archived item updates the
+  archive too. A day's hash/deadline ledger prevents a retry from restarting
+  the hour after cleanup. Public identity and time only, never a payload in
+  a log.
+- `src/observe.mjs` — the pure round shared by Lambda and scenarios: facts,
+  current journeys, history and received reports in; status, journals and
+  archives out.
 - `src/journey.mjs` — one journey per kind: the newest item and when the
   probe first saw each system holding it. An arrival is `observed` (a
   measurement: the system lacked the item on one run and had it on the next;
@@ -185,6 +201,12 @@ empty name turns every secret-backed fact off. Secret safety rules are in
 - A lag on the map or in a journey is quoted only from an observed arrival;
   a system that already held the item when watching started shows the time
   watching started and no lag.
+- An event arrival says "reported", at its stated time with one-second
+  resolution; a poll says "seen", with its check interval. The earliest
+  reported arrival wins. Its receipt is independent evidence for that item
+  and kind during a reader failure; the failure still covers everything
+  else. A destination report can prove arrival without a send-leg receipt,
+  but never supplies a missing send time.
 - Pipes have a fixed width; it is not traffic volume. Words and arrows
   carry state and direction as well as colour. The map keeps its own size
   at phone width and scrolls; lane rows stack so their labels stay readable.

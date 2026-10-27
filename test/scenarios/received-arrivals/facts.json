@@ -1,0 +1,20 @@
+{
+  "wt-builder": {
+    "newest": {
+      "issue": {
+        "id": "355",
+        "at": "2026-10-28T02:02:00Z",
+        "url": "https://weekly.thingelstad.com/archive/355/",
+        "title": "WT355",
+        "legs": {
+          "website": {
+            "at": "2026-10-28T02:02:00Z"
+          },
+          "archive": {
+            "at": "2026-10-28T02:02:30Z"
+          }
+        }
+      }
+    }
+  }
+}

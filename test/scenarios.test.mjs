@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import { test } from 'node:test';
 import { loadScenario, renderScenario, scenarioNames, scenarioSnapshot } from '../tools/scenarios.mjs';
 
-const names = ['after-send', 'friday-hold', 'late-hop', 'quiet-tuesday', 'reader-down', 'send-in-progress', 'superseded'];
+const names = ['after-send', 'friday-hold', 'late-hop', 'quiet-tuesday', 'reader-down', 'received-arrivals', 'send-in-progress', 'superseded'];
 
 test('every page scenario is complete and renders without a network request', async () => {
   assert.deepEqual(await scenarioNames(), names);

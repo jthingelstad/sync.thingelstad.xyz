@@ -1,0 +1,37 @@
+flowchart LR
+  accTitle: The hops between Jamie's systems, as they are now
+  n0["Pinboard<br>no fact yet"]:::source
+  n1["micro.blog<br>no fact yet"]:::source
+  n2["Tinylytics<br>no fact yet"]:::source
+  n3["WT Builder<br>WT355"]:::publisher
+  n4["Library Agent<br>no fact yet"]:::agent
+  n5["Weekly Thing (web)<br>WT355"]:::site
+  n6["Buttondown<br>no fact yet"]:::site
+  n7["files.thingelstad.com<br>no fact yet"]:::site
+  n8["Another Thing<br>no fact yet"]:::site
+  n9["Linking Things<br>no fact yet"]:::site
+  n10["Things I've built<br>no fact yet"]:::site
+  n11["Librarian<br>WT355"]:::archive
+  n12["Thingy<br>WT355"]:::answers
+  n13["cards.thingelstad.com<br>no fact yet"]:::answers
+  n0 -->|"1 · link, note · no fact"| n3
+  n3 -->|"2 · note · no fact"| n0
+  n1 -->|"3 · post · no fact"| n3
+  n3 -->|"4 · post, category · no fact"| n1
+  n0 -.->|"5 · link, note · no fact"| n9
+  n5 -.->|"6 · issue · no fact"| n9
+  n3 -->|"7 · WT355 · reported 1 min 7 sec"| n5
+  n3 -->|"8 · issue · no fact"| n6
+  n3 -->|"9 · audio, image · no fact"| n7
+  n3 -->|"10 · WT355 · reported 14 min 10 sec"| n11
+  n1 -.->|"11 · post, category, alt · no fact"| n11
+  n8 -.->|"12 · episode · no fact"| n11
+  n10 -.->|"13 · thing · no fact"| n11
+  n9 -.->|"14 · link, note · no fact"| n11
+  n2 -.->|"15 · readers · no fact"| n11
+  n11 -->|"16 · issue, post, episode, thing, link, topics · no fact"| n12
+  n11 -->|"17 · topics · no fact"| n5
+  n11 -->|"18 · issue, post, link · no fact"| n3
+  n4 -.->|"19 · category, alt, featured · no fact"| n1
+  n1 -->|"20 · post, image · no fact"| n13
+  n3 -->|"21 · episode, audio · no fact"| n8

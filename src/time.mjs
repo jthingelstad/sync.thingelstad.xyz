@@ -9,6 +9,17 @@ export function instant(value) {
   return Number.isNaN(ms) ? null : new Date(ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
 }
 
+/** A stated event time has seconds and a zone; a date or invalid calendar
+ * day is not an arrival instant. Keep the public journal at second resolution. */
+export function statedInstant(value) {
+  if (typeof value !== 'string') return null;
+  const m = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})(?:\.\d{1,9})?(Z|[+-](\d{2}):(\d{2}))$/);
+  if (!m) return null;
+  const [, year, month, day, hour, minute, second, , zoneHour = '0', zoneMinute = '0'] = m;
+  if (+month < 1 || +month > 12 || +day < 1 || +day > new Date(Date.UTC(+year, +month, 0)).getUTCDate() || +hour > 23 || +minute > 59 || +second > 59 || +zoneHour > 23 || +zoneMinute > 59) return null;
+  return instant(value);
+}
+
 export const hoursBetween = (from, to) => (Date.parse(to) - Date.parse(from)) / 3_600_000;
 
 /** "Sat Oct 24, 7:00 a.m. CDT" */

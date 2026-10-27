@@ -1,0 +1,68 @@
+{
+  "published": [
+    {
+      "source": "wt-builder",
+      "detail-type": "published",
+      "time": "2026-10-28T02:02:00Z",
+      "detail": {
+        "kind": "issue",
+        "id": "355",
+        "title": "WT355",
+        "url": "https://weekly.thingelstad.com/archive/355/",
+        "leg": "website",
+        "at": "2026-10-28T02:02:00Z"
+      }
+    },
+    {
+      "source": "wt-builder",
+      "detail-type": "published",
+      "time": "2026-10-28T02:02:30Z",
+      "detail": {
+        "kind": "issue",
+        "id": "355",
+        "title": "WT355",
+        "url": "https://weekly.thingelstad.com/archive/355/",
+        "leg": "archive",
+        "at": "2026-10-28T02:02:30Z"
+      }
+    }
+  ],
+  "received": [
+    {
+      "source": "weekly",
+      "detail-type": "received",
+      "detail": {
+        "system": "weekly",
+        "kind": "issue",
+        "id": "355",
+        "at": "2026-10-28T02:03:07Z",
+        "url": "https://weekly.thingelstad.com/archive/355/",
+        "via": "site-deploy"
+      }
+    },
+    {
+      "source": "librarian",
+      "detail-type": "received",
+      "detail": {
+        "system": "librarian",
+        "kind": "issue",
+        "id": "355",
+        "at": "2026-10-28T02:16:10Z",
+        "url": "https://weekly.thingelstad.com/archive/355/",
+        "via": "library-round"
+      }
+    },
+    {
+      "source": "thingy",
+      "detail-type": "received",
+      "detail": {
+        "system": "thingy",
+        "kind": "issue",
+        "id": "355",
+        "at": "2026-10-28T02:41:01Z",
+        "url": "https://weekly.thingelstad.com/archive/355/",
+        "via": "api-deploy"
+      }
+    }
+  ]
+}

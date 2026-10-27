@@ -10,6 +10,7 @@ import { flows, systemName } from './flows.mjs';
 import { lagAt } from './journey.mjs';
 import { MATRIX_KINDS, SEVERITY } from './probe.mjs';
 import { age, centralDay } from './time.mjs';
+import { duration, measuredHours } from './stories.mjs';
 
 // Mermaid label text: quotes and hashes as entities; <br> is a line break.
 const label = (value) => String(value).replace(/#/g, '#35;').replace(/"/g, '#quot;').replace(/</g, '#lt;').replace(/>/g, '#gt;');
@@ -43,7 +44,10 @@ export function shortItem(kind, item) {
 /** What a node says under the system's name. */
 export function nodeText(system, fact) {
   const state = nodeState(fact);
-  if (state === 'unknown') return 'unknown';
+  if (state === 'unknown') {
+    const reports = Object.keys(fact.reported ?? {}).map((kind) => shortItem(kind, fact.newest?.[kind]));
+    return reports.length ? `${reports.join(' · ')} · reader unavailable` : 'unknown';
+  }
   if (state === 'no-fact') return 'no fact yet';
   // An audio edition that reads the same as its issue is said once.
   const items = [...new Set(MATRIX_KINDS.filter((k) => fact.newest[k]).map((k) => shortItem(k, fact.newest[k])))];
@@ -58,6 +62,10 @@ export function edgeText(status, journeys, id) {
   const what = item ? shortItem(row.kind, item) : row.kind;
   switch (worst) {
     case 'fresh': {
+      const journey = journeys?.[row.kind];
+      const arrival = journey?.arrivals?.[row.to];
+      const exact = arrival?.via && String(journey.item?.id) === String(item?.id) ? measuredHours(journey, arrival) : null;
+      if (exact != null) return `${id} · ${what} · reported ${duration(exact)}`;
       const lag = journeys?.[row.kind] && String(journeys[row.kind].item?.id) === String(item?.id) ? lagAt(journeys[row.kind], row.to) : null;
       return `${id} · ${what} · ${lag == null ? 'fresh' : `in ${age(lag)}`}`;
     }

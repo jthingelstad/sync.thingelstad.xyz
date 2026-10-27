@@ -245,7 +245,7 @@
       "expected_lag_hours": 28,
       "verify": "links_stats last_saved is after the bookmark's save time; data/sync.json updated matches Pinboard's posts/update.",
       "status": "ok",
-      "notes": "The run took about three hours on 2026-10-26 (Wayback lookups). A link saved at 01:00 waits until the next night's run, then the run time: about 28 hours at worst."
+      "notes": "The run took about three hours on 2026-10-26 (Wayback lookups). A link saved at 01:00 waits until the next night's run, then the run time: about 28 hours at worst. Arrival reporting contract (sync plan step 4): source links, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
     },
     {
       "id": 6,
@@ -264,7 +264,7 @@
       "expected_lag_hours": 28,
       "verify": "links_stats latest_issue equals the newest issue on weekly.thingelstad.com.",
       "status": "gap",
-      "notes": "Broken on 2026-10-26: WT354 was sent 2026-10-24, the nightly ran green, and Linking Things still reports 353. The sibling checkout was on a feature branch without 354.md. Fix: read weekly's published archive over HTTPS, or origin main, never a working checkout; and nudge the join from the send (hop 10)."
+      "notes": "Broken on 2026-10-26: WT354 was sent 2026-10-24, the nightly ran green, and Linking Things still reports 353. The sibling checkout was on a feature branch without 354.md. Fix: read weekly's published archive over HTTPS, or origin main, never a working checkout; and nudge the join from the send (hop 10). Arrival reporting contract (sync plan step 4): source links, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
     },
     {
       "id": 7,
@@ -283,7 +283,7 @@
       "expected_lag_hours": 0.25,
       "verify": "feed.xml carries the issue; /archive/<n>/ renders. Its receipt is the published event for the website leg on the bus; the sync page measures the hop from that event's time.",
       "status": "ok",
-      "notes": "Sent for every issue since WT350."
+      "notes": "Sent for every issue since WT350. Arrival reporting contract (sync plan step 4): source weekly, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
     },
     {
       "id": 8,
@@ -339,7 +339,7 @@
       "expected_lag_hours": 0.5,
       "verify": "The round's 'The sent issue arrived' step passed; latest_content lists the issue. Its receipt is the published event for the archive leg on the bus; the sync page measures the hop from that event's time.",
       "status": "ok",
-      "notes": "Sent for every issue since WT350. Linking Things gets no such nudge (hop 6)."
+      "notes": "Sent for every issue since WT350. Linking Things gets no such nudge (hop 6). Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
     },
     {
       "id": 11,
@@ -362,7 +362,7 @@
       "expected_lag_hours": 26,
       "verify": "latest_content source_kind blog lists the post; the library's blog fingerprint moved.",
       "status": "ok",
-      "notes": "Two runners for one round means two answers to 'when did it last run'. blog-published, podcast-published and things-published are declared in library-round.yml and sent by no one (checked 2026-10-26)."
+      "notes": "Two runners for one round means two answers to 'when did it last run'. blog-published, podcast-published and things-published are declared in library-round.yml and sent by no one (checked 2026-10-26). Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
     },
     {
       "id": 12,
@@ -380,7 +380,8 @@
       },
       "expected_lag_hours": 26,
       "verify": "latest_content source_kind podcast lists the episode.",
-      "status": "ok"
+      "status": "ok",
+      "notes": "Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
     },
     {
       "id": 13,
@@ -398,7 +399,8 @@
       },
       "expected_lag_hours": 26,
       "verify": "get_source thing-<id> returns the current page.",
-      "status": "ok"
+      "status": "ok",
+      "notes": "Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
     },
     {
       "id": 14,
@@ -418,7 +420,7 @@
       "expected_lag_hours": 24,
       "verify": "latest_content source_kind link lists the link.",
       "status": "ok",
-      "notes": "Stacks on hop 5: a link saved at 01:00 reaches the Librarian the morning after next, about 52 hours at worst."
+      "notes": "Stacks on hop 5: a link saved at 01:00 reaches the Librarian the morning after next, about 52 hours at worst. Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
     },
     {
       "id": 15,
@@ -437,7 +439,7 @@
       "expected_lag_hours": 26,
       "verify": "The library's readers table has yesterday's counts.",
       "status": "ok",
-      "notes": "Stops when the Mac does."
+      "notes": "Stops when the Mac does. Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
     },
     {
       "id": 16,
@@ -462,7 +464,7 @@
       "verify": "latest_content and corpus_stats show the item.",
       "status": "ok",
       "hold": "From Friday 00:00 until the send (Friday and Saturday, US Central) no automatic build changes the corpus; the round still updates the library. Read 'held', not 'stale'.",
-      "notes": "Thingy's drift check (06:17 daily) compares its vendored contract with the Librarian's main and files a GitHub issue on drift."
+      "notes": "Thingy's drift check (06:17 daily) compares its vendored contract with the Librarian's main and files a GitHub issue on drift. Arrival reporting contract (sync plan step 4): source thingy, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
     },
     {
       "id": 17,
@@ -480,7 +482,8 @@
       },
       "expected_lag_hours": 1,
       "verify": "weekly's topic pages list the new issue.",
-      "status": "ok"
+      "status": "ok",
+      "notes": "Arrival reporting contract (sync plan step 4): source weekly, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
     },
     {
       "id": 18,
@@ -559,7 +562,7 @@
       "expected_lag_hours": 0.25,
       "verify": "podcast.xml carries the episode. Its receipt is the published event for the another leg on the bus; the sync page measures the hop from that event's time.",
       "status": "unverified",
-      "notes": "Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length."
+      "notes": "Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length. Arrival reporting contract (sync plan step 4): source another, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
     }
   ],
   "fields": [
@@ -635,7 +638,7 @@
         20,
         21
       ],
-      "sees": "Whether the destination of each hop holds the newest item of its kind, measured from the published event or the next fact down; each item's journey, system by system, with the time it was first seen at each.",
+      "sees": "Whether the destination of each hop holds the newest item of its kind, measured from the published event or the next fact down; each item's journey, system by system, with the time it was first seen at each. The received contract accepts destination-reported arrival times, labelled reported; unmatched item ids wait at most one hour. Destination senders wait for their own step-5 PRs.",
       "misses": "A hop whose ends publish no fact (Buttondown, Tinylytics); whether the content is right."
     },
     {

@@ -44,6 +44,7 @@ const HOLD_DAYS = new Set(['Fri', 'Sat']);
 const onHold = (hop, now) => Boolean(hop.hold) && HOLD_DAYS.has(centralWeekday(now));
 
 const newest = (facts, system, kind) => facts[system]?.newest?.[kind] ?? null;
+const errorFor = (fact, kind, want) => fact?.reported?.[kind] && String(fact.reported[kind].id) === String(want?.id) ? null : fact?.error;
 
 /** The newest item of a kind at its origin, and which system said so. */
 export function origin(facts, kind) {
@@ -73,7 +74,6 @@ export function holds(have, want) {
 function hopStatus(hop, kind, facts, now) {
   const fromFact = facts[hop.from];
   const toFact = facts[hop.to];
-  if (fromFact?.error || toFact?.error) return { status: 'unknown', why: fromFact?.error ? `${hop.from}: ${fromFact.error}` : `${hop.to}: ${toFact.error}` };
   let source = newest(facts, hop.from, kind);
   let measuredFrom = hop.from;
   if (!source) {
@@ -83,9 +83,13 @@ function hopStatus(hop, kind, facts, now) {
       measuredFrom = o.system;
     }
   }
+  const fromError = errorFor(fromFact, kind, source), toError = errorFor(toFact, kind, source);
+  if (fromError || toError) return { status: 'unknown', why: fromError ? `${hop.from}: ${fromError}` : `${hop.to}: ${toError}` };
   const target = newest(facts, hop.to, kind);
   if (!source) return { status: 'no-fact', why: `${hop.from} publishes no fact for ${kind}` };
   if (!target) return { status: 'no-fact', why: `${hop.to} publishes no fact for ${kind}`, source, measured_from: measuredFrom };
+  const report = toFact?.reported?.[kind];
+  if (report && String(report.id) === String(source.id) && holds(target, source)) return { status: 'fresh', source, target, measured_from: measuredFrom, lag_hours: 0, reported_at: report.at, why: `reported via ${report.via} at ${report.at}` };
   const leg = measuredFrom === hop.from && source.legs ? LEGS[hop.to] : null;
   if (leg) {
     const sent = source.legs[leg];
@@ -133,7 +137,7 @@ export function probe({ flows, facts, now, code = null, trigger = { type: 'clock
         const incoming = hops.filter((h) => h.kind === kind && h.to === system);
         const worst = incoming.reduce((w, h) => (SEVERITY[h.status] > SEVERITY[w] ? h.status : w), incoming.length ? 'fresh' : null);
         const fact = facts[system];
-        return { system, newest: newest(facts, system, kind), status: worst, fact_error: fact?.error ?? null, fact_none: fact?.none ?? null };
+        return { system, newest: newest(facts, system, kind), status: worst, fact_error: errorFor(fact, kind, origin(facts, kind)?.item) ?? null, fact_none: fact?.none ?? null };
       });
     return { kind, cells };
   });
@@ -185,7 +189,7 @@ export function probe({ flows, facts, now, code = null, trigger = { type: 'clock
 function holder(facts, system, kind, want, label) {
   const fact = facts[system];
   const have = newest(facts, system, kind);
-  if (fact?.error) return { system, kind, label, state: 'unknown', why: fact.error };
+  if (errorFor(fact, kind, want)) return { system, kind, label, state: 'unknown', why: fact.error };
   if (!have) return { system, kind, label, state: 'no-fact', why: fact?.none ?? 'no fact for this kind' };
   if (holds(have, want)) return { system, kind, label, state: 'has', newest: have };
   return { system, kind, label, state: 'behind', newest: have };

@@ -94,7 +94,7 @@ async function liveContext() {
   };
 }
 
-export async function writeSite(out, { status, journeys, history = null, retired = [], page }) {
+export async function writeSite(out, { status, journeys, history = null, retired = [], received, page }) {
   await fs.mkdir(path.join(out, 'receipts'), { recursive: true });
   await fs.writeFile(path.join(out, 'index.html'), page);
   await fs.writeFile(path.join(out, 'page.txt'), pageText(page));
@@ -102,6 +102,10 @@ export async function writeSite(out, { status, journeys, history = null, retired
   await fs.writeFile(path.join(out, 'journeys.json'), `${JSON.stringify(journeys, null, 1)}\n`);
   await fs.mkdir(path.join(out, 'journeys'), { recursive: true });
   await fs.writeFile(path.join(out, 'journeys/index.json'), `${JSON.stringify(history, null, 1)}\n`);
+  if (received) {
+    await fs.mkdir(path.join(out, 'facts'), { recursive: true });
+    await fs.writeFile(path.join(out, 'facts/received.json'), `${JSON.stringify(received, null, 1)}\n`);
+  }
   for (const r of retired) {
     const file = path.join(out, r.key);
     await fs.mkdir(path.dirname(file), { recursive: true });

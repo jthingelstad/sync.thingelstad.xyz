@@ -67,6 +67,7 @@ export function advanceAll(journeys, status, history = null) {
 function firstArrival(a, b) {
   if (!a) return b;
   if (!b) return a;
+  if (Boolean(a.via) !== Boolean(b.via)) return a.via ? a : b;
   const earlier = Date.parse(b.at) < Date.parse(a.at);
   const tied = b.at === a.at && b.observed && !a.observed;
   return earlier || tied ? b : a;
@@ -121,9 +122,14 @@ export function summarise(journey, { active = false } = {}) {
 }
 
 /** A writable copy; reconciling active rows waits until this run has its facts. */
-export function copyHistory(index) {
+export function copyHistory(index, journeys = {}) {
   if (index && (index.version !== 1 || !index.kinds || typeof index.kinds !== 'object' || Array.isArray(index.kinds))) throw new Error('Unsupported journey history index');
-  return structuredClone(index ?? { version: 1, kinds: {} });
+  const copy = structuredClone(index ?? { version: 1, kinds: {} });
+  for (const [kind, j] of Object.entries(journeys ?? {})) {
+    const rows = copy.kinds[kind] ??= [];
+    if (!rows.some((old) => String(old.item.id) === String(j.item.id))) rows.push(summarise(j, { active: true }));
+  }
+  return copy;
 }
 
 /** The handler writes retired objects before this index and the current state. */

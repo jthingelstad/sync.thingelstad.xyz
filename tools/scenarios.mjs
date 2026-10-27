@@ -2,10 +2,11 @@
 // as production, so every change can be read in all six states before a send.
 import fs from 'node:fs/promises';
 import { flows } from '../src/flows.mjs';
-import { advanceAll, historyFor } from '../src/journey.mjs';
 import { mapSource } from '../src/map.mjs';
 import { renderPage } from '../src/page.mjs';
-import { probe } from '../src/probe.mjs';
+import { receivedEvent } from '../src/events.mjs';
+import { queueReceived } from '../src/received.mjs';
+import { observe } from '../src/observe.mjs';
 
 const ROOT = new URL('../test/scenarios/', import.meta.url);
 
@@ -17,14 +18,19 @@ export async function loadScenario(name) {
   if (!/^[a-z][a-z0-9-]*$/.test(name) || !(await scenarioNames()).includes(name)) throw new Error(`Unknown scenario: ${name}`);
   const read = async (file) => JSON.parse(await fs.readFile(new URL(`${name}/${file}.json`, ROOT), 'utf8'));
   const history = await read('history').catch((error) => { if (error.code === 'ENOENT') return null; throw error; });
-  return { ...(await read('clock')), facts: await read('facts'), journeys: await read('journeys'), history };
+  const events = await read('events').catch((error) => { if (error.code === 'ENOENT') return []; throw error; });
+  return { ...(await read('clock')), facts: await read('facts'), journeys: await read('journeys'), history, events };
 }
 
-export function renderScenario({ facts, journeys, history = null, now, trigger = { type: 'clock' } }) {
-  const status = probe({ flows, facts, now, code: 'fixtures', trigger });
-  const next = advanceAll(journeys, status, history);
-  const kept = historyFor(history, journeys, next, now);
-  return { status, journeys: kept.journeys, history: kept.index, retired: kept.retired, page: renderPage(status, kept.journeys, kept.index) };
+export function renderScenario({ facts, journeys, history = null, events = [], now, trigger = { type: 'clock' } }) {
+  let received = null;
+  for (const raw of events) {
+    const parsed = receivedEvent(raw, now);
+    if (!parsed || parsed.error) throw new Error('A scenario received event is invalid');
+    received = queueReceived(received, parsed, now);
+  }
+  const result = observe({ flows, facts, journeys, history, received, now, code: 'fixtures', trigger });
+  return { ...result, page: renderPage(result.status, result.journeys, result.history) };
 }
 
 /** Readable rendered text for the snapshots and each PR's send-in-progress page. */

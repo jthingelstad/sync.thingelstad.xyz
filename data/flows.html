@@ -83,9 +83,9 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <p class="lede">Every hop content takes between Jamie's systems, who owns each field, and what watches each hop today. Rendered from <code>shared/flows.json</code>, updated 2026-10-27. A hop is a row in that file before it is code anywhere.</p>
 
 <h2>Open</h2>
-<ul class="open"><li><a href="#hop-6"><span class="pill pill--gap">gap</span> 6. Weekly Thing (web) → Linking Things</a>: Broken on 2026-10-26: WT354 was sent 2026-10-24, the nightly ran green, and Linking Things still reports 353. The sibling checkout was on a feature branch without 354.md. Fix: read weekly's published archive over HTTPS, or origin main, never a working checkout; and nudge the join from the send (hop 10).</li>
+<ul class="open"><li><a href="#hop-6"><span class="pill pill--gap">gap</span> 6. Weekly Thing (web) → Linking Things</a>: Broken on 2026-10-26: WT354 was sent 2026-10-24, the nightly ran green, and Linking Things still reports 353. The sibling checkout was on a feature branch without 354.md. Fix: read weekly's published archive over HTTPS, or origin main, never a working checkout; and nudge the join from the send (hop 10). Arrival reporting contract (sync plan step 4): source links, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</li>
 <li><a href="#hop-19"><span class="pill pill--gap">gap</span> 19. Library Agent → micro.blog</a>: First write round, 2026-10-22: 20 edits accepted by Micropub, 4 missing from the rendered pages after the rebuild. The read-back checks Micropub, not the page, so the round was green. A write needs a receipt: written, rendered, pulled back (hop 11).</li>
-<li><a href="#hop-21"><span class="pill pill--unverified">unverified</span> 21. WT Builder → Another Thing</a>: Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length.</li></ul>
+<li><a href="#hop-21"><span class="pill pill--unverified">unverified</span> 21. WT Builder → Another Thing</a>: Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length. Arrival reporting contract (sync plan step 4): source another, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</li></ul>
 
 <h2>Map</h2>
 <div class="scroll">
@@ -271,7 +271,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>clock, 00:30 daily<br><span class="muted">mac · launchd com.thingelstad.links-nightly</span></td>
   <td class="num">28 h</td>
   <td>links_stats last_saved is after the bookmark's save time; data/sync.json updated matches Pinboard's posts/update.</td>
-  <td><span class="pill pill--ok">ok</span><br><span class="muted">The run took about three hours on 2026-10-26 (Wayback lookups). A link saved at 01:00 waits until the next night's run, then the run time: about 28 hours at worst.</span></td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">The run took about three hours on 2026-10-26 (Wayback lookups). A link saved at 01:00 waits until the next night's run, then the run time: about 28 hours at worst. Arrival reporting contract (sync plan step 4): source links, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
 </tr>
 <tr id="hop-6" class="status--gap">
   <td class="num">6</td>
@@ -280,7 +280,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>clock, 00:30 daily, inside hop 5<br><span class="muted">mac</span></td>
   <td class="num">28 h</td>
   <td>links_stats latest_issue equals the newest issue on weekly.thingelstad.com.</td>
-  <td><span class="pill pill--gap">gap</span><br><span class="muted">Broken on 2026-10-26: WT354 was sent 2026-10-24, the nightly ran green, and Linking Things still reports 353. The sibling checkout was on a feature branch without 354.md. Fix: read weekly's published archive over HTTPS, or origin main, never a working checkout; and nudge the join from the send (hop 10).</span></td>
+  <td><span class="pill pill--gap">gap</span><br><span class="muted">Broken on 2026-10-26: WT354 was sent 2026-10-24, the nightly ran green, and Linking Things still reports 353. The sibling checkout was on a feature branch without 354.md. Fix: read weekly's published archive over HTTPS, or origin main, never a working checkout; and nudge the join from the send (hop 10). Arrival reporting contract (sync plan step 4): source links, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
 </tr>
 <tr id="hop-7" class="status--ok">
   <td class="num">7</td>
@@ -289,7 +289,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>nudge, on send<br><span class="muted">mac</span></td>
   <td class="num">15 min</td>
   <td>feed.xml carries the issue; /archive/&lt;n&gt;/ renders. Its receipt is the published event for the website leg on the bus; the sync page measures the hop from that event's time.</td>
-  <td><span class="pill pill--ok">ok</span><br><span class="muted">Sent for every issue since WT350.</span></td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Sent for every issue since WT350. Arrival reporting contract (sync plan step 4): source weekly, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
 </tr>
 <tr id="hop-8" class="status--ok">
   <td class="num">8</td>
@@ -316,7 +316,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>nudge, on send<br><span class="muted">mac</span></td>
   <td class="num">30 min</td>
   <td>The round's 'The sent issue arrived' step passed; latest_content lists the issue. Its receipt is the published event for the archive leg on the bus; the sync page measures the hop from that event's time.</td>
-  <td><span class="pill pill--ok">ok</span><br><span class="muted">Sent for every issue since WT350. Linking Things gets no such nudge (hop 6).</span></td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Sent for every issue since WT350. Linking Things gets no such nudge (hop 6). Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
 </tr>
 <tr id="hop-11" class="status--ok">
   <td class="num">11</td>
@@ -325,7 +325,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
   <td class="num">26 h</td>
   <td>latest_content source_kind blog lists the post; the library's blog fingerprint moved.</td>
-  <td><span class="pill pill--ok">ok</span><br><span class="muted">Two runners for one round means two answers to 'when did it last run'. blog-published, podcast-published and things-published are declared in library-round.yml and sent by no one (checked 2026-10-26).</span></td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Two runners for one round means two answers to 'when did it last run'. blog-published, podcast-published and things-published are declared in library-round.yml and sent by no one (checked 2026-10-26). Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
 </tr>
 <tr id="hop-12" class="status--ok">
   <td class="num">12</td>
@@ -334,7 +334,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
   <td class="num">26 h</td>
   <td>latest_content source_kind podcast lists the episode.</td>
-  <td><span class="pill pill--ok">ok</span></td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
 </tr>
 <tr id="hop-13" class="status--ok">
   <td class="num">13</td>
@@ -343,7 +343,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
   <td class="num">26 h</td>
   <td>get_source thing-&lt;id&gt; returns the current page.</td>
-  <td><span class="pill pill--ok">ok</span></td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
 </tr>
 <tr id="hop-14" class="status--ok">
   <td class="num">14</td>
@@ -352,7 +352,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
   <td class="num">24 h</td>
   <td>latest_content source_kind link lists the link.</td>
-  <td><span class="pill pill--ok">ok</span><br><span class="muted">Stacks on hop 5: a link saved at 01:00 reaches the Librarian the morning after next, about 52 hours at worst.</span></td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Stacks on hop 5: a link saved at 01:00 reaches the Librarian the morning after next, about 52 hours at worst. Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
 </tr>
 <tr id="hop-15" class="status--ok">
   <td class="num">15</td>
@@ -361,7 +361,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>clock, 05:00 daily<br><span class="muted">mac</span></td>
   <td class="num">26 h</td>
   <td>The library's readers table has yesterday's counts.</td>
-  <td><span class="pill pill--ok">ok</span><br><span class="muted">Stops when the Mac does.</span></td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Stops when the Mac does. Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
 </tr>
 <tr id="hop-16" class="status--ok">
   <td class="num">16</td>
@@ -370,7 +370,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>nudge, on a round that moved the library, or a push to the pipeline<br><span class="muted">github-actions</span></td>
   <td class="num">1 h</td>
   <td>latest_content and corpus_stats show the item.</td>
-  <td><span class="pill pill--ok">ok</span><br><span class="muted"><strong>Hold.</strong> From Friday 00:00 until the send (Friday and Saturday, US Central) no automatic build changes the corpus; the round still updates the library. Read 'held', not 'stale'.</span><br><span class="muted">Thingy's drift check (06:17 daily) compares its vendored contract with the Librarian's main and files a GitHub issue on drift.</span></td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted"><strong>Hold.</strong> From Friday 00:00 until the send (Friday and Saturday, US Central) no automatic build changes the corpus; the round still updates the library. Read 'held', not 'stale'.</span><br><span class="muted">Thingy's drift check (06:17 daily) compares its vendored contract with the Librarian's main and files a GitHub issue on drift. Arrival reporting contract (sync plan step 4): source thingy, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
 </tr>
 <tr id="hop-17" class="status--ok">
   <td class="num">17</td>
@@ -379,7 +379,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>nudge, on a corpus build that changed the graph<br><span class="muted">github-actions</span></td>
   <td class="num">1 h</td>
   <td>weekly's topic pages list the new issue.</td>
-  <td><span class="pill pill--ok">ok</span></td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">Arrival reporting contract (sync plan step 4): source weekly, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
 </tr>
 <tr id="hop-18" class="status--ok">
   <td class="num">18</td>
@@ -415,7 +415,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>nudge, on send<br><span class="muted">mac</span></td>
   <td class="num">15 min</td>
   <td>podcast.xml carries the episode. Its receipt is the published event for the another leg on the bus; the sync page measures the hop from that event's time.</td>
-  <td><span class="pill pill--unverified">unverified</span><br><span class="muted">Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length.</span></td>
+  <td><span class="pill pill--unverified">unverified</span><br><span class="muted">Never run. Episodes so far were committed by hand, their MP3s put with npm run audio:put. Needs ANOTHER_GITHUB_PAT_TOKEN. The send behaves as audio:put: the same bytes are left alone, different audio at the key is refused unless an earlier send of the episode put it there, nothing deletes from the bucket. The deploy-aws job refuses a feed whose MP3 is not in the bucket at the feed's length. Arrival reporting contract (sync plan step 4): source another, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
 </tr>
 </tbody>
 </table>
@@ -492,7 +492,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <tr>
   <td><strong>sync.thingelstad.xyz</strong><br><span class="muted">AWS Lambda on a half-hour schedule and on every published event (then again at 2, 5, 10, 15, 30, 45 and 60 minutes), publishing a public page</span></td>
   <td class="num"><a href="#hop-6">6</a>, <a href="#hop-7">7</a>, <a href="#hop-8">8</a>, <a href="#hop-9">9</a>, <a href="#hop-10">10</a>, <a href="#hop-11">11</a>, <a href="#hop-12">12</a>, <a href="#hop-14">14</a>, <a href="#hop-16">16</a>, <a href="#hop-20">20</a>, <a href="#hop-21">21</a></td>
-  <td>Whether the destination of each hop holds the newest item of its kind, measured from the published event or the next fact down; each item's journey, system by system, with the time it was first seen at each.</td>
+  <td>Whether the destination of each hop holds the newest item of its kind, measured from the published event or the next fact down; each item's journey, system by system, with the time it was first seen at each. The received contract accepts destination-reported arrival times, labelled reported; unmatched item ids wait at most one hour. Destination senders wait for their own step-5 PRs.</td>
   <td>A hop whose ends publish no fact (Buttondown, Tinylytics); whether the content is right.</td>
 </tr>
 <tr>

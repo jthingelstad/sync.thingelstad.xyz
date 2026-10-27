@@ -5,6 +5,8 @@ import { handler, HISTORY_KEY, publish, run } from '../src/handler.mjs';
 import { loadScenario, renderScenario } from '../tools/scenarios.mjs';
 import { fixtureContext } from '../tools/probe.mjs';
 import { summarise } from '../src/journey.mjs';
+import { queueReceived, receivedEvent, RECEIVED_KEY } from '../src/received.mjs';
+import { PUBLISHER_FACT_KEY } from '../src/facts.mjs';
 
 test('the handler keeps a superseded journey before the index and publishes health only after all files', async () => {
   const result = renderScenario(await loadScenario('superseded'));
@@ -63,6 +65,21 @@ test('run preserves an index-only current item until it can archive it on recove
   assert.deepEqual(result.history.kinds.issue.map((j) => [j.item.id, j.active]), [['354', true], ['355', false]]);
 });
 
+test('a received report updates an archive outside the history index without making it current', async () => {
+  const context=await fixtureContext('2026-10-28T02:45:00Z');
+  const archived={kind:'issue',item:{id:'355',at:'2026-10-28T02:02:00Z'},origin:'wt-builder',started_at:'2026-10-28T02:02:00Z',updated_at:'2026-10-28T02:10:00Z',arrivals:{},observations:{}};
+  const read=context.s3Get;
+  context.s3Get=async(bucket,key)=>key==='journeys/issue/355.json'?archived:read(bucket,key);
+  const event=receivedEvent({source:'librarian','detail-type':'received',detail:{system:'librarian',kind:'issue',id:'355',at:'2026-10-28T02:16:10Z',via:'library-round'}},context.now);
+  const result=await run({now:context.now,env:{},context,history:{version:1,kinds:{}},received:queueReceived(null,event,context.now)});
+  assert.equal(result.journeys.issue.item.id,'354');
+  const saved=result.retired.find(r=>r.key==='journeys/issue/355.json');
+  assert.equal(saved.journey.arrivals.librarian.at,event.at);
+  assert.equal(saved.journey.arrivals.librarian.via,'library-round');
+  assert.equal(saved.journey.lags,undefined,'the archive carries evidence, not a stale index summary');
+  assert.equal(result.received.pending.length,0);
+});
+
 test('a rehearsal returns before any reader, state read, write or follow-up call', async () => {
   const prior = process.env.SITE_BUCKET;
   process.env.SITE_BUCKET = 'fixture-bucket';
@@ -75,10 +92,75 @@ test('a rehearsal returns before any reader, state read, write or follow-up call
     assert.equal(report.rehearsal.would_follow_up.length, 7);
     const clock = await handler({ rehearsal: true, clock: true });
     assert.deepEqual(clock.rehearsal.would_follow_up, []);
+    const received = await handler({ rehearsal: true, source: 'weekly', 'detail-type': 'received', detail: { system: 'weekly', kind: 'issue', id: '355', at: new Date(Date.now()-1000).toISOString(), via: 'site-deploy' } });
+    assert.equal(received.rehearsal.received.id, '355');
     assert.equal(s3.mock.calls.length, 0);
     assert.equal(network.mock.calls.length, 0);
   } finally {
     s3.mock.restore(); network.mock.restore(); log.mock.restore();
     if (prior == null) delete process.env.SITE_BUCKET; else process.env.SITE_BUCKET = prior;
+  }
+});
+
+test('an accepted receipt survives a failed journey write and a clock retry applies it before clearing the queue', async () => {
+  const prior=process.env.SITE_BUCKET;
+  process.env.SITE_BUCKET='fixture-bucket';
+  const iso=(ago)=>new Date(Date.now()-ago).toISOString().replace(/\.\d{3}Z$/,'Z');
+  const publication=iso(300000), arrival=iso(240000);
+  const stored=new Map([[PUBLISHER_FACT_KEY,JSON.stringify({newest:{issue:{id:'355',at:publication,legs:{website:{at:publication}}}}})]]);
+  let fail=true;
+  const writes=[];
+  const s3=mock.method(S3Client.prototype,'send',async(command)=>{
+    const {Key,Body}=command.input;
+    if(command.constructor.name==='GetObjectCommand') {
+      if(!stored.has(Key)) throw Object.assign(new Error('fixture object absent'),{name:'NoSuchKey'});
+      return {Body:{transformToString:async()=>stored.get(Key)}};
+    }
+    if(command.constructor.name==='PutObjectCommand') {
+      writes.push(Key);
+      if(fail && Key==='journeys.json') throw new Error('fixture current-state write failed');
+      stored.set(Key,Body); return {};
+    }
+    throw new Error('fixture poll unavailable');
+  });
+  const network=mock.method(globalThis,'fetch',()=>{throw new Error('fixture reader unavailable');});
+  const log=mock.method(console,'log',()=>{});
+  const error=mock.method(console,'error',()=>{});
+  try {
+    await assert.rejects(handler({source:'weekly','detail-type':'received',detail:{system:'weekly',kind:'issue',id:'355',at:arrival,via:'site-deploy'}}),/current-state write failed/);
+    assert.equal(writes[0],RECEIVED_KEY,'the report is durable before collection or public-file writes');
+    assert.equal(JSON.parse(stored.get(RECEIVED_KEY)).pending.length,1);
+    assert.ok(!writes.includes('health.json'));
+    fail=false; writes.length=0;
+    await handler({clock:true});
+    assert.equal(JSON.parse(stored.get('journeys.json')).issue.arrivals.weekly.at,arrival);
+    assert.equal(JSON.parse(stored.get('journeys.json')).issue.arrivals.weekly.via,'site-deploy');
+    assert.equal(JSON.parse(stored.get(RECEIVED_KEY)).pending.length,0);
+    assert.equal(writes.at(-1),'health.json');
+    assert.ok(writes.indexOf(RECEIVED_KEY)>writes.indexOf('journeys.json'));
+  } finally {
+    s3.mock.restore(); network.mock.restore(); log.mock.restore(); error.mock.restore();
+    if(prior==null) delete process.env.SITE_BUCKET; else process.env.SITE_BUCKET=prior;
+  }
+});
+
+test('malformed events are dropped before readers or storage and logs contain no rejected payload values', async () => {
+  const prior=process.env.SITE_BUCKET;
+  process.env.SITE_BUCKET='fixture-bucket';
+  const s3=mock.method(S3Client.prototype,'send',()=>{throw new Error('Rejected event touched S3');});
+  const network=mock.method(globalThis,'fetch',()=>{throw new Error('Rejected event used a reader');});
+  const lines=[];
+  const log=mock.method(console,'error',(line)=>lines.push(line));
+  try {
+    const result=await handler({source:'weekly','detail-type':'received',detail:{system:'fixture-private',kind:'fixture-private',id:'fixture-private@example.test',at:'fixture-private',via:'fixture-private@example.test'}});
+    assert.equal(result.rejected,'received');
+    assert.doesNotMatch(lines.join(' '),/fixture-private|example\.test/);
+    const published=await handler({source:'wt-builder','detail-type':'published',detail:{kind:'fixture-private',leg:'fixture-private',id:'fixture-private@example.test',at:'fixture-private'}});
+    assert.equal(published.rejected,'published');
+    assert.doesNotMatch(lines.join(' '),/fixture-private|example\.test/);
+    assert.equal(s3.mock.calls.length,0); assert.equal(network.mock.calls.length,0);
+  } finally {
+    s3.mock.restore(); network.mock.restore(); log.mock.restore();
+    if(prior==null) delete process.env.SITE_BUCKET; else process.env.SITE_BUCKET=prior;
   }
 });

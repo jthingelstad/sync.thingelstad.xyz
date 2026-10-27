@@ -35,12 +35,14 @@ test('a published event is read from its detail; the clock and follow-ups are no
 test('a malformed published event is rejected with its reasons, never guessed at', () => {
   assert.match(publishedEvent(raw(null)).error, /no detail/);
   const bad = publishedEvent(raw({ kind: 'tweet', id: 'a b', leg: 'fax', at: 'yesterday' }, { time: 'then' }));
-  assert.match(bad.error, /kind "tweet"/);
+  assert.match(bad.error, /kind is not one of/);
   assert.match(bad.error, /id is missing/);
-  assert.match(bad.error, /leg "fax"/);
+  assert.match(bad.error, /leg is not one of/);
   assert.match(bad.error, /at is not a time/);
   // The event's own time stands in for a missing at.
   assert.equal(publishedEvent(raw({ kind: 'issue', id: '355', leg: 'website' })).at, '2026-10-31T12:00:13Z');
+  assert.match(publishedEvent(raw({ kind: 'issue', id: '355', leg: 'website', at: 'not a time' })).error, /at is not a time/);
+  assert.match(publishedEvent(raw({ kind: 'issue', id: '355', leg: 'website' }, { source: 'unregistered' })).error, /source/);
 });
 
 test('events fold into the publisher fact: legs accumulate, a new item replaces, the first time of a leg stays', () => {
@@ -73,6 +75,13 @@ test('events fold into the publisher fact: legs accumulate, a new item replaces,
   fact = mergePublished(fact, next, '2026-11-07T12:00:01Z');
   assert.equal(fact.newest.issue.id, '356');
   assert.deepEqual(Object.keys(fact.newest.issue.legs), ['website'], 'a new issue starts its legs afresh');
+  assert.equal(fact.newest.issue.url, null, 'a new item never borrows the old item\'s permalink');
+  assert.equal(fact.newest.issue.title, null);
+  const before = fact.events.length;
+  fact = mergePublished(fact, next, '2026-11-07T12:00:02Z');
+  assert.equal(fact.events.length, before, 'an event retry is not another send');
+  fact = mergePublished(fact, podcast, '2026-11-07T12:00:03Z');
+  assert.equal(fact.newest.issue.id, '356', 'a late old leg never replaces the newest item');
 
   // The reader: the audio edition is the issue's podcast leg.
   const newest = parsePublisherFact({ newest: { issue: { id: '355', at: '2026-10-31T12:00:12Z', legs: { website: { at: '2026-10-31T12:00:12Z' }, podcast: { at: '2026-10-31T12:08:00Z', url: 'https://x/355.mp3' } } } } });
