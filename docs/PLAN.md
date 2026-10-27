@@ -5,7 +5,7 @@ on one bus, with a page that shows each item's journey as it happens. Written
 2026-10-26 (Jamie: "Approved: write docs/PLAN.md in sync.thingelstad.xyz"),
 after the first night: the bus, the WT Builder sender, the probe, the
 journeys, the runtime map, the Pinboard and micro.blog secrets, and the
-Discord activity stream are live. Step 1 below is now live; later steps
+Discord activity stream are live. Steps 1 and 2 below are now live; later steps
 remain the work ahead.
 
 Each step is one pull request, small enough for an evening. Any session,
@@ -82,7 +82,11 @@ paths. Snapshot tests pin the map labels and the journey text per scenario,
 so a change to the page is a visible diff.
 Acceptance: six scenarios render; `npm test` covers them; no AWS call.
 
-### 2. Journey history
+### 2. [x] Journey history
+
+Deployed 2026-10-27, [PR #2](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/2).
+All seven previews render; 43 tests pass on Node 24; public health and the
+history index serve the tested package (`6aafee7…`).
 
 Today one journey per kind lives in `journeys.json` and is replaced when a
 newer item appears. Keep the finished ones: `journeys/<kind>/<id>.json` when
