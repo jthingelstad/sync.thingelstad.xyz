@@ -158,10 +158,16 @@
       "id": 1,
       "from": "pinboard",
       "to": "wt-builder",
-      "kinds": ["link", "note"],
+      "kinds": [
+        "link",
+        "note"
+      ],
       "moves": "Every bookmark saved inside the issue's window.",
       "mechanism": "Pinboard API read on open and on sweep.",
-      "trigger": { "type": "live", "runs_on": "mac" },
+      "trigger": {
+        "type": "live",
+        "runs_on": "mac"
+      },
       "expected_lag_hours": 0,
       "verify": "The link is an item in the issue (get_item).",
       "status": "ok"
@@ -170,10 +176,15 @@
       "id": 2,
       "from": "wt-builder",
       "to": "pinboard",
-      "kinds": ["note"],
+      "kinds": [
+        "note"
+      ],
       "moves": "Jamie's commentary edits, mirrored back as his note.",
       "mechanism": "Compare-and-set write-back; a bookmark changed at Pinboard since the last scan is marked conflict, not written.",
-      "trigger": { "type": "live", "runs_on": "mac" },
+      "trigger": {
+        "type": "live",
+        "runs_on": "mac"
+      },
       "expected_lag_hours": 0,
       "verify": "The bookmark's note at Pinboard matches the item.",
       "status": "ok"
@@ -182,10 +193,15 @@
       "id": 3,
       "from": "microblog",
       "to": "wt-builder",
-      "kinds": ["post"],
+      "kinds": [
+        "post"
+      ],
       "moves": "Posts in the window, for the Journal; later edits to posts not edited in WT Builder.",
       "mechanism": "Micropub q=source read on open; reconcile adopts micro.blog edits, conflict only when both sides edited.",
-      "trigger": { "type": "live", "runs_on": "mac" },
+      "trigger": {
+        "type": "live",
+        "runs_on": "mac"
+      },
       "expected_lag_hours": 0,
       "verify": "The post is a Journal item with the current text.",
       "status": "ok"
@@ -194,10 +210,16 @@
       "id": 4,
       "from": "wt-builder",
       "to": "microblog",
-      "kinds": ["post", "category"],
+      "kinds": [
+        "post",
+        "category"
+      ],
       "moves": "Edits to a Journal item, and the Weekly Thing category on reprinted posts.",
       "mechanism": "Micropub update, compare-and-set.",
-      "trigger": { "type": "live", "runs_on": "mac" },
+      "trigger": {
+        "type": "live",
+        "runs_on": "mac"
+      },
       "expected_lag_hours": 0,
       "verify": "q=source for the post shows the edit.",
       "status": "ok"
@@ -206,10 +228,20 @@
       "id": 5,
       "from": "pinboard",
       "to": "links",
-      "kinds": ["link", "note"],
+      "kinds": [
+        "link",
+        "note"
+      ],
       "moves": "Every public bookmark, as the year shards under data/links/.",
       "mechanism": "tools/nightly.sh: sync.py (posts/update, then posts/all if the stamp moved), join, enrichment, validate, commit, push; the push deploys.",
-      "trigger": { "type": "clock", "schedule": "00:30 daily", "cron": "30 0 * * *", "tz": "America/Chicago", "runs_on": "mac", "runner": "launchd com.thingelstad.links-nightly" },
+      "trigger": {
+        "type": "clock",
+        "schedule": "00:30 daily",
+        "cron": "30 0 * * *",
+        "tz": "America/Chicago",
+        "runs_on": "mac",
+        "runner": "launchd com.thingelstad.links-nightly"
+      },
       "expected_lag_hours": 28,
       "verify": "links_stats last_saved is after the bookmark's save time; data/sync.json updated matches Pinboard's posts/update.",
       "status": "ok",
@@ -219,10 +251,16 @@
       "id": 6,
       "from": "weekly",
       "to": "links",
-      "kinds": ["issue"],
+      "kinds": [
+        "issue"
+      ],
       "moves": "Which issue carried each link (the /issues/<n>/ pages and wt: search).",
       "mechanism": "join_issues.py reads the issue pages' front matter from the sibling checkout ../thingelstad.com/weekly.thingelstad.com/apps/site/archive on the Mac, inside the nightly run.",
-      "trigger": { "type": "clock", "schedule": "00:30 daily, inside hop 5", "runs_on": "mac" },
+      "trigger": {
+        "type": "clock",
+        "schedule": "00:30 daily, inside hop 5",
+        "runs_on": "mac"
+      },
       "expected_lag_hours": 28,
       "verify": "links_stats latest_issue equals the newest issue on weekly.thingelstad.com.",
       "status": "gap",
@@ -232,10 +270,16 @@
       "id": 7,
       "from": "wt-builder",
       "to": "weekly",
-      "kinds": ["issue"],
+      "kinds": [
+        "issue"
+      ],
       "moves": "The issue's generated 11ty inputs (apps/site/archive/<n>.md and its assets).",
       "mechanism": "The website leg commits to main; the deploy workflow builds and publishes on push.",
-      "trigger": { "type": "nudge", "event": "send", "runs_on": "mac" },
+      "trigger": {
+        "type": "nudge",
+        "event": "send",
+        "runs_on": "mac"
+      },
       "expected_lag_hours": 0.25,
       "verify": "feed.xml carries the issue; /archive/<n>/ renders. Its receipt is the published event for the website leg on the bus; the sync page measures the hop from that event's time.",
       "status": "ok",
@@ -245,10 +289,16 @@
       "id": 8,
       "from": "wt-builder",
       "to": "buttondown",
-      "kinds": ["issue"],
+      "kinds": [
+        "issue"
+      ],
       "moves": "The email edition, as a draft.",
       "mechanism": "Buttondown API: creates and updates a draft. Never schedules, never sends; Jamie sends.",
-      "trigger": { "type": "nudge", "event": "send", "runs_on": "mac" },
+      "trigger": {
+        "type": "nudge",
+        "event": "send",
+        "runs_on": "mac"
+      },
       "expected_lag_hours": 0.25,
       "verify": "The draft exists with the issue's subject; the email goes out when Jamie sends it. Its receipt is the published event for the buttondown leg on the bus; the sync page measures the hop from that event's time.",
       "status": "ok"
@@ -257,10 +307,17 @@
       "id": 9,
       "from": "wt-builder",
       "to": "cdn",
-      "kinds": ["audio", "image"],
+      "kinds": [
+        "audio",
+        "image"
+      ],
       "moves": "The issue's audio edition (with chapters and VTT) and every rehosted image.",
       "mechanism": "Upload to files.thingelstad.com before the website and email legs; content-named files, so a re-render re-sends the website leg.",
-      "trigger": { "type": "nudge", "event": "send", "runs_on": "mac" },
+      "trigger": {
+        "type": "nudge",
+        "event": "send",
+        "runs_on": "mac"
+      },
       "expected_lag_hours": 0.25,
       "verify": "The URL the issue names returns the object. Its receipt is the published event for the podcast leg on the bus; the sync page measures the hop from that event's time.",
       "status": "ok"
@@ -269,10 +326,16 @@
       "id": 10,
       "from": "wt-builder",
       "to": "librarian",
-      "kinds": ["issue"],
+      "kinds": [
+        "issue"
+      ],
       "moves": "The news that an issue is out (its number), not the text.",
       "mechanism": "repository_dispatch issue-sent to librarian-thing after the website leg; the library round pulls the issue page from weekly.thingelstad.com and ends the weekend hold.",
-      "trigger": { "type": "nudge", "event": "send", "runs_on": "mac" },
+      "trigger": {
+        "type": "nudge",
+        "event": "send",
+        "runs_on": "mac"
+      },
       "expected_lag_hours": 0.5,
       "verify": "The round's 'The sent issue arrived' step passed; latest_content lists the issue. Its receipt is the published event for the archive leg on the bus; the sync page measures the hop from that event's time.",
       "status": "ok",
@@ -282,10 +345,20 @@
       "id": 11,
       "from": "microblog",
       "to": "librarian",
-      "kinds": ["post", "category", "alt"],
+      "kinds": [
+        "post",
+        "category",
+        "alt"
+      ],
       "moves": "Every post and page, with categories and alt as micro.blog holds them.",
       "mechanism": "library.py round --only blog, on the Mac (Library Agent, 05:00) and on GitHub (07:17) as the backstop. The round declares a blog-published dispatch, but nothing sends it.",
-      "trigger": { "type": "clock", "schedule": "05:00 and 07:17 daily", "cron": "17 12 * * * (UTC)", "tz": "America/Chicago", "runs_on": "mac+github-actions" },
+      "trigger": {
+        "type": "clock",
+        "schedule": "05:00 and 07:17 daily",
+        "cron": "17 12 * * * (UTC)",
+        "tz": "America/Chicago",
+        "runs_on": "mac+github-actions"
+      },
       "expected_lag_hours": 26,
       "verify": "latest_content source_kind blog lists the post; the library's blog fingerprint moved.",
       "status": "ok",
@@ -295,10 +368,16 @@
       "id": 12,
       "from": "another",
       "to": "librarian",
-      "kinds": ["episode"],
+      "kinds": [
+        "episode"
+      ],
       "moves": "Each episode and its transcript, into the podcast corpus.",
       "mechanism": "library.py round --only another, from the published site. podcast-published is declared but never sent.",
-      "trigger": { "type": "clock", "schedule": "05:00 and 07:17 daily", "runs_on": "mac+github-actions" },
+      "trigger": {
+        "type": "clock",
+        "schedule": "05:00 and 07:17 daily",
+        "runs_on": "mac+github-actions"
+      },
       "expected_lag_hours": 26,
       "verify": "latest_content source_kind podcast lists the episode.",
       "status": "ok"
@@ -307,10 +386,16 @@
       "id": 13,
       "from": "xyz",
       "to": "librarian",
-      "kinds": ["thing"],
+      "kinds": [
+        "thing"
+      ],
       "moves": "The registry of things, into the reference base.",
       "mechanism": "library.py round --only things, from the published site. things-published is declared but never sent.",
-      "trigger": { "type": "clock", "schedule": "05:00 and 07:17 daily", "runs_on": "mac+github-actions" },
+      "trigger": {
+        "type": "clock",
+        "schedule": "05:00 and 07:17 daily",
+        "runs_on": "mac+github-actions"
+      },
       "expected_lag_hours": 26,
       "verify": "get_source thing-<id> returns the current page.",
       "status": "ok"
@@ -319,10 +404,17 @@
       "id": 14,
       "from": "links",
       "to": "librarian",
-      "kinds": ["link", "note"],
+      "kinds": [
+        "link",
+        "note"
+      ],
       "moves": "Every public link, one passage each, into the links corpus.",
       "mechanism": "library.py round --only links reads Linking Things' published JSON (its nightly snapshot).",
-      "trigger": { "type": "clock", "schedule": "05:00 and 07:17 daily", "runs_on": "mac+github-actions" },
+      "trigger": {
+        "type": "clock",
+        "schedule": "05:00 and 07:17 daily",
+        "runs_on": "mac+github-actions"
+      },
       "expected_lag_hours": 24,
       "verify": "latest_content source_kind link lists the link.",
       "status": "ok",
@@ -332,10 +424,16 @@
       "id": 15,
       "from": "tinylytics",
       "to": "librarian",
-      "kinds": ["readers"],
+      "kinds": [
+        "readers"
+      ],
       "moves": "View counts per post, page and issue.",
       "mechanism": "library.py round --only readers, Mac only (the GitHub round has no Tinylytics key).",
-      "trigger": { "type": "clock", "schedule": "05:00 daily", "runs_on": "mac" },
+      "trigger": {
+        "type": "clock",
+        "schedule": "05:00 daily",
+        "runs_on": "mac"
+      },
       "expected_lag_hours": 26,
       "verify": "The library's readers table has yesterday's counts.",
       "status": "ok",
@@ -345,10 +443,21 @@
       "id": 16,
       "from": "librarian",
       "to": "thingy",
-      "kinds": ["issue", "post", "episode", "thing", "link", "topics"],
+      "kinds": [
+        "issue",
+        "post",
+        "episode",
+        "thing",
+        "link",
+        "topics"
+      ],
       "moves": "The embedded corpora the API answers from (Weekly Thing, blog, podcast, reference, links).",
       "mechanism": "deploy.yml rebuilds each corpus the library moved past, uploads to S3, redeploys the Lambda; Thingy and MCP clients answer from it at once.",
-      "trigger": { "type": "nudge", "event": "a round that moved the library, or a push to the pipeline", "runs_on": "github-actions" },
+      "trigger": {
+        "type": "nudge",
+        "event": "a round that moved the library, or a push to the pipeline",
+        "runs_on": "github-actions"
+      },
       "expected_lag_hours": 1,
       "verify": "latest_content and corpus_stats show the item.",
       "status": "ok",
@@ -359,10 +468,16 @@
       "id": 17,
       "from": "librarian",
       "to": "weekly",
-      "kinds": ["topics"],
+      "kinds": [
+        "topics"
+      ],
       "moves": "The topic graph (graph.json) that renders the topic pages.",
       "mechanism": "deploy.yml commits data/librarian/graph.json to weekly.thingelstad.com with a PAT; the push deploys.",
-      "trigger": { "type": "nudge", "event": "a corpus build that changed the graph", "runs_on": "github-actions" },
+      "trigger": {
+        "type": "nudge",
+        "event": "a corpus build that changed the graph",
+        "runs_on": "github-actions"
+      },
       "expected_lag_hours": 1,
       "verify": "weekly's topic pages list the new issue.",
       "status": "ok"
@@ -371,10 +486,17 @@
       "id": 18,
       "from": "librarian",
       "to": "wt-builder",
-      "kinds": ["issue", "post", "link"],
+      "kinds": [
+        "issue",
+        "post",
+        "link"
+      ],
       "moves": "Retrieval for Thingy drafts, Echoes and the earlier issues that carried a link.",
       "mechanism": "The versioned /retrieve contract, read live.",
-      "trigger": { "type": "live", "runs_on": "aws" },
+      "trigger": {
+        "type": "live",
+        "runs_on": "aws"
+      },
       "expected_lag_hours": 0,
       "verify": "get_item shows the earlier issues that carried the link.",
       "status": "ok"
@@ -383,10 +505,19 @@
       "id": 19,
       "from": "library-agent",
       "to": "microblog",
-      "kinds": ["category", "alt", "featured"],
+      "kinds": [
+        "category",
+        "alt",
+        "featured"
+      ],
       "moves": "Categories for unfiled posts, alt for photos without it, and the Featured choice (proposed to Jamie first).",
       "mechanism": "make blog-round --write: Micropub update by URL, id-checked (q=source, trust only uid, write, read back). Guards: fill blanks only, 50 category and 20 alt writes a day, never an <img> turned into markdown, WRITES_ON flag.",
-      "trigger": { "type": "clock", "schedule": "05:00 daily", "runs_on": "mac", "runner": "Codex automation library-agent" },
+      "trigger": {
+        "type": "clock",
+        "schedule": "05:00 daily",
+        "runs_on": "mac",
+        "runner": "Codex automation library-agent"
+      },
       "expected_lag_hours": 26,
       "verify": "q=source shows the edit, and the rendered page shows it after micro.blog rebuilds.",
       "status": "gap",
@@ -396,10 +527,16 @@
       "id": 20,
       "from": "microblog",
       "to": "cards",
-      "kinds": ["post", "image"],
+      "kinds": [
+        "post",
+        "image"
+      ],
       "moves": "The post's title, date, categories and text, for its social card.",
       "mechanism": "The card Lambda reads the post's h-entry on request; CloudFront caches the image. A drawing change needs /www/* invalidated.",
-      "trigger": { "type": "live", "runs_on": "aws" },
+      "trigger": {
+        "type": "live",
+        "runs_on": "aws"
+      },
       "expected_lag_hours": 0,
       "verify": "The card URL draws the post as it is now.",
       "status": "ok"
@@ -408,10 +545,17 @@
       "id": 21,
       "from": "wt-builder",
       "to": "another",
-      "kinds": ["episode", "audio"],
+      "kinds": [
+        "episode",
+        "audio"
+      ],
       "moves": "An episode: the mastered MP3 into the audio bucket, then its page and transcript in one commit.",
       "mechanism": "The Another Thing send (/another), built 2026-10-11. Since 2026-10-26 (wt-builder PR #8) it puts the tagged MP3 in the another-site audio bucket at uploads/YYYY/another-thing-N.mp3 with the AWS key in WT Builder's .env, reads it back, then commits the episode page (with audioBytes and audioSeconds) and its transcript to git. No MP3 goes to git; CloudFront serves the bucket at the same /uploads/ URL.",
-      "trigger": { "type": "nudge", "event": "send", "runs_on": "mac" },
+      "trigger": {
+        "type": "nudge",
+        "event": "send",
+        "runs_on": "mac"
+      },
       "expected_lag_hours": 0.25,
       "verify": "podcast.xml carries the episode. Its receipt is the published event for the another leg on the bus; the sync page measures the hop from that event's time.",
       "status": "unverified",
@@ -478,21 +622,37 @@
     {
       "name": "sync.thingelstad.xyz",
       "where": "AWS Lambda on a half-hour schedule and on every published event (then again at 2, 5, 10, 15, 30, 45 and 60 minutes), publishing a public page",
-      "hops": [6, 7, 8, 9, 10, 11, 12, 14, 16, 20, 21],
+      "hops": [
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        14,
+        16,
+        20,
+        21
+      ],
       "sees": "Whether the destination of each hop holds the newest item of its kind, measured from the published event or the next fact down; each item's journey, system by system, with the time it was first seen at each.",
       "misses": "A hop whose ends publish no fact (Buttondown, Tinylytics); whether the content is right."
     },
     {
       "name": "weekly-thing-feed-publication-monitor",
       "where": "OpenClaw cron on the Mac, 12:00 daily, posts to Discord",
-      "hops": [7],
+      "hops": [
+        7
+      ],
       "sees": "A new item in weekly's feed.xml or podcast.xml.",
       "misses": "Everything downstream of the site."
     },
     {
       "name": "another-thing-podcast-feed-monitor",
       "where": "OpenClaw cron on the Mac, 08:15 daily, posts to Discord",
-      "hops": [21],
+      "hops": [
+        21
+      ],
       "sees": "A new GUID in another.thingelstad.com/podcast.xml."
     },
     {
@@ -505,30 +665,62 @@
     {
       "name": "Thingy drift check",
       "where": "GitHub Actions in thingy.thingelstad.com, 06:17 daily, files or closes a GitHub issue",
-      "hops": [16],
+      "hops": [
+        16
+      ],
       "sees": "The vendored Librarian contract and MCP surface drifting from librarian-thing main; npm advisories.",
       "misses": "Freshness of the corpus."
     },
     {
       "name": "CloudWatch alarms (Thingy, Librarian API, Linking Things MCP)",
       "where": "AWS, into the projects-ops-alerts queue the Operator drains at 06:30",
-      "hops": [16, 18],
+      "hops": [
+        16,
+        18
+      ],
       "sees": "5xx rates, auth bursts, throttling, dead letters, the subscribe path.",
       "misses": "Whether the data is current. No alarm anywhere measures lag."
     },
     {
       "name": "Library round run status",
       "where": "GitHub Actions in librarian-thing",
-      "hops": [10, 11, 12, 13, 14],
+      "hops": [
+        10,
+        11,
+        12,
+        13,
+        14
+      ],
       "sees": "A red run, including a blog pull skipped for a missing key.",
       "misses": "Nobody is notified of a red scheduled run."
     },
     {
       "name": "nightly.log",
       "where": "~/Library/Logs/links/nightly.log on the Mac",
-      "hops": [5, 6],
+      "hops": [
+        5,
+        6
+      ],
       "sees": "Each step's exit and counts.",
       "misses": "A green run that joined a stale checkout (hop 6, 2026-10-26)."
+    },
+    {
+      "name": "Activity stream (Discord)",
+      "where": "projects-sysadmin: config/activity.toml routes, scripts/activity, stack projects-activity-alarms; posts land in the otto-discord Activity category (#publishing-log, #sites-log, #sysadmin-log; #needs-jamie for BLOCKED, NEEDS JAMIE, FAILED and firing alarms); every post in ~/Library/Logs/projects-activity/events.jsonl. Built 2026-10-26.",
+      "hops": [
+        5,
+        6,
+        10,
+        11,
+        12,
+        13,
+        14,
+        16,
+        17,
+        20
+      ],
+      "sees": "Agent closeouts per channel; every CloudWatch alarm state change in the account, routed by alarm-name prefix (weekly-thing-librarian-, thingy-web-, weekly-site-, another-site- to #publishing-log; links-, thingelstad-xyz-, cards- to #sites-log); Codex automations that fired but started no run (activity missed, in the 06:30 brief).",
+      "misses": "Lag itself, until the sync alarms exist (step 4, prefix sync-); the publishing bus, which nothing posts from yet (every leg, journeys or late only is Jamie's call)."
     }
   ]
 }
