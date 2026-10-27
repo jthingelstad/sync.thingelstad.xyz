@@ -257,7 +257,7 @@
       "expected_lag_hours": 28,
       "verify": "links_stats last_saved is after the bookmark's save time; data/sync.json updated matches Pinboard's posts/update.",
       "status": "ok",
-      "notes": "The run took about three hours on 2026-10-26 (Wayback lookups). A link saved at 01:00 waits until the next night's run, then the run time: about 28 hours at worst. Arrival reporting contract (sync plan step 4): source links, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 5 Linking Things receipt contract: the public build publishes only its imported change stamp and newest joined issue id/time in sync-fact.json. The deploy compares a known earlier public fact with the tested build and a verified public readback, then source links reports received via site-deploy. A local join or stats write alone is not arrival; unknown baselines, unchanged facts and regressions report nothing. This sender is proposed off, and does not fix the WT354 join or enable a subscriber."
+      "notes": "The run took about three hours on 2026-10-26 (Wayback lookups). A link saved at 01:00 waits until the next night's run, then the run time: about 28 hours at worst. Arrival reporting contract (sync plan step 4): source links, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 5 Linking Things receipt contract: the public build publishes only its imported change stamp and newest joined issue id/time in sync-fact.json. The deploy compares a known earlier public fact with the tested build and a verified public readback, then source links reports received via site-deploy. A local join or stats write alone is not arrival; unknown baselines, unchanged facts and regressions report nothing. The AWS publisher now owns this receipt sender and the separate public bookmark subscriber (hop 23). The nightly full snapshot and WT354 issue join remain in place."
     },
     {
       "id": 6,
@@ -613,8 +613,8 @@
       },
       "expected_lag_hours": 0.5,
       "verify": "The exact saved URL and bookmark id are present in the published record and sync-fact.json carries its Feedbin star identity. The destination reports received only after independent public readback; a partial bookmark import never advances the account-wide Pinboard change stamp.",
-      "status": "unverified",
-      "notes": "Approved by Jamie on 2026-10-27: an AWS publisher completes Feedbin -> Pinboard -> Linking Things. GitHub delivers tested code and the canonical snapshot using existing OIDC; content events use IAM and need no GitHub token. The inbox is durable and sync repeats wake-ups until deployed acknowledgements arrive. The original nightly full mirror (hop 5), enrichment, and the separate WT354 issue join (hop 6) remain in place. Activation and real-item acceptance are recorded in the repositories."
+      "status": "ok",
+      "notes": "Activated on 2026-10-27 after an approved GitHub OIDC source release and verified AWS publication. A real Feedbin star (5323715058) reached Linking Things through the EventBridge-started CodeBuild publisher; the exact public record and its reported arrival at 2026-10-27T18:19:06Z complete the Sync journey. Stars have no source timestamps, so no star-to-arrival lag is claimed. The private inbox retains captures across retries and code releases. The nightly full mirror (hop 5), enrichment and separate WT354 issue join (hop 6) remain in place."
     }
   ],
   "fields": [
