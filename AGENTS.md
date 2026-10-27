@@ -10,7 +10,9 @@ leg it runs again
 at 2, 5, 10, 15, 30, 45 and 60 minutes after the event (one-off Scheduler
 schedules it makes for itself), so an item is watched as it moves. Public by
 design (Jamie, 2026-10-26: "seems fine if that is public"): it holds ids and
-times, never a secret and never a visitor.
+times, never a secret and never a visitor. It is Jamie's own tool: never in
+the sites strip, and `noindex` (Jamie, 2026-10-27: "Sync is NOT for the site
+strip. This is a me tool only.").
 
 ## The publishing bus
 
@@ -166,19 +168,22 @@ Builder's credentials proves the permission without matching the rule.
   content-keyed zip, one stack, change set every time, two-step first apply,
   `deployment.json` rewritten with the live ids.
 
-Destination senders remain in their own repos. The five `*ReceiverRole`
-parameters default empty; they attach only `received`/`ping` on this bus
-from that destination's source. They do not change trust or bypass a
-permissions boundary. `docs/DESTINATIONS.md` names the overrides and the
-activation order. Unknown baselines never become measured arrivals.
+Destination senders remain in their own repos. One parameter,
+`ReceiverRoles` (`SYNC_RECEIVER_ROLES`, a comma-separated list of the
+destinations' deploy role names), attaches one policy that allows only
+`received` and `ping` from the destination sources on this bus. Empty, it
+grants nobody. It does not change trust or bypass a permissions boundary.
+`docs/DESTINATIONS.md` has the activation order. Unknown baselines never
+become measured arrivals.
 
-- `src/subscribers.mjs` — the proposed workflow destinations, rendered into the template by `tools/build-subscribers.mjs`. Connections and real work have separate switches; ping always requests a dry run. Defaults create nothing. Hop 6 also needs Jamie's explicit repair approval, so WT354 stays the example.
+- Subscribers (rules on the bus that start a destination's workflow) are
+  not in the stack. The night of 2026-10-26 built four, all off, as twenty
+  dormant resources and ten switches; they came out the next morning at
+  Jamie's ask to keep the stack hobby-sized. `docs/SUBSCRIBERS.md` keeps
+  the shape for the day one is wanted, and git history (987138f) the code.
 
 The registry's downstream event is `xyz/refreshed`, a verified public
-document hash, URL and time. Its separately disabled subscriber pulls only
-things into the library; a document revision never invents a thing's
-publication date or journey. `RegistryPublisherRole` is empty by default
-and can grant only xyz refreshed/ping on this stack's bus after review.
+document hash, URL and time; its grant is the same `ReceiverRoles` list.
 
 ## Deploying
 
@@ -226,6 +231,12 @@ an activity webhook comes back only as a new flows row. The intake makes one bus
 attempt with a 1.2-second deadline so a failure can ask the provider to retry.
 
 ## Conventions
+
+- Hobby scale (the rule in `~/Projects/AGENTS.md`, applied here 2026-10-27
+  at Jamie's ask): a switch or a resource exists only for a thing that
+  exists. No scaffolding for a destination or subscriber nobody has turned
+  on; one list where six parameters would say the same thing; a new
+  mechanism arrives with the first thing that uses it, as its own PR.
 
 - Facts only. The page says "no fact yet" rather than guessing, and a reader
   that fails makes its hops "unknown", never "late".

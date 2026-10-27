@@ -104,7 +104,8 @@ files still hold only ids, times and titles.
 Deployed 2026-10-27, [PR #3](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/3).
 All seven previews render; 48 tests and desktop/phone browser checks pass.
 Public health serves the tested package (`927bd11…`), with 21 scriptless pipes.
-The sites strip and story metadata remain Jamie's decisions in the PR.
+The sites strip: no (Jamie, 2026-10-27: "Sync is NOT for the site strip. This
+is a me tool only."). The story as title and description: still open.
 
 The page Jamie wants is "much more compelling" than the first one. Brief:
 
@@ -249,8 +250,10 @@ previews pass, both health URLs serve package `1aafe26…`. Hop 13 separates
 repository evidence refresh from verified registry publication into the
 library. Jamie adds repository Actions-token keys, reviews permissions,
 rehearses and approves activation; clocks/nudges remain until natural
-acceptance. Hop 6 also needs his explicit repair decision. This step is
-intentionally unchecked; do not duplicate the proposals.
+acceptance. Hop 6 also needs Jamie's explicit repair decision.
+2026-10-27: the sync-side scaffolding (sync #10 and #11) was removed again
+at Jamie's ask, to keep the stack hobby-sized; `docs/SUBSCRIBERS.md` keeps
+the shape, and the first real subscriber comes back as its own PR.
 
 Rules on the bus that start work, replacing nudges and clocks one hop at a
 time, each behind its flows row:
@@ -312,3 +315,6 @@ missing event.
   weeks of history; 0 is optional.
 - 2026-10-27: Strava removed from the intake, the stack, the contract and
   the docs at Jamie's ask; Buttondown and GitHub stay, off.
+- 2026-10-27: hobby-scale fold. Six receiver parameters and policies became
+  one list and one policy; the dormant subscriber scaffolding came out. The
+  stack went from 24 parameters and 57 resources to 8 and 27.

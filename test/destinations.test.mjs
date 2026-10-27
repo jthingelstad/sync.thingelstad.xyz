@@ -11,15 +11,17 @@ test('every prepared destination uses the registered arrival contract and has an
     const parsed = receivedEvent(event, '2026-10-28T03:00:00Z');
     assert.ok(!parsed.error);
     assert.equal(parsed.system, event.source);
-    const label = event.source[0].toUpperCase() + event.source.slice(1);
-    assert.equal(template.Parameters[`${label}ReceiverRole`].Default, '');
-    const policy = template.Resources[`${label}ReceiverPolicy`];
-    assert.equal(policy.Condition, `Has${label}Receiver`);
-    const [statement] = policy.Properties.PolicyDocument.Statement;
-    assert.equal(statement.Action, 'events:PutEvents');
-    assert.deepEqual(statement.Resource, { 'Fn::GetAtt': ['PublishingBus', 'Arn'] });
-    assert.deepEqual(statement.Condition.StringEquals, { 'events:source': event.source, 'events:detail-type': ['received', 'ping'] });
   }
+  // One list, one policy: the grant exists only when a role name is listed.
+  assert.equal(template.Parameters.ReceiverRoles.Default, '');
+  const policy = template.Resources.ReceiverPutEvents;
+  assert.equal(policy.Condition, 'HasReceivers');
+  assert.deepEqual(policy.Properties.Roles, { Ref: 'ReceiverRoles' });
+  const [statement] = policy.Properties.PolicyDocument.Statement;
+  assert.equal(statement.Action, 'events:PutEvents');
+  assert.deepEqual(statement.Resource, { 'Fn::GetAtt': ['PublishingBus', 'Arn'] });
+  for (const event of events) assert.ok(statement.Condition.StringEquals['events:source'].includes(event.source));
+  assert.deepEqual(statement.Condition.StringEquals['events:detail-type'], ['received', 'ping']);
 });
 
 test('a hand-published episode never measures an arrival at its own producer', () => {
