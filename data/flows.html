@@ -298,7 +298,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>nudge, on send<br><span class="muted">mac</span></td>
   <td class="num">15 min</td>
   <td>The draft exists with the issue's subject; the email goes out when Jamie sends it. Its receipt is the published event for the buttondown leg on the bus; the sync page measures the hop from that event's time.</td>
-  <td><span class="pill pill--ok">ok</span></td>
+  <td><span class="pill pill--ok">ok</span><br><span class="muted">undefined Step 7 intake: Buttondown subscriber.created and subscriber.unsubscribed may announce source buttondown, detail-type subscriber, with event and intake time only; no address or subscriber id. This is a separate count signal, not an email-send receipt. The /buttondown sender stays off until Jamie adds buttondown_webhook_signing_key to sync-runtime and enables EnableButtondown after configuring the same signing key in Buttondown. HMAC-SHA256 covers the raw body.</span></td>
 </tr>
 <tr id="hop-9" class="status--ok">
   <td class="num">9</td>
@@ -585,7 +585,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <tr>
   <td><strong><a href="https://buttondown.com/">Buttondown</a></strong><br><span class="muted">site · buttondown.com</span></td>
   <td>The newest email in the account.</td>
-  <td>The email edition. WT Builder makes a draft; Jamie sends it.</td>
+  <td>The email edition. WT Builder makes a draft; Jamie sends it. A signed subscriber-count webhook is prepared in sync-intake, disabled until its key and explicit enable flag are set; it never changes this email-edition fact.</td>
 </tr>
 <tr>
   <td><strong><a href="https://files.thingelstad.com/">files.thingelstad.com</a></strong><br><span class="muted">site · aws</span></td>

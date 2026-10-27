@@ -149,6 +149,13 @@ Builder's credentials proves the permission without matching the rule.
   collect, probe, advance the journeys, render, put to S3, make the
   follow-ups. `ReservedConcurrentExecutions` is 1, so an event run and a
   clock run never write the journeys at once (the later one is retried).
+- `src/intake.mjs`, `src/intake-handler.mjs` — the separate `sync-intake`
+  function URL. Verify the raw-body signature first, then allow only the
+  sender's small bus detail. No body is logged or written to the site.
+  Invalid requests get an empty 204; a verified delivery whose queue write
+  fails gets 503 for retry. Buttondown starts off; its signing key and
+  console steps are in `docs/WEBHOOKS.md`. The intake role has no site or
+  secret-read permission.
 - `tools/probe.mjs` — run it here: live, or `--fixtures` with a fixed clock.
   Output in `.build/site/`. `--fixtures --scenario <name>` reads one of the
   `test/scenarios/` sets; `npm run preview` renders them all, offline,
@@ -190,6 +197,12 @@ line to the Function's environment, deploy. The stack remembers the name; run
 the deploy once with `SYNC_RUNTIME_SECRET=<name>` to set or change it, and an
 empty name turns every secret-backed fact off. Secret safety rules are in
 `~/Projects/AGENTS.md`.
+
+Webhook keys resolve only when their explicit sender flag is on. The
+Buttondown key is `buttondown_webhook_signing_key`; `EnableButtondown`
+defaults false. `SYNC_ENABLE_BUTTONDOWN` changes it for plan/deploy, and a
+routine deploy remembers it. Add the key in the console before enabling;
+an off sender never tries to resolve a missing key.
 
 ## Conventions
 
