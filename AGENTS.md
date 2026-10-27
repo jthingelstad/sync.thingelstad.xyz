@@ -29,6 +29,15 @@ public"): it holds ids and times, never a secret and never a visitor.
   already publishes (feeds, the Linking Things MCP, S3 object times). Parsers
   are pure and tested on `test/fixtures/`. A system with no reader is
   "no fact yet" on the page; adding the fact is a change in that system.
+  The Librarian's fact is the metadata each corpus object carries
+  (`newest-id`, `newest-at`, `item-count`, `built-at`; librarian-thing
+  `pipeline/deploy/corpus_fact.py`, PR #94), read with a HEAD and the id's
+  kind prefix taken off (`wt-354` is issue 354 here). Thingy's fact is
+  `librarian.thingelstad.com/health`: `corpus_versions` names the S3 versions
+  the running build was deployed against; a match with the object's current
+  version means Thingy serves what the Librarian holds, and a mismatch shows
+  as the build Thingy still serves (`build <8 hex>`), so the hop reads moving
+  until the redeploy after the upload lands.
 - `src/probe.mjs` — facts in, status out: fresh / moving / late / held /
   no-fact / unknown per hop and kind; the matrix; the receipts. Pure.
 - `src/page.mjs` — the HTML. No script, `--jt-` colours, Central time.

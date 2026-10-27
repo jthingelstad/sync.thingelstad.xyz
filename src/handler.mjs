@@ -17,7 +17,7 @@ export async function run({ now = new Date().toISOString().replace(/\.\d{3}Z$/, 
     fetch: (url, init) => fetch(url, { ...init, headers: { 'user-agent': 'sync.thingelstad.xyz probe', ...(init?.headers ?? {}) } }),
     s3Head: async (Bucket, Key) => {
       const head = await s3.send(new HeadObjectCommand({ Bucket, Key }));
-      return { lastModified: head.LastModified?.toISOString(), metadata: head.Metadata, size: head.ContentLength };
+      return { lastModified: head.LastModified?.toISOString(), metadata: head.Metadata, size: head.ContentLength, versionId: head.VersionId ?? null };
     },
   };
   const facts = await collect(ctx, flows.systems.map((s) => s.id));

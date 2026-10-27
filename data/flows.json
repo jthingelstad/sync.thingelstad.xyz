@@ -137,7 +137,7 @@
       "url": "https://librarian.thingelstad.com/",
       "repo": "jthingelstad/librarian-thing",
       "runs_on": "github-actions+aws",
-      "fact": "latest_content and corpus_stats (MCP) show the newest item of each kind the deployed corpus holds; library.db in S3 holds what the library pulled.",
+      "fact": "Each corpus object in S3 carries its fact as metadata (newest-id, newest-at, item-count, built-at; since 2026-10-26): a HEAD says the newest item of each kind the uploaded corpus holds. latest_content and corpus_stats (MCP) show the same from the deployed corpus; library.db in S3 holds what the library pulled.",
       "notes": "The library (library.db in S3), the five corpora, and the API Thingy and MCP clients answer from."
     },
     {
@@ -147,7 +147,7 @@
       "url": "https://thingy.thingelstad.com/",
       "repo": "jthingelstad/thingy.thingelstad.com",
       "runs_on": "aws",
-      "fact": "Answers from whatever corpus the Librarian API serves; no fact of its own yet.",
+      "fact": "librarian.thingelstad.com/health reports source_revision and corpus_versions, the S3 versions of the corpus objects the running build was deployed against (since 2026-10-26): where they match the objects' current versions, Thingy serves what the Librarian holds; where one differs, the redeploy that serves the newer upload has not landed.",
       "notes": "Chat client of the Librarian API. MCP clients (Claude, ChatGPT, Codex) read the same corpus through librarian.thingelstad.com/mcp."
     },
     {
@@ -418,12 +418,12 @@
       "to": "another",
       "kinds": ["episode", "audio"],
       "moves": "An episode: outline, mastered audio, transcript, one commit.",
-      "mechanism": "The Another Thing send (/another), built 2026-10-11.",
+      "mechanism": "The Another Thing send (/another), built 2026-10-11. It commits the episode, its transcript and the MP3 to git; since 2026-10-26 the MP3's home is the another-site audio bucket, served by CloudFront at the same /uploads/ URL.",
       "trigger": { "type": "nudge", "event": "send", "runs_on": "mac" },
       "expected_lag_hours": 0.25,
       "verify": "podcast.xml carries the episode.",
       "status": "unverified",
-      "notes": "Never run. Episodes so far were committed by hand. Needs ANOTHER_GITHUB_PAT_TOKEN."
+      "notes": "Never run. Episodes so far were committed by hand. Needs ANOTHER_GITHUB_PAT_TOKEN. Before the DNS cutover retires Pages, the send must put the MP3 in the audio bucket and write audioBytes and audioSeconds instead of committing it; until then the deploy-aws job refuses a feed whose MP3 is not in the bucket (npm run audio:put fixes it)."
     },
     {
       "id": 22,

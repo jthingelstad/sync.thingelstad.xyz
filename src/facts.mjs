@@ -33,6 +33,15 @@ export const LIBRARIAN_ARTIFACTS = {
   reference_corpus: 'artifacts/reference_corpus.json',
   links_corpus: 'artifacts/links_corpus.json',
 };
+// Which corpus holds each kind, and the public id prefix the Librarian gives
+// its items (wt-354, blog-<id>, ep-<n>, link-<id>).
+export const LIBRARIAN_KINDS = {
+  issue: { artifact: 'weekly_corpus', prefix: 'wt-' },
+  post: { artifact: 'blog_corpus', prefix: 'blog-' },
+  episode: { artifact: 'podcast_corpus', prefix: 'ep-' },
+  link: { artifact: 'links_corpus', prefix: 'link-' },
+};
+export const LIBRARIAN_HEALTH = 'https://librarian.thingelstad.com/health';
 
 // ---------- parsers ----------
 
@@ -106,6 +115,31 @@ export function parseActivity(xml) {
   return newestBy(entries, (e) => e.at);
 }
 
+/**
+ * The fact a Librarian corpus object carries as S3 metadata (newest-id,
+ * newest-at, item-count, built-at; librarian-thing pipeline/deploy/corpus_fact.py),
+ * as the probe's item for `kind`: the Librarian's id with its kind prefix
+ * taken off, so "wt-354" reads as issue 354 here like everywhere else.
+ */
+export function parseCorpusFact(kind, metadata) {
+  const id = metadata?.['newest-id'];
+  if (!id) return null;
+  const { prefix } = LIBRARIAN_KINDS[kind] ?? {};
+  const bare = prefix && id.startsWith(prefix) ? id.slice(prefix.length) : id;
+  return { id: bare, at: instant(metadata['newest-at']), librarian_id: id };
+}
+
+/** librarian.thingelstad.com/health: the build id and the corpus versions it was deployed against. */
+export function parseLibrarianHealth(body) {
+  const health = typeof body === 'string' ? JSON.parse(body) : body;
+  if (!health?.ok) throw new Error('the Librarian health check did not answer ok');
+  return {
+    contract_version: health.contract_version ?? null,
+    source_revision: health.source_revision ?? null,
+    corpus_versions: health.corpus_versions && typeof health.corpus_versions === 'object' ? health.corpus_versions : null,
+  };
+}
+
 // ---------- readers ----------
 
 async function text(ctx, url, init) {
@@ -175,13 +209,58 @@ const READERS = {
     return { newest: {}, extra: { activity_at: entry?.at ?? null, activity: entry?.title ?? null } };
   },
 
+  // Each corpus object says what it holds in its S3 metadata (since
+  // librarian-thing PR #94); before that, only the artifact times.
   async librarian(ctx) {
     const extra = {};
+    const newest = {};
     for (const [name, key] of Object.entries(LIBRARIAN_ARTIFACTS)) {
       const head = await ctx.s3Head(LIBRARIAN_BUCKET, key);
-      extra[name] = { built_at: instant(head.lastModified), fingerprint: head.metadata?.['library-fingerprint'] ?? null, bytes: head.size ?? null };
+      const meta = head.metadata ?? {};
+      extra[name] = {
+        key,
+        version_id: head.versionId ?? null,
+        uploaded_at: instant(head.lastModified),
+        built_at: instant(meta['built-at']),
+        fingerprint: meta['library-fingerprint'] ?? null,
+        items: meta['item-count'] == null ? null : Number(meta['item-count']),
+        bytes: head.size ?? null,
+      };
     }
-    return { newest: {}, extra, none: 'The Librarian publishes no fact about which items its corpus holds yet; these are the artifact times in S3.' };
+    for (const [kind, { artifact }] of Object.entries(LIBRARIAN_KINDS)) {
+      const key = LIBRARIAN_ARTIFACTS[artifact];
+      const item = parseCorpusFact(kind, (await ctx.s3Head(LIBRARIAN_BUCKET, key)).metadata);
+      if (item) newest[kind] = item;
+    }
+    const fact = { newest, extra };
+    if (!Object.keys(newest).length) fact.none = 'The corpus objects carry no newest-item metadata yet (they will after their next upload); these are the artifact times in S3.';
+    return fact;
+  },
+
+  // Thingy answers from whatever corpus the running Librarian build loaded.
+  // /health names the corpus object versions the build was deployed
+  // against; where they match the objects' current versions, Thingy holds
+  // what the Librarian holds. Where one differs, a newer corpus is uploaded
+  // and the redeploy that serves it has not landed, so Thingy still holds
+  // the previous build of that corpus (the item is the build, not a guess
+  // at what the old corpus held).
+  async thingy(ctx, facts) {
+    const health = parseLibrarianHealth(await text(ctx, LIBRARIAN_HEALTH));
+    const extra = { ...health, serving: {} };
+    if (!health.corpus_versions) return { newest: {}, extra, none: '/health does not name the corpus versions this build serves yet.' };
+    const librarian = facts.librarian;
+    if (!librarian || librarian.error) return { newest: {}, extra, none: 'The Librarian fact is needed to say what Thingy holds.' };
+    const newest = {};
+    for (const [kind, { artifact }] of Object.entries(LIBRARIAN_KINDS)) {
+      const key = LIBRARIAN_ARTIFACTS[artifact];
+      const current = librarian.extra?.[artifact]?.version_id ?? null;
+      const served = health.corpus_versions[key] ?? null;
+      const same = Boolean(current && served && current === served);
+      extra.serving[kind] = { key, served_version: served, current_version: current, newest: same };
+      if (same && librarian.newest?.[kind]) newest[kind] = { ...librarian.newest[kind] };
+      else if (!same && served) newest[kind] = { id: `build ${(health.source_revision ?? served).slice(0, 8)}`, at: null, behind: true };
+    }
+    return { newest, extra };
   },
 
   // The CDN holds the audio edition the newest issue names: a HEAD proves it.
@@ -205,7 +284,7 @@ const READERS = {
   },
 };
 
-const DEPENDENT = new Set(['cdn', 'cards']);
+const DEPENDENT = new Set(['cdn', 'cards', 'thingy']);
 
 /**
  * Read every system's fact. Returns { <system id>: fact } for every system in

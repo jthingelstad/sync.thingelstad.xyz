@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { test } from 'node:test';
-import { parseActivity, parseBlogFeed, parseLinksStats, parseLinksSync, parseOgImage, parsePodcast, parseWeeklyFeed } from '../src/facts.mjs';
+import { parseActivity, parseBlogFeed, parseCorpusFact, parseLibrarianHealth, parseLinksStats, parseLinksSync, parseOgImage, parsePodcast, parseWeeklyFeed } from '../src/facts.mjs';
 
 const fixture = (name) => fs.readFile(new URL(`./fixtures/${name}`, import.meta.url), 'utf8');
 
@@ -43,4 +43,15 @@ test('og:image and an Atom activity entry parse', () => {
   const entry = parseActivity('<rss><channel><item><title>B</title><pubDate>Sun, 25 Oct 2026 02:39:58 GMT</pubDate></item><item><title>A</title><pubDate>Mon, 26 Oct 2026 02:39:58 GMT</pubDate></item></channel></rss>');
   assert.equal(entry.title, 'A');
   assert.equal(entry.at, '2026-10-26T02:39:58Z');
+});
+
+test('a corpus fact and the Librarian health parse', () => {
+  assert.deepEqual(parseCorpusFact('issue', { 'newest-id': 'wt-354', 'newest-at': '2026-10-24T12:00:00Z' }), { id: '354', at: '2026-10-24T12:00:00Z', librarian_id: 'wt-354' });
+  assert.equal(parseCorpusFact('link', { 'newest-id': 'link-abc', 'newest-at': '2026-10-26T01:00:00Z' }).id, 'abc');
+  assert.equal(parseCorpusFact('issue', { 'library-fingerprint': 'x' }), null);
+  assert.equal(parseCorpusFact('issue', undefined), null);
+  const health = parseLibrarianHealth('{"ok":true,"contract_version":"4.19.0","source_revision":"abc","corpus_versions":{"artifacts/corpus.json":"v1"}}');
+  assert.deepEqual(health, { contract_version: '4.19.0', source_revision: 'abc', corpus_versions: { 'artifacts/corpus.json': 'v1' } });
+  assert.equal(parseLibrarianHealth({ ok: true }).corpus_versions, null);
+  assert.throws(() => parseLibrarianHealth({ ok: false }), /did not answer ok/);
 });

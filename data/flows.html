@@ -85,7 +85,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <h2>Open</h2>
 <ul class="open"><li><a href="#hop-6"><span class="pill pill--gap">gap</span> 6. Weekly Thing (web) → Linking Things</a>: Broken on 2026-10-26: WT354 was sent 2026-10-24, the nightly ran green, and Linking Things still reports 353. The sibling checkout was on a feature branch without 354.md. Fix: read weekly's published archive over HTTPS, or origin main, never a working checkout; and nudge the join from the send (hop 10).</li>
 <li><a href="#hop-19"><span class="pill pill--gap">gap</span> 19. Library Agent → micro.blog</a>: First write round, 2026-10-22: 20 edits accepted by Micropub, 4 missing from the rendered pages after the rebuild. The read-back checks Micropub, not the page, so the round was green. A write needs a receipt: written, rendered, pulled back (hop 11).</li>
-<li><a href="#hop-21"><span class="pill pill--unverified">unverified</span> 21. WT Builder → Another Thing</a>: Never run. Episodes so far were committed by hand. Needs ANOTHER_GITHUB_PAT_TOKEN.</li>
+<li><a href="#hop-21"><span class="pill pill--unverified">unverified</span> 21. WT Builder → Another Thing</a>: Never run. Episodes so far were committed by hand. Needs ANOTHER_GITHUB_PAT_TOKEN. Before the DNS cutover retires Pages, the send must put the MP3 in the audio bucket and write audioBytes and audioSeconds instead of committing it; until then the deploy-aws job refuses a feed whose MP3 is not in the bucket (npm run audio:put fixes it).</li>
 <li><a href="#hop-22"><span class="pill pill--unverified">unverified</span> 22. Otto (OpenClaw) → Pinboard</a>: 68 agent-voice notes exist on Linking Things. No OpenClaw cron job carries this name on 2026-10-26; whether it still runs is unconfirmed.</li></ul>
 
 <h2>Map</h2>
@@ -419,11 +419,11 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <tr id="hop-21" class="status--unverified">
   <td class="num">21</td>
   <td><strong>WT Builder</strong> → <strong>Another Thing</strong><br><span class="muted">episode, audio</span></td>
-  <td>An episode: outline, mastered audio, transcript, one commit.<br><span class="muted">The Another Thing send (/another), built 2026-10-11.</span></td>
+  <td>An episode: outline, mastered audio, transcript, one commit.<br><span class="muted">The Another Thing send (/another), built 2026-10-11. It commits the episode, its transcript and the MP3 to git; since 2026-10-26 the MP3's home is the another-site audio bucket, served by CloudFront at the same /uploads/ URL.</span></td>
   <td>nudge, on send<br><span class="muted">mac</span></td>
   <td class="num">15 min</td>
   <td>podcast.xml carries the episode.</td>
-  <td><span class="pill pill--unverified">unverified</span><br><span class="muted">Never run. Episodes so far were committed by hand. Needs ANOTHER_GITHUB_PAT_TOKEN.</span></td>
+  <td><span class="pill pill--unverified">unverified</span><br><span class="muted">Never run. Episodes so far were committed by hand. Needs ANOTHER_GITHUB_PAT_TOKEN. Before the DNS cutover retires Pages, the send must put the MP3 in the audio bucket and write audioBytes and audioSeconds instead of committing it; until then the deploy-aws job refuses a feed whose MP3 is not in the bucket (npm run audio:put fixes it).</span></td>
 </tr>
 <tr id="hop-22" class="status--unverified">
   <td class="num">22</td>
@@ -619,12 +619,12 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 </tr>
 <tr>
   <td><strong><a href="https://librarian.thingelstad.com/">Librarian</a></strong><br><span class="muted">archive · github-actions+aws · jthingelstad/librarian-thing</span></td>
-  <td>latest_content and corpus_stats (MCP) show the newest item of each kind the deployed corpus holds; library.db in S3 holds what the library pulled.</td>
+  <td>Each corpus object in S3 carries its fact as metadata (newest-id, newest-at, item-count, built-at; since 2026-10-26): a HEAD says the newest item of each kind the uploaded corpus holds. latest_content and corpus_stats (MCP) show the same from the deployed corpus; library.db in S3 holds what the library pulled.</td>
   <td>The library (library.db in S3), the five corpora, and the API Thingy and MCP clients answer from.</td>
 </tr>
 <tr>
   <td><strong><a href="https://thingy.thingelstad.com/">Thingy</a></strong><br><span class="muted">answers · aws · jthingelstad/thingy.thingelstad.com</span></td>
-  <td>Answers from whatever corpus the Librarian API serves; no fact of its own yet.</td>
+  <td>librarian.thingelstad.com/health reports source_revision and corpus_versions, the S3 versions of the corpus objects the running build was deployed against (since 2026-10-26): where they match the objects' current versions, Thingy serves what the Librarian holds; where one differs, the redeploy that serves the newer upload has not landed.</td>
   <td>Chat client of the Librarian API. MCP clients (Claude, ChatGPT, Codex) read the same corpus through librarian.thingelstad.com/mcp.</td>
 </tr>
 <tr>

@@ -8,6 +8,7 @@ import { fixtureContext } from '../tools/probe.mjs';
 
 const systems = flows.systems.map((s) => s.id);
 const hop = (status, from, to, kind) => status.hops.find((h) => h.from === from && h.to === to && h.kind === kind);
+const status = (ctx, facts) => probe({ flows, facts, now: ctx.now });
 
 test('holds: same id, or published at or after', () => {
   assert.ok(holds({ id: '354', at: null }, { id: '354', at: '2026-10-24T12:00:00Z' }));
@@ -52,21 +53,72 @@ test('Pinboard without a token is no fact, and the link receipt comes from Linki
   assert.equal(link.origin, 'links');
 });
 
-test('the Librarian to Thingy hop is held on a Friday and no-fact otherwise', async () => {
+test('the Librarian to Thingy hop is held on a Friday and measured otherwise', async () => {
   const friday = await fixtureContext('2026-10-30T20:00:00Z'); // Friday afternoon in Chicago
   let facts = await collect(friday, systems);
-  // Give both sides a fact so the hold is what decides.
-  facts.librarian.newest.issue = { id: '353', at: '2026-10-17T12:00:00Z' };
-  facts.thingy = { newest: { issue: { id: '353', at: '2026-10-17T12:00:00Z' } }, extra: {}, checked_at: friday.now };
+  // A newer corpus than the one Thingy serves, on the hold day.
   facts.weekly.newest.issue = { id: '355', at: '2026-10-30T12:00:00Z', url: 'https://weekly.thingelstad.com/archive/355/' };
   facts.librarian.newest.issue = { id: '355', at: '2026-10-30T12:00:00Z' };
+  facts.thingy.newest.issue = { id: '353', at: '2026-10-17T12:00:00Z' };
   let status = probe({ flows, facts, now: friday.now });
   assert.equal(hop(status, 'librarian', 'thingy', 'issue').status, 'held');
 
+  // On a Monday the fixtures say the build serves the corpus that holds
+  // WT353, so the hop is fresh and the matrix shows the issue on both.
   const monday = await fixtureContext('2026-10-26T22:00:00Z');
   facts = await collect(monday, systems);
   status = probe({ flows, facts, now: monday.now });
-  assert.equal(hop(status, 'librarian', 'thingy', 'issue').status, 'no-fact');
+  assert.equal(hop(status, 'librarian', 'thingy', 'issue').status, 'fresh');
+  assert.deepEqual(facts.thingy.newest.issue, facts.librarian.newest.issue);
+});
+
+test('the Librarian fact is the corpus metadata, with the kind prefix taken off', async () => {
+  const ctx = await fixtureContext('2026-10-26T22:00:00Z');
+  const facts = await collect(ctx, systems);
+  assert.equal(facts.librarian.newest.issue.id, '353');
+  assert.equal(facts.librarian.newest.issue.librarian_id, 'wt-353');
+  assert.equal(facts.librarian.newest.post.id, '71901');
+  assert.equal(facts.librarian.newest.episode.id, '7');
+  assert.equal(facts.librarian.newest.link.id, '0123456789ab');
+  assert.equal(facts.librarian.extra.weekly_corpus.items, 353);
+  assert.equal(facts.librarian.extra.reference_corpus.items, 41);
+  assert.equal(facts.librarian.none, undefined);
+  // The weekly site has WT354 and the corpus does not: the hop into the
+  // Librarian is measured from the site and reads late.
+  const into = hop(status(ctx, facts), 'wt-builder', 'librarian', 'issue');
+  assert.equal(into.status, 'late');
+  assert.equal(into.measured_from, 'weekly');
+  assert.equal(into.target.id, '353');
+});
+
+test('Thingy holds the build it serves where a corpus was uploaded but not redeployed', async () => {
+  const ctx = await fixtureContext('2026-10-26T22:00:00Z');
+  const facts = await collect(ctx, systems);
+  assert.equal(facts.thingy.extra.serving.issue.newest, true);
+  assert.equal(facts.thingy.extra.serving.post.newest, false);
+  assert.match(facts.thingy.newest.post.id, /^build 8a0fea73$/);
+  assert.equal(facts.thingy.newest.post.behind, true);
+  const st = status(ctx, facts);
+  const post = hop(st, 'librarian', 'thingy', 'post');
+  assert.ok(post.status === 'moving' || post.status === 'late', post.status);
+  assert.equal(post.target.id, 'build 8a0fea73');
+  const receipt = st.receipts.find((r) => r.kind === 'post');
+  assert.equal(receipt.holders.find((h) => h.system === 'thingy').state, 'behind');
+});
+
+test('without corpus metadata or health versions both facts say so', async () => {
+  const ctx = await fixtureContext('2026-10-26T22:00:00Z');
+  const bare = {
+    ...ctx,
+    s3Head: async () => ({ lastModified: '2026-10-26T20:12:37Z', metadata: {}, size: 1, versionId: 'v' }),
+    fetch: async (url, init) => (url.endsWith('/health') ? { ok: true, status: 200, text: async () => '{"ok":true,"contract_version":"4.19.0"}' } : ctx.fetch(url, init)),
+  };
+  const facts = await collect(bare, systems);
+  assert.deepEqual(facts.librarian.newest, {});
+  assert.match(facts.librarian.none, /no newest-item metadata yet/);
+  assert.deepEqual(facts.thingy.newest, {});
+  assert.match(facts.thingy.none, /corpus versions/);
+  assert.equal(hop(status(ctx, facts), 'librarian', 'thingy', 'issue').status, 'no-fact');
 });
 
 test('a reader that fails makes its hops unknown, not late', async () => {
