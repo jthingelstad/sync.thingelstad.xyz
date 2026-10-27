@@ -136,7 +136,9 @@ the sync app not just for this one secret"). Each key is one secret the app
 needs; the template resolves each into its own environment variable with
 `{{resolve:secretsmanager:${RuntimeSecret}:SecretString:<key>}}`, so no value
 enters a session. Keys today: `pinboard_token` → `PINBOARD_API_TOKEN`, the
-Pinboard fact. To add a secret: add the key in the console, add the resolve
+Pinboard fact; `microblog_api_key` → `MICROBLOG_API_KEY` (added 2026-10-26 at
+Jamie's ask, ahead of the readers that will use it: the Micropub source query
+for hop 19's render receipt, and a blog producer for the bus). To add a secret: add the key in the console, add the resolve
 line to the Function's environment, deploy. The stack remembers the name; run
 the deploy once with `SYNC_RUNTIME_SECRET=<name>` to set or change it, and an
 empty name turns every secret-backed fact off. Secret safety rules are in

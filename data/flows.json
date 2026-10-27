@@ -710,6 +710,9 @@
       "hops": [
         5,
         6,
+        7,
+        8,
+        9,
         10,
         11,
         12,
@@ -717,10 +720,11 @@
         14,
         16,
         17,
-        20
+        20,
+        21
       ],
-      "sees": "Agent closeouts per channel; every CloudWatch alarm state change in the account, routed by alarm-name prefix (weekly-thing-librarian-, thingy-web-, weekly-site-, another-site- to #publishing-log; links-, thingelstad-xyz-, cards- to #sites-log); Codex automations that fired but started no run (activity missed, in the 06:30 brief).",
-      "misses": "Lag itself, until the sync alarms exist (step 4, prefix sync-); the publishing bus, which nothing posts from yet (every leg, journeys or late only is Jamie's call)."
+      "sees": "Agent closeouts per channel; every CloudWatch alarm state change in the account, routed by alarm-name prefix (weekly-thing-librarian-, thingy-web-, weekly-site-, another-site- to #publishing-log; links-, thingelstad-xyz-, cards- to #sites-log); Codex automations that fired but started no run (activity missed, in the 06:30 brief); each published send leg on the publishing bus, as one post in #publishing-log saying which legs have gone and which are pending (rule projects-activity-published in the projects-activity-alarms stack, since 2026-10-26).",
+      "misses": "Lag itself, until the sync alarms exist (step 4, prefix sync-); a leg that never sends (no event, so no post; the sync page shows it moving, then late)."
     }
   ]
 }
