@@ -48,6 +48,7 @@ test('og:image and an Atom activity entry parse', () => {
 test('a corpus fact and the Librarian health parse', () => {
   assert.deepEqual(parseCorpusFact('issue', { 'newest-id': 'wt-354', 'newest-at': '2026-10-24T12:00:00Z' }), { id: '354', at: '2026-10-24T12:00:00Z', librarian_id: 'wt-354' });
   assert.equal(parseCorpusFact('link', { 'newest-id': 'link-abc', 'newest-at': '2026-10-26T01:00:00Z' }).id, 'abc');
+  assert.equal(parseCorpusFact('episode', { 'newest-id': 'ep-1', 'newest-at': '2025-10-05' }).at, '2025-10-05', 'a day stays a day');
   assert.equal(parseCorpusFact('issue', { 'library-fingerprint': 'x' }), null);
   assert.equal(parseCorpusFact('issue', undefined), null);
   const health = parseLibrarianHealth('{"ok":true,"contract_version":"4.19.0","source_revision":"abc","corpus_versions":{"artifacts/corpus.json":"v1"}}');

@@ -126,7 +126,10 @@ export function parseCorpusFact(kind, metadata) {
   if (!id) return null;
   const { prefix } = LIBRARIAN_KINDS[kind] ?? {};
   const bare = prefix && id.startsWith(prefix) ? id.slice(prefix.length) : id;
-  return { id: bare, at: instant(metadata['newest-at']), librarian_id: id };
+  // A day-only newest-at (the podcast corpus) stays a day: holds() then
+  // compares by day, not as midnight.
+  const at = metadata['newest-at'] ?? null;
+  return { id: bare, at: /^\d{4}-\d{2}-\d{2}$/.test(at ?? '') ? at : instant(at), librarian_id: id };
 }
 
 /** librarian.thingelstad.com/health: the build id and the corpus versions it was deployed against. */
