@@ -1,13 +1,14 @@
 // A separate Lambda URL receives webhooks; it cannot read or write the site.
 import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
 import { intakeEvent } from './intake.mjs';
+import github from '../data/github-repositories.json' with { type: 'json' };
 
 const bus = new EventBridgeClient({});
 const respond = (statusCode) => ({ statusCode, headers: { 'cache-control': 'no-store' }, body: '' });
 const emit = (event, name) => bus.send(new PutEventsCommand({ Entries: [{ EventBusName: name, Source: event.source, DetailType: event['detail-type'], Detail: JSON.stringify(event.detail), Time: new Date(event.detail.at) }] }));
 
 export async function handleIntake(request, { env = process.env, now = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'), send = emit, log = (entry) => console.log(JSON.stringify(entry)) } = {}) {
-  const parsed = intakeEvent(request, env, now);
+  const parsed = intakeEvent(request, env, now, { repositories: github.repositories });
   if (!parsed.accepted) {
     log({ webhook: 'dropped', why: parsed.why });
     return respond(204);

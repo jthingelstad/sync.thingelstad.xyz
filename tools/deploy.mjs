@@ -240,6 +240,7 @@ async function apply(execute_) {
     // A routine deploy preserves the explicit sender choice. New senders
     // start off, so a missing key is never resolved during their first deploy.
     EnableButtondown: process.env.SYNC_ENABLE_BUTTONDOWN ?? (parameter(stack, 'EnableButtondown') || 'false'),
+    EnableGitHub: process.env.SYNC_ENABLE_GITHUB ?? (parameter(stack, 'EnableGitHub') || 'false'),
   };
   log(`\nchange set for ${name}`);
   const set = await changeSet(name, template, parameters, true);
@@ -256,7 +257,7 @@ async function apply(execute_) {
   const distributionId = output(stack, 'DistributionId');
   const domain = output(stack, 'DistributionDomain');
   log(`publishing bus ${output(stack, 'PublishingBusArn')}`);
-  if (output(stack, 'IntakeUrl')) log(`webhook intake ${output(stack, 'IntakeUrl')} (Buttondown enabled: ${parameters.EnableButtondown})`);
+  if (output(stack, 'IntakeUrl')) log(`webhook intake ${output(stack, 'IntakeUrl')} (Buttondown enabled: ${parameters.EnableButtondown}; GitHub enabled: ${parameters.EnableGitHub})`);
   await uploadStatic(siteBucket);
   await invokeProbe(functionName);
   await cloudfront.send(

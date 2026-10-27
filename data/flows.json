@@ -120,7 +120,7 @@
       "repo": "jthingelstad/thingelstad.xyz",
       "runs_on": "github-actions",
       "fact": "The registry on the site; activity.xml carries each day's collected observations.",
-      "notes": "Content changes by pull request; a daily collector refreshes observations."
+      "notes": "Content changes by pull request; a daily collector refreshes observations. Its public registry supplies the reviewed webhook repository allowlist; private repositories and unlisted pushes are refused. The intake is disabled until its signing key and explicit enable flag are set."
     },
     {
       "id": "librarian",
@@ -403,7 +403,7 @@
       "expected_lag_hours": 26,
       "verify": "get_source thing-<id> returns the current page.",
       "status": "ok",
-      "notes": "Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note."
+      "notes": "Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 7 intake: signed GitHub push deliveries for thingelstad.xyz and the 44 public repository sources listed in https://thingelstad.xyz/things.json become source github, detail-type pushed, with repository/ref/commit id and intake time only. The /github sender is off until Jamie adds github_webhook_signing_key in sync-runtime and enables EnableGitHub. It does not rebuild anything until step 8 adds a subscriber; this hop remains on its existing clock."
     },
     {
       "id": 14,
