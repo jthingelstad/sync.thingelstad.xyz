@@ -5,8 +5,8 @@ on one bus, with a page that shows each item's journey as it happens. Written
 2026-10-26 (Jamie: "Approved: write docs/PLAN.md in sync.thingelstad.xyz"),
 after the first night: the bus, the WT Builder sender, the probe, the
 journeys, the runtime map, the Pinboard and micro.blog secrets, and the
-Discord activity stream are live. Steps 1 through 4 below are now live; later steps
-remain the work ahead.
+Discord activity stream are live. Steps 1 through 4, 6 and 7 are now live. Destination senders and
+subscribers (5 and 8) remain PR work; 0, 9 and 10 are not part of this night.
 
 Each step is one pull request, small enough for an evening. Any session,
 Claude's or Codex's, picks up the lowest unchecked step cold: this file,
@@ -196,21 +196,18 @@ that fallback. Another Thing remains manual/unverified.
 Acceptance: the blog's post journey starts from the event, not the feed;
 hop 19 reads fresh or late with a reason.
 
-### 7. Webhook intake
+### 7. [x] Webhook intake
 
-Buttondown intake deployed 2026-10-27, [PR #6](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/6),
-with `EnableButtondown=false`. 69 tests and ten previews pass; health serves
-package `72c7029…`, and all three disabled/unbuilt paths answer empty 204 to
-a GET. Jamie adds `buttondown_webhook_signing_key` in `sync-runtime`,
-configures Buttondown and enables it using `docs/WEBHOOKS.md`. GitHub and
-Strava still wait for their own PRs; the step is not complete.
-
-GitHub intake deployed 2026-10-27, [PR #7](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/7),
-with both sender flags false. 73 tests and ten previews pass; both health
-URLs serve package `b4f253a…` at 2:40 a.m. CDT. The same intake URL stays
-live, with the reviewed 44-repository public allowlist. Jamie adds
-`github_webhook_signing_key`, configures the desired repositories and
-enables the flag using `docs/WEBHOOKS.md`; step 8 adds the rebuild rule.
+Deployed 2026-10-27: Buttondown [PR #6](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/6),
+GitHub [PR #7](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/7), and
+Strava [PR #8](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/8), each
+with a clean completed review. 79 tests and ten previews pass; both health
+URLs serve package `c757ca1…` at 2:52 a.m. CDT. The scriptless map has 22 pipes
+and WT354 remains late. All three senders are off; StravaOwnerId is empty.
+Their signing keys, Strava's separate verify token and every console/enable
+step are in `docs/WEBHOOKS.md` and the PRs. Provider setup waits for Jamie.
+Strava follows its official 200 acknowledgement protocol for accepted
+requests; invalid requests remain empty 204. No activity consumer is built.
 
 A second function, `sync-intake`, behind a Lambda function URL, turns a
 third party's webhook into a bus event after checking its signature, and
