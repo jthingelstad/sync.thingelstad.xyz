@@ -171,7 +171,16 @@ too, so the day Jamie fixes the join its arrival is already reported.
 Acceptance per destination: a rehearsal run (`ping` or a dry-run flag)
 proves the permission; the first real event shows on the page.
 
-### 6. Producers beside WT Builder
+### 6. [x] Producers beside WT Builder
+
+Deployed 2026-10-27, [PR #5](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/5).
+The public-feed producer uses Jamie's explicit response-fixture fallback;
+64 tests and ten previews pass, and health serves package `1db271b…`.
+The first run established a silent 25-post baseline with no bus sends.
+Hop 19 remains no-fact: the authenticated source call waits for the
+independent uid, modification field and Library Agent write receipt in
+`docs/MICROBLOG.md`. Its original fresh/late acceptance is deferred under
+that fallback. Another Thing remains manual/unverified.
 
 - **micro.blog** (hops 3, 4, 11, 19, 20): a reader in `src/facts.mjs` using
   `MICROBLOG_API_KEY` for Micropub `q=source` (read-only, never a write),
