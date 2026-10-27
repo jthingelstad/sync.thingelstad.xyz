@@ -221,7 +221,7 @@ async function apply(execute_) {
 
   if (!stack) {
     log(`\n${name} does not exist: step one creates the buckets and roles`);
-    const set = await changeSet(name, template, { CodeKey: '', CodeVersion: '', CertificateArn: certificateArn, PinboardSecret: '', PublisherUser: 'wt-archive' }, false);
+    const set = await changeSet(name, template, { CodeKey: '', CodeVersion: '', CertificateArn: certificateArn, RuntimeSecret: '', PublisherUser: 'wt-archive' }, false);
     show(set);
     if (!execute_) return log('\nplan only; run `npm run deploy` to create it');
     stack = await execute(name, set, false);
@@ -234,7 +234,8 @@ async function apply(execute_) {
     CodeKey: manifest.key,
     CodeVersion: codeVersion,
     CertificateArn: certificateArn,
-    PinboardSecret: parameter(stack, 'PinboardSecret'),
+    // The stack remembers the app secret's name; SYNC_RUNTIME_SECRET sets or changes it.
+    RuntimeSecret: process.env.SYNC_RUNTIME_SECRET ?? parameter(stack, 'RuntimeSecret'),
     PublisherUser: parameter(stack, 'PublisherUser') || 'wt-archive',
   };
   log(`\nchange set for ${name}`);

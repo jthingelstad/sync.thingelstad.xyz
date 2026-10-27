@@ -24,7 +24,7 @@
       "role": "source",
       "url": "https://pinboard.in/",
       "runs_on": "pinboard.in",
-      "fact": "posts/update gives the time of the last change (token needed).",
+      "fact": "posts/update gives the time of the last change; the sync probe reads it with the pinboard_token key of the sync-runtime secret (since 2026-10-26).",
       "notes": "Jamie's capture tool for links. No webhooks."
     },
     {
@@ -480,7 +480,7 @@
       "where": "AWS Lambda on a half-hour schedule and on every published event (then again at 2, 5, 10, 15, 30, 45 and 60 minutes), publishing a public page",
       "hops": [6, 7, 8, 9, 10, 11, 12, 14, 16, 20, 21],
       "sees": "Whether the destination of each hop holds the newest item of its kind, measured from the published event or the next fact down; each item's journey, system by system, with the time it was first seen at each.",
-      "misses": "A hop whose ends publish no fact (Pinboard without a token, Buttondown, Tinylytics); whether the content is right."
+      "misses": "A hop whose ends publish no fact (Buttondown, Tinylytics); whether the content is right."
     },
     {
       "name": "weekly-thing-feed-publication-monitor",

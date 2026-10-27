@@ -129,11 +129,18 @@ Namecheap holds the DNS; Jamie adds the CNAMEs the certificate command
 prints. Once the certificate is issued, `npm run deploy` puts the alias on
 the distribution.
 
-The Pinboard fact is off until the stack's `PinboardSecret` parameter names a
-Secrets Manager secret with a `token` key; the template resolves it with
-`{{resolve:secretsmanager:...}}` so the value never enters a session. Jamie
-creates the secret in the console (secret safety rules in
-`~/Projects/AGENTS.md`).
+Secrets. The stack's `RuntimeSecret` parameter names the sync app's one
+Secrets Manager secret, `sync-runtime` (the house `<app>-runtime` shape; made
+2026-10-26 from WT Builder's `.env`, Jamie: "set the secret up generically for
+the sync app not just for this one secret"). Each key is one secret the app
+needs; the template resolves each into its own environment variable with
+`{{resolve:secretsmanager:${RuntimeSecret}:SecretString:<key>}}`, so no value
+enters a session. Keys today: `pinboard_token` → `PINBOARD_API_TOKEN`, the
+Pinboard fact. To add a secret: add the key in the console, add the resolve
+line to the Function's environment, deploy. The stack remembers the name; run
+the deploy once with `SYNC_RUNTIME_SECRET=<name>` to set or change it, and an
+empty name turns every secret-backed fact off. Secret safety rules are in
+`~/Projects/AGENTS.md`.
 
 ## Conventions
 

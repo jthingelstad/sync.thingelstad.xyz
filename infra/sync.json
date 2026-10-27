@@ -17,15 +17,15 @@
       "Default": "",
       "Description": "ACM certificate for sync.thingelstad.xyz in us-east-1; empty serves the CloudFront domain only"
     },
-    "PinboardSecret": {
-      "Type": "String",
-      "Default": "",
-      "Description": "Name of the Secrets Manager secret whose token key holds a Pinboard API token; empty leaves the Pinboard fact unread"
-    },
     "PublisherUser": {
       "Type": "String",
       "Default": "wt-archive",
       "Description": "IAM user WT Builder signs its AWS calls with; it may put events on the publishing bus. Empty grants nobody."
+    },
+    "RuntimeSecret": {
+      "Type": "String",
+      "Default": "",
+      "Description": "Name of the sync app's Secrets Manager secret (sync-runtime). Keys: pinboard_token, a Pinboard API token for the Pinboard fact. Empty leaves every fact that needs a secret unread."
     }
   },
   "Conditions": {
@@ -65,24 +65,24 @@
         }
       ]
     },
-    "HasPinboard": {
-      "Fn::Not": [
-        {
-          "Fn::Equals": [
-            {
-              "Ref": "PinboardSecret"
-            },
-            ""
-          ]
-        }
-      ]
-    },
     "HasPublisher": {
       "Fn::Not": [
         {
           "Fn::Equals": [
             {
               "Ref": "PublisherUser"
+            },
+            ""
+          ]
+        }
+      ]
+    },
+    "HasRuntimeSecret": {
+      "Fn::Not": [
+        {
+          "Fn::Equals": [
+            {
+              "Ref": "RuntimeSecret"
             },
             ""
           ]
@@ -442,9 +442,9 @@
             },
             "PINBOARD_API_TOKEN": {
               "Fn::If": [
-                "HasPinboard",
+                "HasRuntimeSecret",
                 {
-                  "Fn::Sub": "{{resolve:secretsmanager:${PinboardSecret}:SecretString:token}}"
+                  "Fn::Sub": "{{resolve:secretsmanager:${RuntimeSecret}:SecretString:pinboard_token}}"
                 },
                 {
                   "Ref": "AWS::NoValue"
