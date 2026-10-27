@@ -3,15 +3,19 @@ import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge
 import { intakeEvent } from './intake.mjs';
 import github from '../data/github-repositories.json' with { type: 'json' };
 
-const bus = new EventBridgeClient({});
+const bus = new EventBridgeClient({ maxAttempts: 1 });
 const respond = (statusCode) => ({ statusCode, headers: { 'cache-control': 'no-store' }, body: '' });
-const emit = (event, name) => bus.send(new PutEventsCommand({ Entries: [{ EventBusName: name, Source: event.source, DetailType: event['detail-type'], Detail: JSON.stringify(event.detail), Time: new Date(event.detail.at) }] }));
+const emit = (event, name) => bus.send(new PutEventsCommand({ Entries: [{ EventBusName: name, Source: event.source, DetailType: event['detail-type'], Detail: JSON.stringify(event.detail), Time: new Date(event.detail.at) }] }), { abortSignal: AbortSignal.timeout(1200) });
 
 export async function handleIntake(request, { env = process.env, now = new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'), send = emit, log = (entry) => console.log(JSON.stringify(entry)) } = {}) {
   const parsed = intakeEvent(request, env, now, { repositories: github.repositories });
   if (!parsed.accepted) {
     log({ webhook: 'dropped', why: parsed.why });
     return respond(204);
+  }
+  if (parsed.challenge) {
+    log({ webhook: 'challenge-verified', source: 'strava' });
+    return { ...respond(200), headers: { 'cache-control': 'no-store', 'content-type': 'application/json' }, body: JSON.stringify({ 'hub.challenge': parsed.challenge }) };
   }
   try {
     if (!env.PUBLISHING_BUS) throw new Error('Bus not configured');
@@ -24,7 +28,7 @@ export async function handleIntake(request, { env = process.env, now = new Date(
     return respond(503);
   }
   log({ webhook: 'queued', source: parsed.event.source, type: parsed.event['detail-type'] });
-  return respond(204);
+  return respond(parsed.ack ?? 204);
 }
 
 export const handler = (request) => handleIntake(request);

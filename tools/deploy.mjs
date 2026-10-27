@@ -241,6 +241,8 @@ async function apply(execute_) {
     // start off, so a missing key is never resolved during their first deploy.
     EnableButtondown: process.env.SYNC_ENABLE_BUTTONDOWN ?? (parameter(stack, 'EnableButtondown') || 'false'),
     EnableGitHub: process.env.SYNC_ENABLE_GITHUB ?? (parameter(stack, 'EnableGitHub') || 'false'),
+    EnableStrava: process.env.SYNC_ENABLE_STRAVA ?? (parameter(stack, 'EnableStrava') || 'false'),
+    StravaOwnerId: process.env.SYNC_STRAVA_OWNER_ID ?? parameter(stack, 'StravaOwnerId'),
   };
   log(`\nchange set for ${name}`);
   const set = await changeSet(name, template, parameters, true);
@@ -257,7 +259,7 @@ async function apply(execute_) {
   const distributionId = output(stack, 'DistributionId');
   const domain = output(stack, 'DistributionDomain');
   log(`publishing bus ${output(stack, 'PublishingBusArn')}`);
-  if (output(stack, 'IntakeUrl')) log(`webhook intake ${output(stack, 'IntakeUrl')} (Buttondown enabled: ${parameters.EnableButtondown}; GitHub enabled: ${parameters.EnableGitHub})`);
+  if (output(stack, 'IntakeUrl')) log(`webhook intake ${output(stack, 'IntakeUrl')} (Buttondown enabled: ${parameters.EnableButtondown}; GitHub enabled: ${parameters.EnableGitHub}; Strava enabled: ${parameters.EnableStrava})`);
   await uploadStatic(siteBucket);
   await invokeProbe(functionName);
   await cloudfront.send(

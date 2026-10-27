@@ -8,7 +8,7 @@ visitor, a subscriber address or a secret. A new producer or hop changes
 
 The existing `sync-published` rule runs the probe for `published` and
 `received` from the sources below. The ninety-day archive keeps both types.
-The archive also retains Buttondown's `subscriber` and GitHub's `pushed` signals; those do
+The archive also retains `subscriber`, `pushed` and `activity` signals; those do
 not match the probe rule. `ping` matches neither. The clock and published-event follow-ups still
 reconcile the public facts.
 
@@ -21,6 +21,7 @@ reconcile the public facts.
 | `microblog` | `published` | The sync probe, after finding a new public post | Public-feed producer; silent initial baseline |
 | `buttondown` | `subscriber` | Signed `/buttondown` webhook through `sync-intake` | Prepared, disabled; no probe subscriber |
 | `github` | `pushed` | Signed `/github` push for a public registered source repository | Prepared, disabled; step 8 adds work |
+| `strava` | `activity` | Timestamp-signed `/strava` delivery for the configured athlete | Prepared, disabled; no subscriber |
 | `weekly` | `received` | Weekly Thing deploy, after the public build holds the item | Sender waits for step 5 |
 | `another` | `received` | Another Thing deploy, after the public build holds the item | Sender waits for step 5 |
 | `librarian` | `received` | Library round, after its pull advances a source | Sender waits for step 5 |

@@ -1,0 +1,56 @@
+{
+  "provenance": {
+    "signature_source": "https://developers.strava.com/docs/webhookexample/",
+    "payload_source": "https://developers.strava.com/docs/webhooks/",
+    "captured_at": "2026-10-27",
+    "note": "Recorded official example format with public fixture keys and synthetic activity/private-field values; no account delivery, activity or secret was read."
+  },
+  "fixture_key": "public-strava-fixture-key-not-a-credential",
+  "fixture_token": "public-strava-fixture-token-not-a-credential",
+  "owner": "134815",
+  "now": "2026-10-28T12:00:00Z",
+  "valid": {
+    "version": "2.0",
+    "rawPath": "/strava",
+    "requestContext": {
+      "http": {
+        "method": "POST"
+      }
+    },
+    "headers": {
+      "content-type": "application/json",
+      "x-strava-signature": "t=1793188800,v1=30ebe0f5a6c2052bdd04aa85f9caaf5d9fef92c00b8d7ec8a44df5901c5c7d0f"
+    },
+    "body": "{\"aspect_type\":\"update\",\"event_time\":1793188796,\"object_id\":1360128428,\"object_type\":\"activity\",\"owner_id\":134815,\"subscription_id\":120475,\"updates\":{\"title\":\"fixture-private-activity-title\",\"type\":\"Run\",\"private\":\"true\"}}",
+    "isBase64Encoded": false
+  },
+  "invalid": {
+    "version": "2.0",
+    "rawPath": "/strava",
+    "requestContext": {
+      "http": {
+        "method": "POST"
+      }
+    },
+    "headers": {
+      "content-type": "application/json",
+      "x-strava-signature": "t=1793188800,v1=30ebe0f5a6c2052bdd04aa85f9caaf5d9fef92c00b8d7ec8a44df5901c5c7d0f"
+    },
+    "body": "{\"aspect_type\":\"update\",\"event_time\":1793188796,\"object_id\":1360128428,\"object_type\":\"activity\",\"owner_id\":134815,\"subscription_id\":120475,\"updates\":{\"title\":\"fixture-private-activity-title\",\"type\":\"Run\",\"private\":\"true\"}} ",
+    "isBase64Encoded": false
+  },
+  "challenge": {
+    "version": "2.0",
+    "rawPath": "/strava",
+    "requestContext": {
+      "http": {
+        "method": "GET"
+      }
+    },
+    "queryStringParameters": {
+      "hub.mode": "subscribe",
+      "hub.verify_token": "public-strava-fixture-token-not-a-credential",
+      "hub.challenge": "fixture-challenge"
+    }
+  }
+}

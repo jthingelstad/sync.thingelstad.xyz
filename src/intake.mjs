@@ -1,6 +1,7 @@
 // Signed webhooks become small bus events. Nothing from a request is logged
 // or published until its raw bytes have been authenticated. Pure.
 import { createHmac, timingSafeEqual } from 'node:crypto';
+import { stravaActivity, stravaChallenge } from './strava.mjs';
 
 const MAX_BODY = 256 * 1024;
 const reject = (why) => ({ accepted: false, why });
@@ -30,16 +31,22 @@ export function webhookBytes(request) {
 const SENDERS = {
   '/buttondown': { flag: 'ENABLE_BUTTONDOWN', key: 'BUTTONDOWN_WEBHOOK_SIGNING_KEY', signature: 'x-buttondown-signature' },
   '/github': { flag: 'ENABLE_GITHUB', key: 'GITHUB_WEBHOOK_SIGNING_KEY', signature: 'x-hub-signature-256' },
+  '/strava': { flag: 'ENABLE_STRAVA', key: 'STRAVA_WEBHOOK_SIGNING_KEY', signature: 'x-strava-signature' },
 };
 
 export function intakeEvent(request, env, now, { repositories = [] } = {}) {
   const sender = SENDERS[request?.rawPath];
   if (!sender) return reject('unregistered path');
   if (env[sender.flag] !== 'true' || !env[sender.key]) return reject('sender disabled');
+  if (request.rawPath === '/strava') {
+    if (!env.STRAVA_OWNER_ID || !env.STRAVA_WEBHOOK_VERIFY_TOKEN) return reject('sender disabled');
+    if (request.requestContext?.http?.method === 'GET') return stravaChallenge(request.queryStringParameters, env.STRAVA_WEBHOOK_VERIFY_TOKEN);
+  }
   if (request.requestContext?.http?.method !== 'POST') return reject('method not accepted');
   if (!/^application\/json(?:\s*;|$)/i.test(header(request.headers, 'content-type') ?? '')) return reject('content type not accepted');
   const body = webhookBytes(request);
   if (!body) return reject('body not accepted');
+  if (request.rawPath === '/strava') return stravaActivity(body, header(request.headers, sender.signature), env[sender.key], env.STRAVA_OWNER_ID, now);
   if (!verifiesHmac(body, header(request.headers, sender.signature), env[sender.key])) return reject('signature not accepted');
   let payload;
   try { payload = JSON.parse(body.toString('utf8')); } catch { return reject('JSON not accepted'); }
