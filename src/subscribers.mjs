@@ -3,6 +3,7 @@ export const SUBSCRIBERS = [
   { name: 'Librarian', slug: 'librarian', hop: 10, repo: 'librarian-thing', workflow: 'library-round.yml', source: 'wt-builder', type: 'published', leg: 'archive', key: 'github_librarian_actions_token' },
   { name: 'Links', slug: 'links', hop: 6, repo: 'links.thingelstad.xyz', workflow: 'sync-join.yml', source: 'wt-builder', type: 'published', leg: 'website', key: 'github_links_actions_token' },
   { name: 'Registry', slug: 'registry', hop: 13, repo: 'thingelstad.xyz', workflow: 'sync-rebuild.yml', source: 'github', type: 'pushed', key: 'github_registry_actions_token' },
+  { name: 'RegistryLibrary', slug: 'registry-library', hop: 13, repo: 'librarian-thing', workflow: 'library-round.yml', source: 'xyz', type: 'refreshed', key: 'github_librarian_actions_token' },
 ];
 
 export function dispatchRequest(route, event, repositories) {
@@ -12,11 +13,12 @@ export function dispatchRequest(route, event, repositories) {
   if (!dry) {
     if (event['detail-type'] !== route.type || !detail) return null;
     if (route.leg && (detail.product !== 'weekly-thing' || detail.kind !== 'issue' || detail.leg !== route.leg || !/^[1-9][0-9]*$/.test(String(detail.id)))) return null;
-    if (!route.leg && (!repositories.includes(detail.repository) || detail.repository === 'jthingelstad/thingelstad.xyz')) return null;
+    if (route.name === 'Registry' && (!repositories.includes(detail.repository) || detail.repository === 'jthingelstad/thingelstad.xyz')) return null;
+    if (route.name === 'RegistryLibrary' && (!/^[a-f0-9]{64}$/.test(detail.id || '') || detail.url !== 'https://thingelstad.xyz/things.json')) return null;
   } else if (detail?.subscriber !== route.slug) return null;
   return {
     ref: 'main',
-    inputs: { dry_run: String(dry), ...(route.name === 'Librarian' ? { only: 'weekly', issue: dry ? '' : String(detail.id) } : route.name === 'Registry' ? {repository:dry ? '' : detail.repository} : {}) },
+    inputs: { dry_run: String(dry), ...(route.name === 'Librarian' ? { only: 'weekly', issue: dry ? '' : String(detail.id) } : route.name === 'RegistryLibrary' ? {only:'things',issue:''} : route.name === 'Registry' ? {repository:dry ? '' : detail.repository} : {}) },
   };
 }
 
@@ -51,7 +53,7 @@ export function subscriberTemplate(flows, repositories) {
       Policies: [{ PolicyName: 'InvokeOneReviewedWorkflow', PolicyDocument: { Version: '2012-10-17', Statement: [{ Effect: 'Allow', Action: 'events:InvokeApiDestination', Resource: att(destination, 'ArnForPolicy') }] } }],
     } };
     for (const dry of [false, true]) {
-      const request = { ref: 'main', inputs: { dry_run: String(dry), ...(route.name === 'Librarian' ? { only: 'weekly', issue: dry ? '' : '<issue>' } : route.name === 'Registry' ? {repository:dry ? '' : '<repository>'} : {}) } };
+      const request = { ref: 'main', inputs: { dry_run: String(dry), ...(route.name === 'Librarian' ? { only: 'weekly', issue: dry ? '' : '<issue>' } : route.name === 'RegistryLibrary' ? {only:'things',issue:''} : route.name === 'Registry' ? {repository:dry ? '' : '<repository>'} : {}) } };
       const target = {
         Id: `${route.slug}-${dry ? 'ping' : 'work'}`, Arn: att(destination), RoleArn: att(role),
         HttpParameters: { HeaderParameters: { Accept: 'application/vnd.github+json', 'Content-Type': 'application/json', 'X-GitHub-Api-Version': '2026-03-10' } },
@@ -63,7 +65,7 @@ export function subscriberTemplate(flows, repositories) {
       Resources[`${route.name}Subscriber${dry ? 'Ping' : 'Work'}Rule`] = { Type: 'AWS::Events::Rule', Condition: condition, Properties: {
         Name: sub(`\${AWS::StackName}-${route.slug}-${dry ? 'ping' : 'work'}`), EventBusName: ref('PublishingBus'),
         State: dry ? 'ENABLED' : { 'Fn::If': [`Runs${route.name}Subscriber`, 'ENABLED', 'DISABLED'] },
-        EventPattern: { source: [route.source], 'detail-type': [dry ? 'ping' : route.type], detail: dry ? { subscriber: [route.slug] } : route.leg ? { product: ['weekly-thing'], kind: ['issue'], leg: [route.leg], id: [{ exists: true }] } : { repository: repositories.filter((repo) => repo !== 'jthingelstad/thingelstad.xyz') } },
+        EventPattern: { source: [route.source], 'detail-type': [dry ? 'ping' : route.type], detail: dry ? { subscriber: [route.slug] } : route.leg ? { product: ['weekly-thing'], kind: ['issue'], leg: [route.leg], id: [{ exists: true }] } : route.name === 'Registry' ? { repository: repositories.filter((repo) => repo !== 'jthingelstad/thingelstad.xyz') } : {id:[{exists:true}],url:['https://thingelstad.xyz/things.json']} },
         Targets: [target],
       } };
     }

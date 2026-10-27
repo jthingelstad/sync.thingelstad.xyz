@@ -180,6 +180,12 @@ activation order. Unknown baselines never become measured arrivals.
 
 - `src/subscribers.mjs` — the proposed workflow destinations, rendered into the template by `tools/build-subscribers.mjs`. Connections and real work have separate switches; ping always requests a dry run. Defaults create nothing. Hop 6 also needs Jamie's explicit repair approval, so WT354 stays the example.
 
+The registry's downstream event is `xyz/refreshed`, a verified public
+document hash, URL and time. Its separately disabled subscriber pulls only
+things into the library; a document revision never invents a thing's
+publication date or journey. `RegistryPublisherRole` is empty by default
+and can grant only xyz refreshed/ping on this stack's bus after review.
+
 ## Deploying
 
 From the Mac as the cloud-engineer identity (the tool refuses any other):

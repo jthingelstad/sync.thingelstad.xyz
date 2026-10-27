@@ -156,6 +156,25 @@ available for retry. Reserved concurrency of one keeps clock and event
 writes apart. `src/observe.mjs` is the pure round used by Lambda and
 previews; `src/received.mjs` owns validation and folding.
 
+## A verified registry revision
+
+`source xyz`, `detail-type refreshed`, detail `{ id, at, url }`: id is the
+64-hex SHA-256 of canonical public things.json content excluding only its
+generated build clock, at is the UTC verification time, and url is exactly
+https://thingelstad.xyz/things.json. The producer requires a known previous
+public document, changed content and byte-verified delivery of the new
+build. Clock-only builds, failed baselines and mismatched readbacks report
+nothing. No body enters the event. The optional publisher-role grant permits
+only xyz refreshed/ping on this bus; no secret or trust is added.
+
+This is a document-level work trigger, not an individual thing publication
+date. It is archived and may start library-round.yml with only=things; it
+does not enter the per-item probe rule or invent a journey. A Librarian
+receipt still needs a known item producer before it can measure a journey.
+Both producer and consumer remain off pending their destination PRs and
+Jamie's activation. Never emit refreshed as a live test; fixtures and ping
+are the rehearsal.
+
 ## Rehearsal
 
 Never put a test `published` on the bus: it is a real send to the probe and
