@@ -110,6 +110,8 @@ tbody th { white-space:nowrap; font-weight:600; }
 td.num { white-space:nowrap; font-variant-numeric:tabular-nums; }
 tr:target { outline:3px solid var(--jt-moving); outline-offset:-3px; }
 .matrix td.cell { min-width:9rem; }
+.hops { min-width:54rem; }
+.hops td:nth-child(2) { min-width:12rem; }
 .cell--fresh { background:var(--jt-xyz-soft); } .cell--moving { background:var(--jt-weekly-soft); } .cell--late { background:var(--jt-another-soft); } .cell--held,.cell--unknown { background:var(--jt-thingy-soft); } .cell--no-fact { background:var(--jt-soft); }
 .fact { border-top:1px solid var(--jt-line); padding:0.5rem 0; font-size:var(--jt-size-small); }
 .fact summary { padding-block:0.4rem; cursor:pointer; } .fact ul { padding-left:1.5rem; }

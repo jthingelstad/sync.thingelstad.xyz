@@ -76,7 +76,7 @@ function hopsTable(hops) {
 </tr>`,
     )
     .join('\n');
-  return `<table><thead><tr><th>#</th><th>Hop</th><th>Source has</th><th>Destination has</th><th>Behind</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
+  return `<table class="hops"><thead><tr><th>#</th><th>Hop</th><th>Source has</th><th>Destination has</th><th>Behind</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
 }
 
 function factsList(facts) {
