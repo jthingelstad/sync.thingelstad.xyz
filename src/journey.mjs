@@ -114,9 +114,15 @@ export function summarise(journey, { active = false } = {}) {
   return { kind: journey.kind, item: pick(journey.item), origin: journey.origin, started_at: journey.started_at, updated_at: journey.updated_at, active, archive: active ? null : archiveKey(journey.kind, journey.item.id), arrivals, observations: structuredClone(journey.observations ?? {}), lags };
 }
 
+/** A writable copy; reconciling active rows waits until this run has its facts. */
+export function copyHistory(index) {
+  if (index && (index.version !== 1 || !index.kinds || typeof index.kinds !== 'object' || Array.isArray(index.kinds))) throw new Error('Unsupported journey history index');
+  return structuredClone(index ?? { version: 1, kinds: {} });
+}
+
 /** The handler writes retired objects before this index and the current state. */
 export function historyFor(index, previous, current, now) {
-  if (index && (index.version !== 1 || !index.kinds || typeof index.kinds !== 'object' || Array.isArray(index.kinds))) throw new Error('Unsupported journey history index');
+  index = copyHistory(index);
   const next = restoreKnown(current, index);
   const retired = retire(restoreKnown(previous, index), next);
   // The index can land before journeys.json during a failed publish. Its

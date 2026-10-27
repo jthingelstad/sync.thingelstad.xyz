@@ -10,7 +10,7 @@ import { GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from 
 import { followUps, mergePublished, publishedEvent } from './events.mjs';
 import { collect, PUBLISHER_FACT_KEY } from './facts.mjs';
 import { flows } from './flows.mjs';
-import { advanceAll, archiveKey, historyFor, summarise } from './journey.mjs';
+import { advanceAll, archiveKey, copyHistory, historyFor, summarise } from './journey.mjs';
 import { renderPage } from './page.mjs';
 import { probe } from './probe.mjs';
 
@@ -67,7 +67,7 @@ export async function run({ now = stamp(), env = process.env, trigger = { type: 
   };
   const facts = await collect(ctx, flows.systems.map((s) => s.id));
   const status = probe({ flows, facts, now, code: env.SYNC_CODE ?? null, trigger });
-  const recorded = historyFor(history, journeys, journeys, now).index;
+  const recorded = copyHistory(history);
   const bucket = env.SITE_BUCKET ?? ctx.env?.SITE_BUCKET;
   if (bucket && ctx.s3Get) {
     for (const receipt of status.receipts) {

@@ -4,6 +4,7 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { handler, HISTORY_KEY, publish, run } from '../src/handler.mjs';
 import { loadScenario, renderScenario } from '../tools/scenarios.mjs';
 import { fixtureContext } from '../tools/probe.mjs';
+import { summarise } from '../src/journey.mjs';
 
 test('the handler keeps a superseded journey before the index and publishes health only after all files', async () => {
   const result = renderScenario(await loadScenario('superseded'));
@@ -48,6 +49,18 @@ test('an item outside the fifty-row index resumes its archived measurements', as
   assert.equal(result.journeys.issue.arrivals.weekly.at, archived.arrivals.weekly.at);
   assert.equal(result.journeys.issue.arrivals.weekly.observed, true);
   assert.equal(result.history.kinds.issue.find((j) => j.item.id === '354').lags.weekly, 2 / 60);
+});
+
+test('run preserves an index-only current item until it can archive it on recovery', async () => {
+  const context = await fixtureContext();
+  const b = { kind: 'issue', item: { id: '355', at: '2026-10-25T12:00:00Z' }, origin: 'wt-builder', started_at: '2026-10-25T12:00:00Z', updated_at: '2026-10-25T12:02:00Z', arrivals: { weekly: { at: '2026-10-25T12:02:00Z', observed: true } } };
+  // The fixture readers still choose A/354, as after a partial B publish
+  // followed by a failed origin reader. B exists only in the saved index.
+  const history = { version: 1, kinds: { issue: [summarise(b, { active: true })] } };
+  const result = await run({ now: context.now, env: {}, context, history });
+  assert.equal(result.journeys.issue.item.id, '354');
+  assert.equal(result.retired.find((r) => r.key === 'journeys/issue/355.json').journey.arrivals.weekly.observed, true);
+  assert.deepEqual(result.history.kinds.issue.map((j) => [j.item.id, j.active]), [['354', true], ['355', false]]);
 });
 
 test('a rehearsal returns before any reader, state read, write or follow-up call', async () => {
