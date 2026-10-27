@@ -35,7 +35,7 @@ its legs, and the last fifty events. A hop out of WT Builder is measured from
 the leg that reaches its destination (`LEGS` in `src/probe.mjs`) and reads
 "moving: the archive leg has not sent" until that leg goes. The audio edition
 is the issue's podcast leg. The bus has a ninety-day archive (replayable), a
-rule for `published` that invokes the probe, and an inline policy on the
+rule for `published` that invokes the probe, and a managed policy attached to the
 `PublisherUser` parameter's IAM user (`wt-archive`, the user WT Builder's
 `.env` names) allowing `events:PutEvents` on the bus and nothing else.
 

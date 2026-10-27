@@ -27,7 +27,10 @@ export const JOURNEYS_KEY = 'journeys.json';
 
 const stamp = (d = new Date()) => d.toISOString().replace(/\.\d{3}Z$/, 'Z');
 
-/** A JSON object in the site bucket, or null when there is none. */
+/**
+ * A JSON object in the site bucket, or null when there is none. The role has
+ * s3:ListBucket on the bucket so a missing key answers 404, not 403.
+ */
 export async function s3Get(Bucket, Key) {
   try {
     const got = await s3.send(new GetObjectCommand({ Bucket, Key }));

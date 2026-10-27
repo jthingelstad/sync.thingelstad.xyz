@@ -286,10 +286,10 @@
       }
     },
     "PublisherPutEvents": {
-      "Type": "AWS::IAM::Policy",
+      "Type": "AWS::IAM::ManagedPolicy",
       "Condition": "HasPublisher",
       "Properties": {
-        "PolicyName": "sync-publishing-put-events",
+        "Description": "Put events on the thingelstad-publishing bus and nothing else",
         "Users": [
           {
             "Ref": "PublisherUser"
@@ -363,6 +363,16 @@
                   ],
                   "Resource": {
                     "Fn::Sub": "${SiteBucket.Arn}/*"
+                  }
+                },
+                {
+                  "Sid": "KnowSiteBucket",
+                  "Effect": "Allow",
+                  "Action": [
+                    "s3:ListBucket"
+                  ],
+                  "Resource": {
+                    "Fn::Sub": "${SiteBucket.Arn}"
                   }
                 },
                 {
