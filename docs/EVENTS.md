@@ -21,7 +21,6 @@ reconcile the public facts.
 | `microblog` | `published` | The sync probe, after finding a new public post | Public-feed producer; silent initial baseline |
 | `buttondown` | `subscriber` | Signed `/buttondown` webhook through `sync-intake` | Prepared, disabled; no probe subscriber |
 | `github` | `pushed` | Signed `/github` push for a public registered source repository | Prepared, disabled; step 8 adds work |
-| `strava` | `activity` | Timestamp-signed `/strava` delivery for the configured athlete | Prepared, disabled; no subscriber |
 | `weekly` | `received` | Weekly Thing deploy, after the public build holds the item | Sender waits for step 5 |
 | `another` | `received` | Another Thing deploy, after the public build holds the item | Sender waits for step 5 |
 | `librarian` | `received` | Library round, after its pull advances a source | Sender waits for step 5 |

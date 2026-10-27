@@ -210,21 +210,19 @@ hop 19 reads fresh or late with a reason.
 
 ### 7. [x] Webhook intake
 
-Deployed 2026-10-27: Buttondown [PR #6](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/6),
-GitHub [PR #7](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/7), and
-Strava [PR #8](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/8), each
-with a clean completed review. 79 tests and ten previews pass; both health
+Deployed 2026-10-27: Buttondown [PR #6](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/6)
+and GitHub [PR #7](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/7), each
+with a clean completed review. (Strava, [PR #8](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/8),
+was built the same night and removed the same morning at Jamie's ask.) 79 tests and ten previews pass; both health
 URLs serve package `c757ca1…` at 2:52 a.m. CDT. The scriptless map has 22 pipes
-and WT354 remains late. All three senders are off; StravaOwnerId is empty.
-Their signing keys, Strava's separate verify token and every console/enable
-step are in `docs/WEBHOOKS.md` and the PRs. Provider setup waits for Jamie.
-Strava follows its official 200 acknowledgement protocol for accepted
-requests; invalid requests remain empty 204. No activity consumer is built.
+and WT354 remains late. Both senders are off. Their signing keys and every
+console/enable step are in `docs/WEBHOOKS.md` and the PRs. Provider setup
+waits for Jamie. Invalid requests get an empty 204.
 
 A second function, `sync-intake`, behind a Lambda function URL, turns a
 third party's webhook into a bus event after checking its signature, and
-answers 204. Secrets as keys in `sync-runtime`. First three senders, each
-its own PR and flows row:
+answers 204. Secrets as keys in `sync-runtime`. The senders, each its own
+PR and flows row:
 
 - **Buttondown** `subscriber.created` / `subscriber.unsubscribed` →
   `source buttondown, detail-type subscriber` (counts only, never an
@@ -233,9 +231,6 @@ its own PR and flows row:
   detail-type pushed`, so Things I've built rebuilds on an event instead of
   a clock (the rebuild itself is an API destination to the site's
   `workflow_dispatch`; step 8).
-- **Strava** activity webhook → `source strava, detail-type activity`,
-  `{ id, type, at }` only. What happens next (a blog post?) is Jamie's call
-  and a later step; the event exists so the choice can be made.
 Acceptance: recorded fixtures per sender with a valid and an invalid
 signature; the invalid one is dropped with a log line and a 204 (never a
 clue to the sender); nothing from a body reaches the page.
@@ -304,8 +299,9 @@ missing event.
   backup.
 - **Fixing hop 6 for WT354.** Jamie's call; step 5 and 8 make the fix a
   flag flip when it comes.
-- **Any post on Jamie's behalf** (Strava → blog). Step 7 carries the event;
-  what reads it is a separate decision.
+- **Strava, or any post on Jamie's behalf.** Jamie, 2026-10-27: "That was
+  just an idea. Don't want that in here yet." It comes back, if ever, as a
+  flows row first.
 - **OpenClaw's feed monitors.** Deferred with OpenClaw.
 
 ## Log
@@ -314,3 +310,5 @@ missing event.
   built, reviewed, merged and deployed from the Mac; 5 and 8 open PRs in
   the other repos but merge there by that repo's rules; 9 waits for two
   weeks of history; 0 is optional.
+- 2026-10-27: Strava removed from the intake, the stack, the contract and
+  the docs at Jamie's ask; Buttondown and GitHub stay, off.

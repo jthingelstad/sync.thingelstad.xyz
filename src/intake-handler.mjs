@@ -13,10 +13,6 @@ export async function handleIntake(request, { env = process.env, now = new Date(
     log({ webhook: 'dropped', why: parsed.why });
     return respond(204);
   }
-  if (parsed.challenge) {
-    log({ webhook: 'challenge-verified', source: 'strava' });
-    return { ...respond(200), headers: { 'cache-control': 'no-store', 'content-type': 'application/json' }, body: JSON.stringify({ 'hub.challenge': parsed.challenge }) };
-  }
   try {
     if (!env.PUBLISHING_BUS) throw new Error('Bus not configured');
     const result = await send(parsed.event, env.PUBLISHING_BUS);

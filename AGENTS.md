@@ -156,12 +156,6 @@ Builder's credentials proves the permission without matching the rule.
   fails gets 503 for retry. Every sender starts off; its keys and
   console steps are in `docs/WEBHOOKS.md`. The intake role has no site or
   secret-read permission.
-- `src/strava.mjs` — the timestamped activity signature and separate GET
-  challenge. Only the configured athlete's activity id, change type and
-  event time reach the bus. The official Strava protocol needs 200 for an
-  accepted POST and challenge; invalid requests still get empty 204. It
-  never fetches an activity, writes content, or puts a webhook body on the
-  page. The new flow is unverified until a natural delivery.
 - `tools/probe.mjs` — run it here: live, or `--fixtures` with a fixed clock.
   Output in `.build/site/`. `--fixtures --scenario <name>` reads one of the
   `test/scenarios/` sets; `npm run preview` renders them all, offline,
@@ -220,17 +214,15 @@ empty name turns every secret-backed fact off. Secret safety rules are in
 
 Webhook keys resolve only when their explicit sender flag is on:
 `buttondown_webhook_signing_key` with `EnableButtondown`, and
-`github_webhook_signing_key` with `EnableGitHub`, and
-`strava_webhook_signing_key` plus `strava_webhook_verify_token` with
-`EnableStrava`. All default false; `SYNC_ENABLE_BUTTONDOWN`,
-`SYNC_ENABLE_GITHUB` and `SYNC_ENABLE_STRAVA` change them for plan/deploy,
+`github_webhook_signing_key` with `EnableGitHub`. Both default false;
+`SYNC_ENABLE_BUTTONDOWN` and `SYNC_ENABLE_GITHUB` change them for plan/deploy,
 and a routine deploy remembers them. Add each key in the console before
 enabling; an off sender never tries to resolve a missing key. GitHub accepts
 only public repositories in `data/github-repositories.json`; `npm run
 github:sync` refreshes those ids from the public registry for review.
-Strava also needs `StravaOwnerId` (`SYNC_STRAVA_OWNER_ID`), a public athlete
-id, empty by default. Its separate verify token is for the GET handshake;
-the signing key never belongs in a query string. The intake makes one bus
+Strava was a third sender for one night (2026-10-27) and was removed the
+same morning (Jamie: "That was just an idea. Don't want that in here yet");
+an activity webhook comes back only as a new flows row. The intake makes one bus
 attempt with a 1.2-second deadline so a failure can ask the provider to retry.
 
 ## Conventions
