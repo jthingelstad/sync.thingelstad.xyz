@@ -1,0 +1,248 @@
+# The sync plan
+
+How Jamie's systems move from "a spaghetti of interconnected stuff" to events
+on one bus, with a page that shows each item's journey as it happens. Written
+2026-10-26 (Jamie: "Approved: write docs/PLAN.md in sync.thingelstad.xyz"),
+after the first night: the bus, the WT Builder sender, the probe, the
+journeys, the runtime map, the Pinboard and micro.blog secrets, and the
+Discord activity stream are live. Nothing in this file is live yet.
+
+Each step is one pull request, small enough for an evening. Any session,
+Claude's or Codex's, picks up the lowest unchecked step cold: this file,
+`AGENTS.md`, the shared flows contract and the tests are the whole context.
+Tick a step here in its own PR when it is live, with the date.
+
+## Rules every step keeps
+
+- **A hop is a row before it is code.** A step that adds, changes or
+  retires a hop first changes `shared/flows.json` in the thingelstad.com
+  repo (and re-renders `shared/flows.html` with `node shared/build-flows.mjs`),
+  then vendors both into `data/` here, byte for byte. `npm run flows:check`
+  compares them when the sibling checkout exists and passes without it.
+- **Facts only, ids and times only.** The page never guesses and never holds
+  a secret, a visitor or a reader's address. A reader that fails makes its
+  hops "unknown", never "late".
+- **Nothing depends on an agent.** Hops run on EventBridge, Lambda, Scheduler,
+  GitHub Actions. Agents build and fix; if every agent stopped, every site
+  would keep working (Jamie, 2026-10-26).
+- **No script in the browser.** The page is HTML and CSS, `--jt-` tokens,
+  Central time, readable at phone width, light and dark.
+- **Never rehearse with a real `published` event.** The probe records it as a
+  send. Use `"rehearsal": true` on a direct invoke, a `ping` detail-type on
+  the bus, or fixtures.
+- **Pure in, pure out.** Logic lives in `src/*.mjs` modules that take data
+  and return data, tested on `test/fixtures/`; `src/handler.mjs` only wires
+  them to AWS. `npm test` must pass; new behaviour arrives with its tests.
+- **No new runtime dependency.** Node 24, the AWS SDK the runtime provides,
+  and Pele. `tools/package.mjs` refuses anything else.
+- **Secrets** go into the `sync-runtime` secret as a new key, resolved into
+  an environment variable by `infra/sync.json`; a PR says which key it
+  expects and Jamie adds the value in the console. A session never reads a
+  value.
+- **Deploys** run from Jamie's Mac as the cloud-engineer identity
+  (`npm run plan`, `npm run deploy`). A PR built elsewhere stops at "tests
+  pass, change set described"; the deploy is a separate, human-started step.
+  Step 0 changes that if Jamie wants it to.
+- **Reviews.** Every PR gets a Codex review (`@codex review`) and its findings
+  are answered before merge. A finding that changes what readers see is
+  Jamie's call, not a fix.
+- **WT354 stays late on hop 6** until Jamie says otherwise. It is the worked
+  example.
+
+## Steps
+
+### 0. Deploy from GitHub Actions (held: needs Jamie's go on an IAM role)
+
+A `deploy.yml` workflow in this repo that runs `npm test`, `npm run plan` on
+a pull request and `npm run deploy` on a push to `main`, assuming an IAM role
+through GitHub's OIDC provider, scoped to this stack, its bucket, the
+function and the Scheduler group. Until this is live, steps built by Codex
+merge but ship when Claude or Jamie runs the deploy from the Mac.
+Acceptance: a docs-only push to `main` deploys nothing new and the
+workflow is green; a real change rewrites `infra/deployment.json` on the
+branch. Needs: `Approved: create the sync deploy role for GitHub Actions`.
+
+### 1. Scenario fixtures and a page preview
+
+The design work needs to see the page in every state without waiting for a
+send. Add `test/scenarios/<name>/` sets (facts, journeys, a fixed clock) for
+at least: a quiet Tuesday (everything fresh); a send in progress (WT355 with
+the website and Buttondown legs out, the podcast and archive legs not yet);
+the hour after a send (every leg out, Thingy's build still behind); a late
+hop (hop 6, WT354); a reader down (Linking Things MCP failing); a Friday
+hold. `npm run probe:fixtures -- --scenario <name>` renders each into
+`.build/site/<name>/`; `npm run preview` renders them all and prints the
+paths. Snapshot tests pin the map labels and the journey text per scenario,
+so a change to the page is a visible diff.
+Acceptance: six scenarios render; `npm test` covers them; no AWS call.
+
+### 2. Journey history
+
+Today one journey per kind lives in `journeys.json` and is replaced when a
+newer item appears. Keep the finished ones: `journeys/<kind>/<id>.json` when
+an item is superseded, and `journeys/index.json` listing the last fifty per
+kind with their observed lags per system. Pure code in `src/journey.mjs`
+(`retire`, `summarise`), the S3 writes in the handler. From the history,
+`typicalLag(kind, system)` (the median of observed arrivals) and
+`worstLag`, both exported for steps 3 and 7.
+Acceptance: a scenario where WT356 supersedes WT355 writes WT355 to history
+with its arrivals; the index holds both; `typicalLag` is tested; the public
+files still hold only ids, times and titles.
+
+### 3. The page, second pass
+
+The page Jamie wants is "much more compelling" than the first one. Brief:
+
+- **Open on the story of the newest item**, in words: "WT355 left WT Builder
+  Sunday 9:02 pm. Weekly Thing had it in 1 min, Buttondown in 2 min, the
+  Librarian in 14 min, Thingy at 9:41 pm. Linking Things has not got it; the
+  Saturday join runs at 6 am." One paragraph per kind that moved this week.
+- **Then the map**, as it is now, full width, the current item on each
+  edge, followed by **journey lanes**: one row per system the item reaches,
+  a tick at each observed arrival, the lag beside it, and the typical lag
+  from step 2 as a faint marker, so a slow hop is visible before it is late.
+- **Then history**: the last ten journeys per kind as small lane rows,
+  so the shape of a normal send is learnable at a glance.
+- The receipts, matrix and hop tables move below, unchanged in content.
+- Each hop's row keeps its anchor (`#hop-<id>`); the map's labels keep
+  linking to them.
+- Shared type (`--jt-` tokens, Inter, 19px body), no italics on sans type,
+  colour and weight for emphasis, dark mode, one column at phone width with
+  the map scrolling sideways.
+
+Jamie's calls, to ask before building: whether the page joins the sites
+strip (today it does not), and whether the story paragraph is the page's
+`<title>` and description too.
+Acceptance: every step-1 scenario renders the new page; snapshot tests
+updated; Lighthouse-style checks by hand: no script, no external request.
+
+### 4. The event contract, written down, with a `received` event
+
+`docs/EVENTS.md`: the bus, each `source`, each `detail-type`, each detail
+field, who may put it, and the rule that a new producer is a flows row
+first. Add the second event: `received`, put by a destination when it has
+an item (`{ system, kind, id, at, url, via }`). The probe folds it into the
+journey as an **observed arrival at the stated time**, resolution seconds,
+and the hop reads fresh on the next run without waiting for a poll. Validate
+and drop malformed events as `published` does. A `received` for an item the
+journey does not know yet is kept for one hour and applied when it arrives.
+Acceptance: fixtures with `received` events; a journey built from events
+alone quotes exact lags; the page says "reported" beside an event-sourced
+arrival and "seen" beside a polled one.
+
+### 5. Destinations report in
+
+Each destination that can, puts `received` on the bus, in its own repo,
+behind the flows row for its hop:
+
+- **Librarian** (hop 10, 11, 12, 13, 14): the library round, after its
+  pull, one event per source it advanced. The round runs on GitHub Actions
+  with the identity that writes `library.db` to S3; the stack grants it
+  `events:PutEvents` on the bus (an IAM change inside a deploy).
+- **Thingy** (hop 16): the deploy workflow, after `/health` shows the new
+  `corpus_versions`.
+- **Linking Things** (hop 5, 14): the join and the stats update.
+- **Weekly Thing** and **Another Thing** (hops 7, 17, 21): the site's
+  deploy workflow, after CloudFront has the new build.
+
+One PR per destination, in that destination's repo, with the sync-side
+fixture added here. Hop 6 (Weekly Thing → Linking Things) gets the sender
+too, so the day Jamie fixes the join its arrival is already reported.
+Acceptance per destination: a rehearsal run (`ping` or a dry-run flag)
+proves the permission; the first real event shows on the page.
+
+### 6. Producers beside WT Builder
+
+- **micro.blog** (hops 3, 4, 11, 19, 20): a reader in `src/facts.mjs` using
+  `MICROBLOG_API_KEY` for Micropub `q=source` (read-only, never a write),
+  giving the blog's newest post with its categories and the receipt hop 19
+  needs (the Library Agent's writes landing). No webhook exists, so this
+  stays a poll, and the probe puts a `published` event for a new post on the
+  bus itself (source `microblog`, via the sync function) so every subscriber
+  sees blog posts the same way it sees issues.
+- **Another Thing by hand** (hop 21): until WT Builder's `/another` send
+  runs live, the podcast feed is the producer; the probe already reads it.
+  Nothing to build; the row's status moves from `unverified` when the first
+  send announces itself.
+Acceptance: the blog's post journey starts from the event, not the feed;
+hop 19 reads fresh or late with a reason.
+
+### 7. Webhook intake
+
+A second function, `sync-intake`, behind a Lambda function URL, turns a
+third party's webhook into a bus event after checking its signature, and
+answers 204. Secrets as keys in `sync-runtime`. First three senders, each
+its own PR and flows row:
+
+- **Buttondown** `subscriber.created` / `subscriber.unsubscribed` →
+  `source buttondown, detail-type subscriber` (counts only, never an
+  address; the detail is `{ event, at }`).
+- **GitHub** `push` on `thingelstad.xyz` and its sources → `source github,
+  detail-type pushed`, so Things I've built rebuilds on an event instead of
+  a clock (the rebuild itself is an API destination to the site's
+  `workflow_dispatch`; step 8).
+- **Strava** activity webhook → `source strava, detail-type activity`,
+  `{ id, type, at }` only. What happens next (a blog post?) is Jamie's call
+  and a later step; the event exists so the choice can be made.
+Acceptance: recorded fixtures per sender with a valid and an invalid
+signature; the invalid one is dropped with a log line and a 204 (never a
+clue to the sender); nothing from a body reaches the page.
+
+### 8. Subscribers on the bus
+
+Rules on the bus that start work, replacing nudges and clocks one hop at a
+time, each behind its flows row:
+
+- hop 10: WT Builder's `issue-sent` dispatch to librarian-thing becomes a
+  rule on `published` (archive leg) → EventBridge API destination →
+  GitHub `workflow_dispatch` of `library-round.yml`. The dispatch in WT
+  Builder stays until the rule has carried one real send, then goes.
+- hop 6: the same shape for Linking Things' join, **built but not enabled**
+  until Jamie says the WT354 example has served.
+- hop 13 and the thingelstad.xyz rebuild from step 7's `pushed` event.
+The GitHub token for the API destination's connection is a key in
+`sync-runtime`, a fine-grained PAT scoped to the one workflow.
+Acceptance: a `ping` through the rule reaches a dry-run workflow; the
+first real send shows the destination's `received` within the expected
+lag; the flows row's trigger type changes from `nudge`/`clock` to `event`.
+
+### 9. Alarms (held until two weeks of history: not before 2026-11-09)
+
+From step 2's `typicalLag`, per-hop thresholds in `shared/flows.json`
+(`alert_after_hours`, replacing the hand-set `expected_lag_hours` where the
+data disagrees), and one CloudWatch alarm per hop kind that is late past it,
+named `sync-<hop>-<kind>`, routed through the projects-sysadmin activity
+Lambda (its `alarm_route` table gains one `sync-` row) to the Discord
+channel Jamie picks. The page is still the record; the alarm is the nudge.
+Acceptance: a scenario late past the threshold raises the alarm in a
+dry run; a held hop does not.
+
+### 10. WT Builder's own receipts
+
+`facts/wt-builder.json` is built from events; the app has the truth. A
+read-only `/api/sync` route in WT Builder (behind its tailnet, read by
+nobody automated) is **not** needed. Instead: WT Builder writes its
+publish receipt (the same detail as the event, per issue) to the audio
+bucket's `receipts/` prefix with the send, so a lost event can be
+reconciled on the next clock run. Small, and it closes the only gap in
+the WT Builder fact.
+Acceptance: a rehearsal receipt in a fixture reconciles a journey with a
+missing event.
+
+## Not in this plan
+
+- **Moving WT Builder off the Mac.** It is a producer; nothing needs to
+  reach it. Revisit when Jamie wants to send without the Mac awake. The
+  one thing to confirm now: `wt-builder.db` is in the 04:30 critical-state
+  backup.
+- **Fixing hop 6 for WT354.** Jamie's call; step 5 and 8 make the fix a
+  flag flip when it comes.
+- **Any post on Jamie's behalf** (Strava → blog). Step 7 carries the event;
+  what reads it is a separate decision.
+- **OpenClaw's feed monitors.** Deferred with OpenClaw.
+
+## Log
+
+- 2026-10-26: plan written. Steps 1 to 4 and 6 need no AWS access to build
+  and are the overnight set; 5, 7, 8 need deploys and IAM inside them;
+  0 and 9 wait on Jamie.
