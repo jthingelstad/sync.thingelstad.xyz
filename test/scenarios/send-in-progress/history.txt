@@ -1,0 +1,2 @@
+The last ten finished journeys of each kind, as small lanes. The archive keeps the original arrival evidence.
+History starts with the next superseded item. A first check is not a measured journey.

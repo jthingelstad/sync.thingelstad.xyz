@@ -1,33 +1,69 @@
-The newest item of each kind, and when the probe first saw each system holding it. A time in bold is measured: the system did not have the item on one run and had it on the next.
+Each lane is time since publication, with its scale above. A solid dot is an observed arrival; a dashed marker is the median from finished, measured journeys. Polled times say seen and give the check interval when known. First confirmations have no measured lag and no time mark.
 Weekly Thing issue
 WT355
-out Tue Oct 27, 9:02 p.m. CDT from WT Builder; watched since Tue Oct 27, 9:02 p.m. CDT
-Weekly Thing (web) Tue Oct 27, 9:03 p.m. CDT, 1 min after it went out
-Buttondown no fact yet
-Linking Things not yet, 5 min so far
-Librarian not yet, 5 min so far
-Thingy not yet, 5 min so far
+from WT Builder
+dated Tue Oct 27, 9:02 p.m. CDT · watching since Tue Oct 27, 9:02 p.m. CDT
+Publication 7 min 30 sec 15 min
+Weekly Thing (web)
+1 min · seen Tue Oct 27, 9:03 p.m. CDT
+Buttondown
+no fact yet
+Linking Things
+not yet · 5 min so far
+Librarian
+not yet · 5 min so far
+Thingy
+not yet · 5 min so far
 Blog post
 WT354 — A museum for nnxyz art
-out Sun Oct 25, 3:08 p.m. CDT from micro.blog; watched since Tue Oct 27, 9:07 p.m. CDT
-WT Builder no fact yet
-Librarian already there when the page started watching, Tue Oct 27, 9:07 p.m. CDT
-Thingy already there when the page started watching, Tue Oct 27, 9:07 p.m. CDT
-cards.thingelstad.com already there when the page started watching, Tue Oct 27, 9:07 p.m. CDT
+from micro.blog
+dated Sun Oct 25, 3:08 p.m. CDT · watching since Tue Oct 27, 9:07 p.m. CDT
+Publication 7 min 30 sec 15 min
+WT Builder
+no fact yet
+Librarian
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
+Thingy
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
+cards.thingelstad.com
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
 Saved link
 saved Sun Oct 25, 9:21 p.m. CDT
-out Sun Oct 25, 9:21 p.m. CDT from Pinboard; watched since Tue Oct 27, 9:07 p.m. CDT
-WT Builder no fact yet
-Linking Things already there when the page started watching, Tue Oct 27, 9:07 p.m. CDT
-Librarian already there when the page started watching, Tue Oct 27, 9:07 p.m. CDT
-Thingy already there when the page started watching, Tue Oct 27, 9:07 p.m. CDT
+from Pinboard
+dated Sun Oct 25, 9:21 p.m. CDT · watching since Tue Oct 27, 9:07 p.m. CDT
+Publication 7 min 30 sec 15 min
+WT Builder
+no fact yet
+Linking Things
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
+Librarian
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
+Thingy
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
 Podcast episode
 How do you start a podcast?
-out Sun Oct 5, 6:48 p.m. CDT from Another Thing; watched since Tue Oct 27, 9:07 p.m. CDT
-Librarian already there when the page started watching, Tue Oct 27, 9:07 p.m. CDT
-Thingy already there when the page started watching, Tue Oct 27, 9:07 p.m. CDT
+from Another Thing
+dated Sun Oct 5, 6:48 p.m. CDT · watching since Tue Oct 27, 9:07 p.m. CDT
+Publication 7 min 30 sec 15 min
+Librarian
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
+Thingy
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
 Audio edition
 WT354
-out Sat Oct 24, 7:00 a.m. CDT from Weekly Thing (web); watched since Tue Oct 27, 9:07 p.m. CDT
-files.thingelstad.com already there when the page started watching, Tue Oct 27, 9:07 p.m. CDT
-Another Thing no fact yet
+from Weekly Thing (web)
+dated Sat Oct 24, 7:00 a.m. CDT · watching since Tue Oct 27, 9:07 p.m. CDT
+Publication 7 min 30 sec 15 min
+files.thingelstad.com
+unmeasured
+confirmed Tue Oct 27, 9:07 p.m. CDT · arrival unmeasured
+Another Thing
+no fact yet

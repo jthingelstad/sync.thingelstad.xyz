@@ -98,8 +98,21 @@ Builder's credentials proves the permission without matching the rule.
   arrivals from the index, or its archive once outside the last fifty;
   a fallback must not erase a measured lag.
 - `src/page.mjs` — the HTML. No script, `--jt-` colours, Central time. It
-  opens with the map, then the journeys, then the receipts, matrix, hops and
-  facts.
+  opens with this week's journey stories, then the pipe map, arrival lanes
+  and ten finished journeys per kind; the receipts, matrix, hops and facts
+  follow (Jamie, 2026-10-26: "visual and interesting. Pipes and flows."). The
+  sites strip and story in the title/description wait for Jamie.
+- `src/stories.mjs` — words from journey data only. An unmeasured arrival
+  never gains a lag, and an unknown reader never becomes a missing item.
+  The story quotes no schedule it has not recorded.
+- `src/lanes.mjs` — time since publication on a linear scale, a shared scale
+  for each history group. Only observed arrivals have time marks; the median
+  of finished measured journeys is a faint marker when there is a sample.
+- `src/page.css`, `src/style.mjs`, `data/style/` — the page's clothes over
+  the shared type. `npm run style:sync` vendors tokens, fonts and licences
+  byte for byte; `style:check` catches drift. The fonts and CSS are inlined
+  so opening the page makes no font-service or asset request. Inter is 19px,
+  Inter Tight heads use the house scale, and no sans text is italic.
 - `src/map.mjs` — the map, drawn on every run with Pele (the renderer Things
   I've built draws its connection diagrams with) from the vendored
   `data/flows.json` and this run's status: one node per system saying what
@@ -172,6 +185,9 @@ empty name turns every secret-backed fact off. Secret safety rules are in
 - A lag on the map or in a journey is quoted only from an observed arrival;
   a system that already held the item when watching started shows the time
   watching started and no lag.
+- Pipes have a fixed width; it is not traffic volume. Words and arrows
+  carry state and direction as well as colour. The map keeps its own size
+  at phone width and scrolls; lane rows stack so their labels stay readable.
 - Each journey keeps its last holder states and last observed absence. A
   failed reader or a missing fact is not evidence that an item was absent.
   A rehearsal returns before collecting or writing, so it cannot advance

@@ -8,7 +8,7 @@
     "node": ">=24"
   },
   "scripts": {
-    "test": "npm run flows:check && npm run test:unit",
+    "test": "npm run flows:check && npm run style:check && npm run test:unit",
     "test:unit": "node --test test/*.test.mjs",
     "flows:sync": "node scripts/sync-flows.mjs",
     "flows:check": "node scripts/sync-flows.mjs --check",
@@ -18,7 +18,9 @@
     "package": "node tools/package.mjs",
     "plan": "node tools/deploy.mjs plan",
     "deploy": "node tools/deploy.mjs apply",
-    "certificate": "node tools/deploy.mjs certificate"
+    "certificate": "node tools/deploy.mjs certificate",
+    "style:sync": "node scripts/sync-style.mjs",
+    "style:check": "node scripts/sync-style.mjs --check"
   },
   "devDependencies": {
     "@aws-sdk/client-acm": "^3.1156.0",

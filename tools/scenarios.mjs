@@ -41,7 +41,9 @@ export function pageText(html) {
 }
 
 export function scenarioSnapshot({ status, journeys, page }) {
-  const journey = page.match(/<h2>Journeys<\/h2>([\s\S]*?)<h2>Needs a look<\/h2>/)?.[1];
+  const journey = page.match(/<h2 id="journeys">Journeys<\/h2>([\s\S]*?)<h2 id="history">History<\/h2>/)?.[1];
   if (!journey) throw new Error('The page has no journeys section to snapshot');
-  return { map: `${mapSource(status, journeys)}\n`, journeys: pageText(journey) };
+  const stories = page.match(/<h2>The newest stories<\/h2>([\s\S]*?)<ul class="counts">/)?.[1];
+  const history = page.match(/<h2 id="history">History<\/h2>([\s\S]*?)<h2>Needs a look<\/h2>/)?.[1];
+  return { map: `${mapSource(status, journeys)}\n`, journeys: pageText(journey), stories: pageText(stories), history: pageText(history) };
 }

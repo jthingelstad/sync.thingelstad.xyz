@@ -1,0 +1,7 @@
+The last ten finished journeys of each kind, as small lanes. The archive keeps the original arrival evidence.
+Weekly Thing issue
+1 finished journey · each row uses the same 0–39 min scale. Only measured arrivals have ticks.
+WT355Tue Oct 27, 9:02 p.m. CDT
+Weekly Thing (web) 1 min
+Librarian 14 min
+Thingy 39 min

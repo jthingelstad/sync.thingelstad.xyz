@@ -1,4 +1,4 @@
-// Package the probe for Lambda: src/, data/flows.json and Pele (the one
+// Package the probe for Lambda: src/, data/flows.json, shared type and Pele (the one
 // package the probe needs beyond the AWS SDK the Node runtime provides: a
 // single self-contained file, copied from node_modules so the map is drawn
 // on every run), zipped into .build/sync.zip. No bundler. The zip's key,
@@ -87,10 +87,12 @@ export async function vendorPele() {
 }
 
 export async function packageProbe() {
-  const sources = (await fs.readdir(path.join(ROOT, 'src'))).filter((f) => f.endsWith('.mjs')).sort();
+  const sources = (await fs.readdir(path.join(ROOT, 'src'))).filter((f) => /\.(?:mjs|css)$/.test(f)).sort();
+  const style = ['tokens.css', ...(await fs.readdir(path.join(ROOT, 'data/style/fonts'))).map((f) => `fonts/${f}`)];
   const entries = [
     ...(await Promise.all(sources.map(async (f) => ({ name: `src/${f}`, data: await fs.readFile(path.join(ROOT, 'src', f)) })))),
     { name: 'data/flows.json', data: await fs.readFile(path.join(ROOT, 'data/flows.json')) },
+    ...(await Promise.all(style.map(async (f) => ({ name: `data/style/${f}`, data: await fs.readFile(path.join(ROOT, 'data/style', f)) })))),
     { name: 'package.json', data: Buffer.from('{"type":"module"}\n') },
     ...(await vendorPele()),
   ];
