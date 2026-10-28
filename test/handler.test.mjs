@@ -167,7 +167,7 @@ test('malformed events are dropped before readers or storage and logs contain no
   }
 });
 
-test('Feedbin saves run only on the clock; deploys and previews cannot checkpoint its journal', async () => {
+test('Feedbin saves run only on the clock; deploys and previews cannot checkpoint import work', async () => {
   const prior = Object.fromEntries(['SITE_BUCKET', 'FEEDBIN_CONFIG', 'PINBOARD_API_TOKEN'].map((k) => [k, process.env[k]]));
   process.env.SITE_BUCKET = 'fixture-bucket';
   process.env.FEEDBIN_CONFIG = JSON.stringify({ url: 'https://feedbin.com/starred/synthetic.xml', mode: 'active', initial: 'import', shared: true, tags: [] });

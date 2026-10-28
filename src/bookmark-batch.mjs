@@ -1,15 +1,15 @@
 // A bounded observation of already-public bookmarks. Private journal inputs
-// stay inside this module; only explicitly selected public fields leave it.
-import { createHash } from 'node:crypto';
+// never enter the public result. Progress keys go only to a deferred private
+// checkpoint hook; the public result contains aggregate history counts.
 import { FEEDBIN_KEY } from './feedbin.mjs';
 import { captureBookmark } from './bookmarks.mjs';
 import { pinboardClient } from './pinboard.mjs';
+import { bookmarkCheckpoint, bookmarkKey, bookmarkProgressSummary, planBookmarkChecks, readCheckHistory } from './bookmark-progress.mjs';
 
 export const BATCH_LIMIT = 6;
 export const LINKS_FACT = 'https://links.thingelstad.xyz/sync-fact.json';
 const stamp = () => new Date().toISOString().replace(/\.\d{3}Z$/, 'Z');
 const instant = (s) => typeof s === 'string' && Number.isFinite(Date.parse(s)) ? s : null;
-const linkId = (url) => createHash('md5').update(url).digest('hex').slice(0, 12);
 const captureId = (item) => typeof item.handoff?.key === 'string' ? item.handoff.key.match(/^bookmarks\/([a-f0-9]{64})\.json$/)?.[1] : null;
 const validURL = (value) => {
   try { const u = new URL(value); return ['http:', 'https:'].includes(u.protocol) && !u.username && !u.password; }
@@ -24,16 +24,6 @@ function candidates(state) {
   items.sort((a, b) => String(b.handoff?.captured_at ?? '').localeCompare(String(a.handoff?.captured_at ?? '')) || String(a.first_seen_at).localeCompare(String(b.first_seen_at)) || String(a.id).localeCompare(String(b.id)));
   return [...new Map(items.map(i => [i.url, i]).reverse()).values()]
     .sort((a, b) => String(b.first_seen_at).localeCompare(String(a.first_seen_at)) || a.url.localeCompare(b.url));
-}
-
-function selection(items, previous, processed, now, limit) {
-  const unresolved = new Set((Array.isArray(previous?.rows) ? previous.rows : []).filter(r => r?.state !== 'present').map(r => r?.id));
-  const priority = items.filter(i => unresolved.has(linkId(i.url)) || (captureId(i) && processed && !processed.has(captureId(i))));
-  // Leave one rotating slot when the priority queue alone exceeds the cap.
-  const first = priority.slice(0, priority.length > limit ? Math.max(1, limit - 1) : limit);
-  const rest = items.filter(i => !first.includes(i));
-  const offset = rest.length ? Math.floor(Date.parse(now) / 1_800_000) % rest.length : 0;
-  return [...first, ...rest.slice(offset), ...rest.slice(0, offset)].slice(0, limit);
 }
 
 async function publicFact(ctx, clock) {
@@ -51,21 +41,29 @@ async function publicFact(ctx, clock) {
  * Missing/private/deleted and unverifiable source records expose counts only.
  * A public Links record AND matching public star association prove presence;
  * a processed capture is an acknowledgement, never an arrival timestamp. */
-export async function collectBookmarkBatch(ctx, { remaining = () => Infinity, limit = BATCH_LIMIT, clock = stamp } = {}) {
+export async function collectBookmarkBatch(ctx, { remaining = () => Infinity, limit = BATCH_LIMIT, clock = stamp, onProgress = null } = {}) {
+  limit = Number.isFinite(limit) ? Math.min(BATCH_LIMIT, Math.max(1, Math.floor(limit))) : BATCH_LIMIT;
   if (!ctx.env?.FEEDBIN_CONFIG || !ctx.env?.SITE_BUCKET) return null;
   const unavailable = { version: 1, state: 'unknown', checked_at: clock(), rows: [], limit, note: 'The public bookmark batch could not be checked. No previous item identities are carried forward.' };
   if (!ctx.pinboard?.capture && !ctx.env.PINBOARD_API_TOKEN) return unavailable;
-  limit = Math.min(BATCH_LIMIT, Math.max(1, Math.floor(limit)));
-  let items, previous;
+  let items, previous, history;
   try {
     const [state, prior] = await Promise.all([ctx.s3Get(ctx.env.SITE_BUCKET, FEEDBIN_KEY), ctx.s3Get(ctx.env.SITE_BUCKET, 'status.json')]);
     items = candidates(state);
     previous = prior?.bookmark_batch;
+    history = readCheckHistory(state.bookmark_checks);
   } catch { return unavailable; }
   const fact = remaining() >= 30_000 ? await publicFact(ctx, clock) : { stars: null, processed: null, checked_at: clock() };
-  const selected = selection(items, previous, fact.processed, ctx.now, limit);
+  const plan = planBookmarkChecks(items, history, previous, fact.processed, limit);
+  const selected = plan.selected;
   const api = ctx.pinboard ?? pinboardClient({ token: ctx.env.PINBOARD_API_TOKEN, fetch: ctx.fetch });
-  const rows = [], work = [];
+  const rows = [], work = [], attempts = new Map();
+  let cursor = null;
+  const attempted = (item, outcome) => {
+    const key = bookmarkKey(item), at = clock();
+    attempts.set(key, { at, outcome });
+    if (plan.sweepKeys.has(key)) cursor = { key, at };
+  };
   const report = { checked: 0, not_public: 0, source_unavailable: 0, deferred: 0 };
   let rateLimited = false;
   for (const item of selected) {
@@ -77,8 +75,9 @@ export async function collectBookmarkBatch(ctx, { remaining = () => Infinity, li
       post = await api.capture(item.url);
       report.checked++;
       capture = captureBookmark(item, post, clock());
-    } catch (error) { report.source_unavailable++; rateLimited = error.status === 429; continue; }
-    if (!capture) { report.not_public++; continue; }
+    } catch (error) { report.source_unavailable++; rateLimited = error.status === 429; attempted(item, 'unknown'); continue; }
+    if (!capture) { report.not_public++; attempted(item, 'not-public'); continue; }
+    attempted(item, 'unknown');
     const id = capture.link_id;
     const row = {
       id, url: item.url, title: post.description.slice(0, 240) || item.url,
@@ -116,7 +115,11 @@ export async function collectBookmarkBatch(ctx, { remaining = () => Infinity, li
   for (const row of rows) {
     row.state = row.record.state === 'present' && row.association.state === 'present' ? 'present'
       : ['unknown', 'mismatch', 'deferred'].includes(row.record.state) || row.association.state === 'unknown' ? 'unknown' : 'pending';
+    attempts.get(bookmarkKey(row)).outcome = row.state;
   }
   rows.sort((a, b) => Number(a.state === 'present') - Number(b.state === 'present') || String(b.first_observed_at).localeCompare(String(a.first_observed_at)) || a.id.localeCompare(b.id));
-  return { version: 1, state: 'checked', checked_at: clock(), limit, candidates: items.length, selected: selected.length, omitted: items.length - selected.length, ...report, rows };
+  const delta = bookmarkCheckpoint(attempts.size ? { ...plan.seeds, ...Object.fromEntries(attempts) } : {}, cursor, clock());
+  const progress = bookmarkProgressSummary(items, history, delta, plan.priorityKeys, new Set(attempts.keys()));
+  if (attempts.size) onProgress?.(delta);
+  return { version: 1, state: 'checked', checked_at: clock(), limit, candidates: items.length, selected: selected.length, omitted: items.length - selected.length, ...report, progress, rows };
 }

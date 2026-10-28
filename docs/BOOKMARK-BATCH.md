@@ -39,12 +39,40 @@ build time, and never starts a timer from the article's publication date.
 
 ## Bounds and next actions
 
-At most six confirmed-save candidates are selected per observation. Known
-unresolved rows and unacknowledged captures take priority, with one slot reserved
-for rotation when that queue exceeds the cap. Other candidates rotate on a
-deterministic half-hour offset. Input order, duplicate entries and restarts do
-not create duplicate requests or rows. Current public-source verification still
-applies to every selected candidate, including a previously unresolved one.
+At most six confirmed-save candidates are selected per observation. Up to five
+unresolved checks/unacknowledged captures get priority, ordered by oldest check.
+At least one slot advances a private cursor through the other candidates; spare
+slots continue that sweep. The sweep's first item is attempted before priority
+work so slow failures cannot consume its runtime reservation. When only one
+request is allowed, that request follows the sweep across all candidates.
+Input order, duplicate entries and restarts do not create duplicate requests
+or rows. Current public-source verification still applies to every displayed
+candidate, including a previously unresolved one.
+
+The existing protected Feedbin journal owns `bookmark_checks`: a cursor and
+at most 256 URL-hash keys with real attempt times and outcomes. None of these
+keys enter public output. Unresolved metadata survives omission from a sample;
+the page reports how many follow-ups were not checked in this snapshot, without
+reusing their identities. History describes past attempts, not current public
+presence. A fresh public-source check remains mandatory for each displayed row.
+
+Eviction prefers resolved history, then the oldest unresolved history if the
+priority queue itself exceeds 256. Aggregate eviction counts, including
+unresolved records, are disclosed. A missing retained record does not mean
+never checked or resolved. The independent cursor survives eviction, deletion
+of its last candidate and new candidates. A fixed healthy 52-item set gets
+attempts in nine successful six-item rounds rather than a sliding one-new-item
+window; six persistent gaps cannot occupy every slot indefinitely. Failures,
+privacy and runtime deferrals never turn those attempts into a completeness
+claim.
+
+Collection only prepares updates in memory. After all public writes, including
+the health marker, succeed, the probe re-reads the private journal and merges
+only its observation field, preserving current import/outbox fields. Private
+progress cannot advance after a failed public write. A crash before the private
+checkpoint repeats checks; a later retry cannot regress a newer cursor or
+outcome. Rendering a stored snapshot still does no I/O. No new object, grant,
+credential, schedule or source write is introduced by this private checkpoint.
 
 The page reports candidate/selected/omitted totals, private-or-deleted counts,
 failed source checks and runtime deferrals. It describes a sample, not complete
@@ -67,14 +95,18 @@ separate missing-observation work.
 
 ## Acceptance
 
-Eight added tests cover a three-item batch (newest present, middle 404, oldest
+The original eight tests cover a three-item batch (newest present, middle 404, oldest
 reader failure); acknowledged captures with mismatched/absent destinations;
 private/deleted/unverifiable source suppression; retries, deduplication,
 reordering and restart; deterministic caps, priority, rotation and runtime/rate
 deferral; full-run sanitized output with existing journey preservation; and
-the exact CloudFront deny. A review regression retains all six unresolved
-items when they fit exactly within the cap, across an acknowledged-capture
-restart and reordered input. All 134 tests and ten existing page scenarios pass.
+the exact CloudFront deny. The fairness regression now retains all six unresolved
+outcomes privately while reserving a progressive slot; it no longer requires
+all six to occupy every current sample. Additional tests cover a 52-item sweep,
+six persistent gaps, publication/health/checkpoint failures, crash/restart,
+privacy/deletion/recovery, request/runtime bounds, resolved-first and overflow
+eviction, membership changes and older checkpoints. Validation receipts below
+distinguish the original release from this follow-up.
 The offline preview (`node tools/preview-bookmark-batch.mjs`) preserves these
 three mixed outcomes visibly. In-app browser checks at actual widths 1280 and
 390 verify native disclosures, exact connection guidance, Back and reload.
@@ -120,3 +152,72 @@ the documented runtime reset; no DevTools access was requested. No bookmark
 was created, replayed or repaired for this observation-only release. The wider
 27 unobserved checks, WT Builder/Buttondown facts and next natural nightly
 acceptance remain separate work. This receipt changes no application code.
+
+## Durable fairness follow-up
+
+The first release's time-based sliding sample checked only one new candidate
+per half hour. A synthetic 52-item run needed 47 snapshots; six persistent
+unresolved rows could occupy every slot indefinitely. The private cursor and
+outcome checkpoint described above replace that behavior without increasing
+the six-request cap or weakening the public-source gate.
+
+All 142 tests and ten scenarios pass. The eight added regressions cover the
+nine-round 52-item sweep, six persistent gaps, a sweep attempt before priority
+timeouts, privacy transitions and recovery, public/health/private-write failure
+and crashes, bounded eviction/idempotent checkpoint retries, membership changes
+and old checkpoints, and refusal to downgrade an unknown history version.
+The exact-cap regression now keeps all six outcomes privately while marking
+the omitted follow-up unchecked in the current sample.
+
+`node tools/preview-bookmark-batch.mjs --fairness` creates an offline 12-item
+fixture with six persistent gaps. In-app browser checks at actual 1280 and
+390 pixels verify five current pending rows, one continuing sweep row and one
+unchecked follow-up whose identity is absent. Map and connection guidance
+retain that distinction beside the fresh newest-star comparison. Native and
+keyboard disclosures, guidance, Back and reload pass; no overflow, script or
+console error. The normal viewport control works with the refreshed runtime;
+no DevTools access was requested.
+
+### Fairness release receipt
+
+Application head `ec06d427d1f30d79e531261104ca7b56fadf2ff2` passed independent
+engineering review and exact-head CI (run `40730019130`). Automated code review
+completed on that same head with no findings. The established cloud-engineer
+plan/apply released package
+`cba0e74cb9dd39f0070876c9441a8faafb1f8aa16b8a327a34ded9e747ff495b` at
+12:01:46 p.m. CDT. Only existing package references changed; the deployed
+template matches the reviewed template. Reserved concurrency was verified as
+one before and after deployment. The existing journal deny and access logging
+remain in place, with no new permission, credential, resource or schedule.
+
+The whole-site invalidation `I12BYL07RK08ZGG0GB7KJB4LE8` was observed
+**Completed** at 12:03:34. Both hostnames serve the expected package. The
+canonical journal path and two encoded aliases return 404 to HEAD requests
+through both hostnames; no raw journal body or access log was requested.
+
+The actual scheduled observation started at 12:04:25 and finished its batch
+at 12:04:50. It checked six public records and reported retained attempts for
+16 of 52 candidates. A separate normal manual observation, invoked with an
+empty payload at 12:07:59, started at 12:08:00 and finished its batch at
+12:08:25. It checked six different public records, and retained history grew
+to 22 of 52. Public exact-record and association readbacks passed for both
+samples. Every row had a fresh source check. The second invocation selected
+no clock importer, follow-up or publishing event; its report contains no blog
+events. This confirms private progress survives between real invocations
+without reading or publishing cursor keys. Persistent gaps and crash recovery
+remain regression-test evidence, rather than manufactured live failures.
+
+The current page accurately distinguishes six fresh public rows from 22
+retained attempts, with 30 candidates lacking retained history. That history
+is not a current full-account audit. Live in-app browser checks at actual
+1280- and 390-pixel widths confirm the counts, real timestamps and working
+evidence disclosures, with no overflow, script or console error. A stale
+browser handle was recovered through the supported runtime reset; no DevTools
+access was requested. Temporary viewport overrides were reset after testing.
+
+The rate schedule remains enabled every 30 minutes. Its next natural
+observation is expected around 12:34 p.m. CDT; that future execution is not
+claimed by this receipt. A crash after public publication but before the
+private checkpoint can repeat read checks; it cannot replay an import on a
+non-clock observation. The 27 unobserved connection/kind checks and the
+separate natural nightly WT354 acceptance remain open work.

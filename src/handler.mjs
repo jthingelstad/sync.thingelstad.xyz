@@ -22,6 +22,7 @@ import { FEEDBIN_KEY, feedbinConfig, importStars, readFeedbin } from './feedbin.
 import { pinboardClient } from './pinboard.mjs';
 import { captureBookmark, handoffBookmarks } from './bookmarks.mjs';
 import { collectBookmarkBatch } from './bookmark-batch.mjs';
+import { advanceBookmarkProgress } from './bookmark-progress.mjs';
 
 const s3 = new S3Client({});
 const bus = new EventBridgeClient({});
@@ -103,10 +104,19 @@ export async function run({ now = stamp(), env = process.env, trigger = { type: 
     }
   }
   const result = observe({ flows, facts, now, code: env.SYNC_CODE ?? null, trigger, journeys, history: recorded, received: queue });
-  const batch = await collectBookmarkBatch(ctx, { remaining, clock: ctx.clock ?? stamp });
+  let commitBookmarkProgress = null;
+  const batch = await collectBookmarkBatch(ctx, { remaining, clock: ctx.clock ?? stamp, onProgress: delta => {
+    // Keep private keys and outcomes in a closure, outside every public JSON
+    // object. Re-read before merging so importer/outbox fields are preserved.
+    commitBookmarkProgress = async (targetBucket, write) => {
+      const latest = await ctx.s3Get(targetBucket, FEEDBIN_KEY);
+      const next = advanceBookmarkProgress(latest, delta);
+      await write(targetBucket, FEEDBIN_KEY, JSON.stringify(next, null, 1));
+    };
+  } });
   if (batch) result.status.bookmark_batch = batch;
   const pages = renderSite(result.status, result.journeys, result.history);
-  return { ...result, blog, pages, page: pages['index.html'] };
+  return { ...result, blog, pages, page: pages['index.html'], ...(commitBookmarkProgress ? { commitBookmarkProgress } : {}) };
 }
 
 const emitBlog = (event, eventBus) => bus.send(new PutEventsCommand({ Entries: [{ EventBusName: eventBus, Source: event.source, DetailType: event['detail-type'], Detail: JSON.stringify(event.detail), Time: new Date(event.detail.at) }] }));
@@ -130,7 +140,7 @@ export async function announceBlog(bucket, blog, now, eventBus, emit = emitBlog,
   return made;
 }
 
-export async function publish(bucket, { status, journeys, history, retired = [], received, page, pages }, write = put) {
+export async function publish(bucket, { status, journeys, history, retired = [], received, page, pages, commitBookmarkProgress }, write = put) {
   // A failed archive cannot advance the index or discard the current journey.
   for (const r of retired) await write(bucket, r.key, JSON.stringify(r.journey, null, 1));
   await write(bucket, HISTORY_KEY, JSON.stringify(history, null, 1));
@@ -143,6 +153,9 @@ export async function publish(bucket, { status, journeys, history, retired = [],
   // Accepted reports remain queued until their journey files have landed.
   if (received) await write(bucket, RECEIVED_KEY, JSON.stringify(received, null, 1));
   await write(bucket, 'health.json', JSON.stringify({ ok: true, code: status.code, checked_at: status.checked_at, trigger: status.trigger, summary: status.summary }));
+  // No private progress can skip work after a failed public write, including
+  // health. A failure here may repeat checks on retry; it cannot skip them.
+  if (commitBookmarkProgress) await commitBookmarkProgress(bucket, write);
 }
 
 /** One-off schedules that run the probe again as the item moves; a name already taken is a follow-up already made. */
