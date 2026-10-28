@@ -3,11 +3,12 @@ import { test } from 'node:test';
 import { createHash } from 'node:crypto';
 import fs from 'node:fs/promises';
 import { collectBookmarkBatch, BATCH_LIMIT, LINKS_FACT } from '../src/bookmark-batch.mjs';
-import { bookmarkBatch } from '../src/bookmark-batch-page.mjs';
+import { bookmarkBatch, bookmarkBatchLink } from '../src/bookmark-batch-page.mjs';
 import { FEEDBIN_KEY } from '../src/feedbin.mjs';
 import { fixtureContext } from '../tools/probe.mjs';
 import { publish, run } from '../src/handler.mjs';
 import { advanceBookmarkProgress, bookmarkCheckpoint, bookmarkKey, CHECK_HISTORY_LIMIT, planBookmarkChecks, readCheckHistory } from '../src/bookmark-progress.mjs';
+import { coverageModel } from '../src/coverage.mjs';
 
 const NOW = '2026-10-28T15:30:00Z';
 const md5 = url => createHash('md5').update(url).digest('hex');
@@ -37,7 +38,7 @@ function harness(items, { prior = null, records = {}, posts = {}, fact = null, j
       const result = records[item.url];
       if (result instanceof Error) throw result;
       if (typeof result === 'number') return { ok: result < 400, status: result };
-      return { ok: true, status: 200, json: async () => result ?? { id: md5(item.url).slice(0, 12), url: item.url } };
+      return { ok: true, status: 200, json: async () => result ?? { id: md5(item.url).slice(0, 12), url: item.url, note: post(item).extended } };
     },
   };
   return { ctx, calls, max: () => max, exported, state: () => state, setState: next => { state = next; } };
@@ -162,6 +163,138 @@ test('deployed run publishes only the sanitized batch, keeping newest-item recei
   const calls = h.calls.length;
   assert.match(bookmarkBatch(result.status.bookmark_batch), /Public article 1/);
   assert.equal(h.calls.length, calls);
+});
+
+test('an acknowledged and present bookmark can have a stale note while the newest succeeds', async () => {
+  const [older, newest] = [1, 2].map(make);
+  const h = harness([older, newest], { records: { [older.url]: { id: older.handoff.link_id, url: older.url, note: 'OLDER_NOTE_CANARY' } } });
+  let delta;
+  const batch = await collect(h.ctx, { onProgress: value => { delta = value; } });
+  const row = batch.rows.find(r => r.url === older.url);
+  assert.equal(row.state, 'present');
+  assert.equal(row.record.state, 'present');
+  assert.equal(row.association.state, 'present');
+  assert.equal(row.acknowledgement.state, 'acknowledged');
+  assert.equal(row.note.state, 'different');
+  assert.equal(batch.rows.find(r => r.url === newest.url).note.state, 'match');
+  assert.equal(delta.entries[bookmarkKey(older)].outcome, 'pending');
+  assert.deepEqual(Object.keys(row.note).sort(), ['destination_checked_at', 'source_checked_at', 'state']);
+  const html = bookmarkBatch(batch);
+  assert.match(html, /2 records and star associations verified, 0 need presence evidence/);
+  assert.match(html, /next nightly Pinboard mirror/);
+  assert.match(html, /action-5-note/);
+  assert.match(bookmarkBatchLink(batch), /1 note differs/);
+  assert.ok(!html.includes('OLDER_NOTE_CANARY'));
+  const baseline = await run({ now: NOW, env: {}, context: await runtimeContext(harness([older, newest])) });
+  const changed = await run({ now: NOW, env: {}, context: await runtimeContext(h) });
+  assert.deepEqual(changed.status.summary, baseline.status.summary, 'sampled notes cannot lower connection-level unknown counters');
+  assert.deepEqual(coverageModel(changed.status), coverageModel(baseline.status));
+  assert.deepEqual(changed.status.receipts, baseline.status.receipts);
+  assert.deepEqual(changed.journeys, baseline.journeys);
+  assert.ok(!Object.hasOwn(changed.status.facts.pinboard.newest ?? {}, 'note'));
+  assert.ok(!Object.hasOwn(changed.status.facts.links.newest ?? {}, 'note'));
+  const guidance = changed.pages['records/index.html'].match(/id="action-5-note".*?<\/article>/s)[0];
+  assert.match(guidance, /Connection-wide newest-note identity or revision facts are not defined/);
+  assert.match(guidance, /\/journeys\/#bookmark-batch/);
+  assert.doesNotMatch(guidance, /This probe does not compare note identities/);
+});
+
+test('note comparison keeps exact whitespace, Unicode and quotes, distinguishes empty and missing, and never exports text or digests', async () => {
+  const item = make(1);
+  const canary = 'NOTE_ONLY_CANARY_" & <script>\n雪 🚀\t e\u0301';
+  const cases = [
+    { source: canary, target: canary, expected: 'match' },
+    { source: '', target: '', expected: 'empty' },
+    { source: '', target: ' ', expected: 'different' },
+    { source: ' \n\t', target: ' \n\t', expected: 'match' },
+    { source: canary, target: canary + ' ', expected: 'different' },
+    { source: 'e\u0301', target: '\u00e9', expected: 'different' },
+    { source: canary, expected: 'missing' },
+    { source: canary, target: null, expected: 'unreadable' },
+    { source: canary, target: { text: canary }, expected: 'unreadable' },
+  ];
+  for (const c of cases) {
+    const record = { id: item.handoff.link_id, url: item.url, ...(Object.hasOwn(c, 'target') ? { note: c.target } : {}) };
+    const h = harness([item], { posts: { [item.url]: { ...post(item), extended: c.source } }, records: { [item.url]: record } });
+    let tick = 0;
+    const batch = await collect(h.ctx, { clock: () => new Date(Date.parse(NOW) + tick++ * 1000).toISOString().replace('.000Z', 'Z') });
+    const row = batch.rows[0];
+    assert.equal(row.state, 'present');
+    assert.equal(row.note.state, c.expected);
+    assert.equal(row.note.source_checked_at, row.public_checked_at);
+    assert.equal(row.note.destination_checked_at, row.record.checked_at);
+    assert.ok(Date.parse(row.note.destination_checked_at) > Date.parse(row.note.source_checked_at));
+    assert.equal(h.calls.filter(c => c[0] === 'source').length, 1);
+    assert.equal(h.calls.filter(c => c[0] === 'public').length, 2, 'reuse the existing fact and exact record requests');
+    let output = JSON.stringify(batch) + bookmarkBatch(batch) + bookmarkBatchLink(batch);
+    if (c.source === canary && c.target === canary) {
+      const result = await run({ now: NOW, env: {}, context: await runtimeContext(h) });
+      const writes = [];
+      await publish('fixtures', result, async (_bucket, _key, body) => { writes.push(body); });
+      output += JSON.stringify(result) + writes.join('\n');
+    }
+    for (const marker of [canary, JSON.stringify(canary).slice(1, -1), encodeURIComponent(canary), 'NOTE_ONLY_CANARY_', ...['md5', 'sha256'].map(hash => createHash(hash).update(canary).digest('hex'))]) assert.ok(!output.includes(marker), marker);
+    assert.ok(!Object.hasOwn(row.note, 'edited_at') && !Object.hasOwn(row.note, 'lag'));
+    if (c.expected === 'missing') assert.match(bookmarkBatch(batch), /missing field does not establish an empty or stale note/);
+  }
+});
+
+test('note absence, wrong identity, reader failure and runtime deferral cannot become equality', async () => {
+  const items = [1, 2, 3, 4, 5].map(make);
+  const records = { [items[0].url]: 404, [items[1].url]: { id: items[1].handoff.link_id, url: items[0].url, note: post(items[1]).extended }, [items[2].url]: Error('NOTE_READER_PRIVATE_CANARY'), [items[3].url]: 503 };
+  const h = harness(items, { records });
+  const original = h.ctx.fetch;
+  h.ctx.fetch = (url, init) => url.endsWith(items[4].handoff.link_id + '.json') ? { ok: true, status: 200, json: async () => { throw Error('NOTE_JSON_PRIVATE_CANARY'); } } : original(url, init);
+  const batch = await collect(h.ctx);
+  for (const [i, state] of ['absent', 'mismatch', 'unreadable', 'unreadable', 'unreadable'].entries()) assert.equal(batch.rows.find(r => r.url === items[i].url).note.state, state);
+  assert.match(bookmarkBatch(batch), /record answered 404/);
+  assert.match(bookmarkBatch(batch), /record identity mismatch/);
+  let calls = 0;
+  const deferred = await collect(harness([items[0]]).ctx, { remaining: () => ++calls <= 2 ? 50_000 : 29_000 });
+  assert.deepEqual(deferred.rows[0].note, { state: 'deferred', source_checked_at: NOW, destination_checked_at: null });
+  assert.ok(!JSON.stringify(batch).includes('PRIVATE_CANARY'));
+});
+
+test('public note results disappear after a private, deleted or unverifiable source transition', async () => {
+  const items = [1, 2, 3].map(make);
+  const text = 'TRANSITION_NOTE_CANARY_"雪\n';
+  const posts = Object.fromEntries(items.map(i => [i.url, { ...post(i), extended: text }]));
+  const records = Object.fromEntries(items.map(i => [i.url, { id: i.handoff.link_id, url: i.url, note: text }]));
+  const first = await collect(harness(items, { posts, records }).ctx);
+  assert.ok(first.rows.every(r => r.note.state === 'match'));
+  const h = harness(items, { prior: first, posts: { [items[0].url]: { ...posts[items[0].url], shared: 'no' }, [items[1].url]: null, [items[2].url]: Error(text) } });
+  const next = await collect(h.ctx);
+  assert.deepEqual(next.rows, []);
+  assert.equal(next.not_public, 2); assert.equal(next.source_unavailable, 1);
+  const output = JSON.stringify(next) + bookmarkBatch(next);
+  for (const marker of [text, 'TRANSITION_NOTE_CANARY_', ...items.flatMap(i => [i.url, i.handoff.link_id, i.handoff.key])]) assert.ok(!output.includes(marker));
+  assert.equal(h.calls.filter(c => c[0] === 'public').length, 1, 'withdrawn identities never reach a destination note lookup');
+});
+
+test('stale-note follow-ups persist across restart without starving the progressive sweep or copying old rows', async () => {
+  const items = Array.from({ length: 12 }, (_, i) => make(i + 1));
+  const records = Object.fromEntries(items.map(i => [i.url, { id: i.handoff.link_id, url: i.url, note: 'STALE_QUEUE_NOTE_CANARY' }]));
+  const h = harness(items, { records }); let delta;
+  const first = await collect(h.ctx, { onProgress: value => { delta = value; } });
+  assert.ok(first.rows.every(r => r.state === 'present' && r.note.state === 'different'));
+  const saved = advanceBookmarkProgress(h.state(), delta);
+  assert.equal(Object.values(saved.bookmark_checks.entries).filter(e => e.outcome === 'pending').length, 6);
+  const next = await collect(harness([...items].reverse(), { journal: JSON.parse(JSON.stringify(saved)), prior: first, records }).ctx);
+  assert.equal(next.progress.follow_up, 6); assert.equal(next.progress.follow_up_not_checked, 1);
+  assert.equal(next.rows.length, 6); assert.equal(next.progress.tracked, 7);
+  const omitted = first.rows.find(r => !next.rows.some(n => n.id === r.id));
+  assert.ok(omitted && !JSON.stringify(next).includes(omitted.url));
+  assert.ok(!JSON.stringify(next).includes('STALE_QUEUE_NOTE_CANARY'));
+});
+
+test('legacy public snapshots show unrecorded note comparison without invented check times or I/O', async () => {
+  const batch = await collect(harness([make(1)]).ctx);
+  delete batch.rows[0].note;
+  const html = bookmarkBatch(batch);
+  assert.match(html, /Note comparison not recorded/);
+  assert.match(html, /No recorded note comparison time/);
+  assert.match(html, /note parity is unverified/);
+  assert.ok(!html.includes('Notes match'));
 });
 
 test('an unresolved queue at the cap retains omitted priority privately while another candidate gets a turn', async () => {

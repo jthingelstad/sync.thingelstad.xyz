@@ -37,6 +37,62 @@ reader remains unknown. Each destination check uses its own completion time.
 The view never invents an item arrival timestamp from an acknowledgement or
 build time, and never starts a timer from the article's publication date.
 
+## Sampled note parity
+
+The same fresh explicit-public Pinboard capture and exact Links JSON read now
+compare Pinboard `extended` with Links `note` in memory. The Links importer maps
+these strings directly, so equality is exact after JSON decoding: no trimming,
+Unicode normalization or whitespace rewriting. Two empty strings mean no note
+on either record; whitespace alone is a nonempty string. A valid string that
+differs is an observed difference, even when the capture is acknowledged and
+the public record and star association are present.
+
+Each row adds only `note.state`, `note.source_checked_at` and
+`note.destination_checked_at`. No note content, length, digest, exception or
+new private identity enters the public result or check history. The source
+time is its fresh public check; the destination time is that exact-record
+read's completion. A missing note field is not an empty note. A non-string
+field, failed/invalid read, identity mismatch, 404 or runtime deferral stays
+distinct and cannot establish equality. Legacy snapshots say no note comparison
+was recorded, with no invented check time.
+
+Record/association presence keeps its existing meaning. Note differences and
+unavailable comparisons are separate in row summaries, sample totals and the
+Map's batch link. They use the existing private pending/unknown outcomes for
+bounded follow-up; the continuing sweep and six-request limit remain intact.
+The view points a confirmed difference to the normal nightly Pinboard mirror
+and a subsequent exact readback, without issuing a repair or replay. A save
+time, account update or capture acknowledgement does not give a note-edit time
+or note propagation lag.
+
+This is a sampled comparison, not a newest-note fact or full-account audit.
+It does not change connection-level comparable/unobserved counters, the
+newest-star fact, receipts, journeys, producer contracts or grants. Source
+privacy/deletion/unverifiable transitions suppress the entire batch row on
+the next successful publication under the existing caching and history limits.
+`node tools/preview-bookmark-batch.mjs --note-parity` provides an offline
+six-item mixture: equality, both empty, different, missing note field, wrong
+record identity and reader failure, with a matching newest item.
+
+Six added regressions cover an acknowledged/present bookmark with a stale
+note while the newest succeeds; exact whitespace, Unicode and quote handling;
+both-empty versus missing/invalid fields; 404, identity mismatch, failed JSON
+and runtime deferral; privacy/deletion/source-failure transitions; durable note
+follow-ups across restart with continuing sweep; and legacy snapshots without
+invented times. Canary text and its digests are absent from batch JSON, HTML,
+full-run results and all mocked publication/checkpoint writes. The connection
+coverage model, summary, newest facts, receipts and journeys remain unchanged
+when only sampled note parity changes.
+
+All 148 tests and ten scenarios pass. The offline note preview passes in-app
+browser checks at actual 1280- and 390-pixel widths: Map to batch, native and
+keyboard disclosure, stale-note guidance to connection 5, Back and reload.
+Counts separate record presence from matching, empty, different and unavailable
+notes. Connection guidance names the sampled view without claiming a newest-note
+fact. There is no page overflow, script, console error or canary content in the
+DOM. Normal viewport overrides were reset, with no DevTools access requested.
+Independent review and live release acceptance are still pending for this slice.
+
 ## Bounds and next actions
 
 At most six confirmed-save candidates are selected per observation. Up to five

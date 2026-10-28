@@ -143,6 +143,16 @@ WT354 validation permission below was added on October 28.
   existing snapshot never performs I/O or advances progress. Omitted unresolved
   candidates publish counts only; no stale identity or check time is presented
   as current.
+  The same bounded public checks compare current Pinboard `extended` and exact
+  Links `note` strings in memory. Only comparison state and source/destination
+  check times enter `row.note`; never text, length or digest. Equality is exact,
+  including Unicode and whitespace; both empty, missing field, different,
+  unreadable, wrong identity, 404 and runtime deferral stay distinct. Presence
+  remains separate from note parity. Note problems reuse private pending/unknown
+  outcomes while keeping the progressive sweep. This is sampled note evidence,
+  not a newest-note fact: connection coverage counters and star journeys stay
+  unchanged. No note-edit time or propagation lag is inferred. Guidance points
+  to the normal mirror and subsequent observation, never a repair or replay.
   The raw Feedbin journal is blocked to CloudFront by an explicit bucket-policy
   deny, while the Lambda retains its existing access. `docs/BOOKMARK-BATCH.md`
   records the limits and acceptance cases. No per-item private source identity,

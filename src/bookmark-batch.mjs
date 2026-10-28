@@ -16,6 +16,18 @@ const validURL = (value) => {
   catch { return false; }
 };
 
+// Links' Pinboard importer maps extended to note without normalization.
+// Only these states leave this function: no note text, hash or length.
+function compareNote(source, record) {
+  if (!Object.hasOwn(record, 'note')) return 'missing';
+  if (typeof record.note !== 'string') return 'unreadable';
+  if (source !== record.note) return 'different';
+  return source === '' ? 'empty' : 'match';
+}
+
+const noteOutcome = row => row.note.state === 'different' ? 'pending'
+  : ['match', 'empty'].includes(row.note.state) ? 'present' : 'unknown';
+
 function candidates(state) {
   if (state?.version !== 1 || !state.items || typeof state.items !== 'object' || Array.isArray(state.items)) throw Error('No journal');
   // Canonical journals have one entry per URL. Also tolerate duplicate and
@@ -89,35 +101,41 @@ export async function collectBookmarkBatch(ctx, { remaining = () => Infinity, li
       association: { state: !fact.stars ? 'unknown' : fact.stars.some(s => String(s.id) === String(item.id) && s.url === item.url && s.link_id === id) ? 'present' : 'absent', checked_at: fact.checked_at, evidence_url: LINKS_FACT },
       record: { state: 'deferred', checked_at: null, evidence_url: `https://links.thingelstad.xyz/links/${id}.json` },
     };
+    row.note = { state: 'deferred', source_checked_at: row.public_checked_at, destination_checked_at: null };
     rows.push(row);
-    work.push(row);
+    // Keep the source text transient. It cannot enter a row or checkpoint.
+    work.push({ row, sourceNote: post.extended });
   }
   // Public destination reads have at most two requests in flight. Source
   // checks above use the existing serialized, paced Pinboard client.
   let next = 0;
   const read = async () => {
     while (next < work.length) {
-      const row = work[next++];
+      const { row, sourceNote } = work[next++];
       if (remaining() < 30_000) continue;
       try {
         const response = await ctx.fetch(row.record.evidence_url, { redirect: 'error', signal: AbortSignal.timeout(8000) });
-        if (response.status === 404) row.record.state = 'absent';
+        if (response.status === 404) { row.record.state = 'absent'; row.note.state = 'absent'; }
         else if (!response.ok) throw Error('Record unavailable');
         else {
           const record = await response.json();
           row.record.state = record.id === row.id && record.url === row.url ? 'present' : 'mismatch';
+          row.note.state = row.record.state === 'present' ? compareNote(sourceNote, record) : 'mismatch';
         }
-      } catch { row.record.state = 'unknown'; }
+      } catch { row.record.state = 'unknown'; row.note.state = 'unreadable'; }
       row.record.checked_at = clock();
+      row.note.destination_checked_at = row.record.checked_at;
     }
   };
   await Promise.all([read(), read()]);
   for (const row of rows) {
     row.state = row.record.state === 'present' && row.association.state === 'present' ? 'present'
       : ['unknown', 'mismatch', 'deferred'].includes(row.record.state) || row.association.state === 'unknown' ? 'unknown' : 'pending';
-    attempts.get(bookmarkKey(row)).outcome = row.state;
+    // Presence stays separate from note parity. The existing private queue
+    // keeps stale or unavailable note checks eligible for bounded follow-up.
+    attempts.get(bookmarkKey(row)).outcome = row.state === 'present' ? noteOutcome(row) : row.state;
   }
-  rows.sort((a, b) => Number(a.state === 'present') - Number(b.state === 'present') || String(b.first_observed_at).localeCompare(String(a.first_observed_at)) || a.id.localeCompare(b.id));
+  rows.sort((a, b) => Number(a.state === 'present') - Number(b.state === 'present') || Number(noteOutcome(a) === 'present') - Number(noteOutcome(b) === 'present') || String(b.first_observed_at).localeCompare(String(a.first_observed_at)) || a.id.localeCompare(b.id));
   const delta = bookmarkCheckpoint(attempts.size ? { ...plan.seeds, ...Object.fromEntries(attempts) } : {}, cursor, clock());
   const progress = bookmarkProgressSummary(items, history, delta, plan.priorityKeys, new Set(attempts.keys()));
   if (attempts.size) onProgress?.(delta);
