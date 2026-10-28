@@ -32,9 +32,13 @@ disclosures open one explanation at a time to keep the opening compact.
 
 Ivory paper #faf7ed, forest ink #253d31, muted olive #6e725f, tan rules
 #d5ccb5, pale sage #e8eddf. Semantic status colours retain their evidence
-meaning. Fine double rules, notched paper tabs, generous folio margins and
+meaning. Fine section rules, notched paper tabs, comfortable reading gutters and
 the existing watermark-free watercolor art; no overlay on the illustration.
 Night mode uses dark forest paper with warm light ink and unfiltered art.
+Jamie rejected the outer page border on 2026-10-28, especially on mobile.
+The paper now reaches the viewport edges with no outer border or inset frame.
+Text retains its reading gutters (16px on phones); the atlas reaches the
+viewport edges too.
 
 Fraunces upright variable for headings, map names and button labels;
 Source Sans 3 upright variable for body, tables and metadata. Body 19px,
@@ -157,3 +161,16 @@ inspected. No page overflow, script, external asset request or console error.
 The Browser plugin was unavailable; the frontend testing skill's Playwright
 fallback supplied the checks. Codex reviewed the application commit without
 findings, including no inline threads. WT354's recorded gap remains late.
+
+### Page edge acceptance
+
+Deployed 2026-10-28 at 7:00 a.m. CDT,
+[PR #24](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/24), package
+`3e61cb65ff32813c70906d873e465dd06ef1480b9930e4f28e587db49140f0af`.
+All 119 tests and ten scenario previews pass on Node 24. Local and live
+JavaScript-disabled Chromium checks at 1536, 768, 390 and 320px confirm zero
+outer border and margin on all four pages, a viewport-wide atlas and no page
+overflow. Item selection, keyboard Records tabs, fact disclosures and journey
+receipts pass; light and dark screenshots were inspected. Alias and
+distribution health identify the tested package. Codex reviewed the CSS
+commit without findings, and inline threads were checked.
