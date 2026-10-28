@@ -14,13 +14,13 @@
     "Environment": "production"
   },
   "live": {
-    "codeKey": "code/8fce18585ef81b5d29f78bf25f3413ffc16bf48826c650bc04cfc7918bac77e1.zip",
+    "codeKey": "code/b438f51e2d55d9e17bf1269998e5511ef4e80890ea4ec8f1b67213fa800b978e.zip",
     "codeBucket": "sync-code-999153317627",
     "siteBucket": "sync-site-999153317627",
     "functionName": "sync",
     "distributionId": "E2ZZ51SVR4J4JL",
     "distributionDomain": "d3dqlhrbtdu6s0.cloudfront.net",
     "certificateArn": "arn:aws:acm:us-east-1:999153317627:certificate/5bf0f763-f40e-4735-b83e-fde062f13c01",
-    "deployedAt": "2026-10-28T06:09:48.750Z"
+    "deployedAt": "2026-10-28T11:47:44.167Z"
   }
 }

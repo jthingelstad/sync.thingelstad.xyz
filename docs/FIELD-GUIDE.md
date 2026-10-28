@@ -135,3 +135,25 @@ screenshots were inspected with `view_image`. Both typefaces load with no
 external request, no page overflows and no console errors. Codex's review
 of the application commit completed with no findings; inline threads were
 also checked.
+
+### Handoff explanation acceptance
+
+Deployed 2026-10-28 at 6:47 a.m. CDT,
+[PR #23](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/23).
+All 119 tests pass on Node 24, including nine focused handoff tests; all ten
+offline scenarios render. The alias, distribution health and all four pages
+identify package
+`b438f51e2d55d9e17bf1269998e5511ef4e80890ea4ec8f1b67213fa800b978e`.
+The change set updates the existing shared function package and its dependent
+references, with no added resource or grant.
+
+JavaScript-disabled Chromium checks passed locally and live at 1536, 768,
+390 and 320px. Checked the selected blog post's first handoff, the upstream
+Thingy wait, recorded schedule, keyboard Records link and Back, item
+selection, reload, successful star completion and journey receipt. Offline
+checks also exercised native branch disclosures, unannounced audio/archive
+legs, unavailable readers and Friday holds. Light and dark screenshots were
+inspected. No page overflow, script, external asset request or console error.
+The Browser plugin was unavailable; the frontend testing skill's Playwright
+fallback supplied the checks. Codex reviewed the application commit without
+findings, including no inline threads. WT354's recorded gap remains late.
