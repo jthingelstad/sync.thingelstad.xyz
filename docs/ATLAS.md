@@ -123,6 +123,14 @@ rest of the page. They neither collect facts nor advance journals. A
 receipt with no matching current journey offers no item selection. Every
 SVG has unique local IDs and reuses the two inline illustration assets.
 
+Deployed 2026-10-27 at 11:47 p.m. CDT, [PR #20](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/20).
+107 tests and all ten previews pass on Node 24. Live browser checks with
+JavaScript disabled pass at 1440×1000, 768×1024 and 390×844, including
+selection, Back, reload, keyboard navigation and both atlas views. The one
+review finding, missing fallback-witness attribution, is fixed and covered
+by a regression. Public alias and distribution health both serve the tested
+package `ecf037c27ecef8c8b22030a92272868c5c12dac2aa19731e79dbd8c475676e3f`.
+
 ## Preview
 
 Use Node 24:
