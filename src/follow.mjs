@@ -76,7 +76,7 @@ export function followEdgeText(model, id) {
   else if (row.status === 'fresh') {
     const arrival = model.journey.arrivals?.[row.to];
     const lag = measuredHours(model.journey, arrival);
-    state = lag == null ? arrival?.via ? 'reported' : 'confirmed' : `${arrival.via ? 'reported' : 'in'} ${duration(lag)}`;
+    state = lag == null ? arrival?.via ? 'reported' : arrival?.observed ? 'seen' : 'confirmed' : `${arrival.via ? 'reported' : 'in'} ${duration(lag)}`;
   } else if (['moving', 'late'].includes(row.status) && row.lag_hours != null) state += ` ${age(row.lag_hours)}`;
   return `${id} · ${name} · ${state}`;
 }
@@ -101,7 +101,7 @@ function itemMap(model, status) {
 export function followAtlas(status, journeys, models = followModels(status, journeys)) {
   return models.map((model, i) => `<section class="follow-view${i === 0 ? ' follow-view--default' : ''}" id="follow-${model.kind}" tabindex="-1" aria-labelledby="follow-${model.kind}-title">
 ${followPicker(models, model.kind)}
-<header class="follow-heading"><p class="kicker">Follow this item · ${esc(KIND_LABEL[model.kind])}</p><h3 id="follow-${model.kind}-title">${esc(itemLabel(model.kind, model.item))}</h3>${model.item.title && ['issue', 'audio'].includes(model.kind) ? `<p>${esc(model.item.title)}</p>` : ''}<p class="muted">${model.item.at ? `Dated ${esc(central(model.item.at))}` : 'Publication time unknown'} · from ${esc(systemName(model.origin))}</p></header>
+<header class="follow-heading"><p class="kicker">Follow this item · ${esc(KIND_LABEL[model.kind])}</p><h3 id="follow-${model.kind}-title">${esc(itemLabel(model.kind, model.item))}</h3>${model.item.title && ['issue', 'audio'].includes(model.kind) ? `<p>${esc(model.item.title)}</p>` : ''}<p class="muted">${model.item.at ? `Dated ${esc(central(model.item.at))}` : model.kind === 'star' ? 'Star time unknown' : 'Publication time unknown'} · from ${esc(systemName(model.origin))}</p></header>
 ${summary(model)}
 ${itemMap(model, status)}
 <details class="follow-connections"><summary>${model.hops.length} connections and their evidence</summary><ol>${model.hops.map((h) => `<li><a href="#hop-${h.id}">${h.id}. ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</a><strong>${esc(followEdgeText(model, h.id).split(' · ').slice(2).join(' · '))}</strong>${h.why ? `<span>${esc(h.why)}</span>` : ''}</li>`).join('')}</ol></details>

@@ -180,7 +180,7 @@ ${followAtlas(status, journeys, following)}
 ${followPicker(following)}
 ${pocket}
 <section id="whole-atlas" class="atlas-full${pocket ? '' : ' atlas-full--fallback'}" aria-label="Whole publishing atlas">
-<a class="atlas-back" href="#map">Back to route view ↑</a>
+<a class="atlas-back" href="#all-connections">Back to route view ↑</a>
 ${status.open.length ? `<p class="atlas-attention"><span class="atlas-attention__label">Needs a look:</span><a href="#place-${esc(status.open[0].to)}">${esc(systemName(status.open[0].from))} → ${esc(systemName(status.open[0].to))}</a><span class="atlas-attention__state">${esc(status.open[0].kind)} ${pill(status.open[0].status)}</span></p>` : ''}
 ${atlasNavigation()}
 <div class="map" tabindex="0" role="region" aria-label="Publishing atlas, scroll sideways to explore">

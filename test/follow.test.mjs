@@ -86,6 +86,8 @@ test('first confirmations gain no lag, reported arrivals keep their time and unk
   const words = pageText(followAtlas(status, journeys, [model]));
   assert.match(words, /Reported .*elapsed time unmeasured.*1 sec resolution/);
   assert.doesNotMatch(words, /2 min after publication/);
+  delete model.journey.arrivals.thingy.via;
+  assert.match(followEdgeText(model, 16), /seen$/);
 });
 
 test('unsent legs keep their evidence and no selection is created for a mismatched or missing journey', async () => {
