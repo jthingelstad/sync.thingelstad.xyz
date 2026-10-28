@@ -74,15 +74,21 @@ configuration. Jamie then requested the end-to-end Feedbin → Pinboard → Link
 Hop 23 captures only explicitly public exact Pinboard records to Links'
 private inbox before a metadata-only bookmark wake-up. `src/bookmarks.mjs`,
 `docs/SUBSCRIBERS.md` and `docs/FEEDBIN.md` cover this continuation.
-This exception does not authorize repairs on any other hop, including WT354.
+This exception does not authorize repairs on other hops. The separate bounded
+WT354 validation permission below was added on October 28.
 
 - It is not the source of a single hop. `data/flows.json` is vendored from
   `../shared/flows.json` (`npm run flows:sync`; `npm run flows:check` fails on
   drift, and `npm test` runs it). A hop is a row in the shared file before it
   is code anywhere; this repo only reads the rows.
-- It does not fix anything. The WT354 join gap (Weekly Thing → Linking Things)
-  is the worked example of how the old arrangement breaks; the page shows it
-  late and leaves it (Jamie, 2026-10-26: "don't fix that yet").
+- It observes rather than repairs hops. The WT354 join gap (Weekly Thing →
+  Linking Things) was held as the worked example (Jamie, 2026-10-26: "don't
+  fix that yet"). Jamie lifted that test hold on 2026-10-28: "the hold repair
+  was to use it as a test which we are now ready to do...". The bounded test
+  rebuilds the derived associations in Linking Things from an isolated pinned
+  Weekly main revision, through its normal publication workflow; completion
+  needs public issue/search evidence, a destination receipt and a subsequent
+  Sync observation. It does not authorize other repairs or bookmark changes.
 - It is not the alarm. Thresholds come after two weeks of observation
   (step 4 of the plan in `../AGENTS.md`); the page is step 2.
 
@@ -164,6 +170,12 @@ This exception does not authorize repairs on any other hop, including WT354.
 - `src/stories.mjs` — words from journey data only. An unmeasured arrival
   never gains a lag, and an unknown reader never becomes a missing item.
   The story quotes no schedule it has not recorded.
+- `src/coverage.mjs` — one evidence check per contracted connection and kind,
+  including missing results. Comparable, unobserved and reader-unavailable
+  states retain fallback witnesses and per-fact check times. Map links to the
+  Records coverage ledger; each check opens conditional next-step guidance,
+  the recorded runner, operation and verification contract. Presentation only;
+  no worker, status or JSON contract changes. `docs/COVERAGE.md` records scope.
 - `src/lanes.mjs` — time since publication on a linear scale, a shared scale
   for each history group. Only observed arrivals have time marks; the median
   of finished measured journeys is a faint marker when there is a sample.

@@ -4,6 +4,7 @@ import { itemLabel, KIND_LABEL } from './stories.mjs';
 import { shortItem } from './map.mjs';
 import { age, central } from './time.mjs';
 import { landmark } from './folio.mjs';
+import { coverageModel, COVERAGE_LABEL, nextAction } from './coverage.mjs';
 const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 const STATUS_LABEL = { fresh: 'fresh', moving: 'moving', late: 'late', held: 'held', 'no-fact': 'no fact yet', unknown: 'unknown' };
@@ -94,6 +95,51 @@ ${extra}
 </details>`;
     })
     .join('\n');
+}
+
+const recordedTime = (at) => at && Number.isFinite(Date.parse(at))
+  ? `<time datetime="${esc(at)}">${esc(central(at))}</time>` : 'no recorded check time';
+const coverageCounts = (model) => `${model.comparable} of ${model.total} checks have comparable evidence · ${model.unobserved} unobserved · ${model.unavailable} reader unavailable`;
+
+export function coverageSummary(status, model = coverageModel(status)) {
+  return `<aside class="coverage-summary" aria-label="Monitoring coverage"><strong>Monitoring coverage</strong><span>${coverageCounts(model)}</span><a href="/records/#coverage">Review coverage →</a></aside>`;
+}
+
+export function coverageLedger(status, model = coverageModel(status)) {
+  const groups = [['unavailable', 'Readers to inspect'], ['unobserved', 'Evidence to establish'], ['comparable', 'Checks with comparable evidence']];
+  return `<h2>Monitoring coverage</h2><p class="coverage-totals">${coverageCounts(model)}</p>
+<p class="evidence-note">One check is one connection and content kind: ${model.total} checks across ${model.connections} connections. Comparable evidence can show fresh, moving, late or held. It is not a count of successful deliveries.</p>
+<p class="evidence-note">${model.kinds} checks have no comparison for their content kind; ${model.endpoints} lack readable endpoint facts.${model.results ? ` ${model.results} have no complete recorded result.` : ''} These are visibility gaps, not confirmed missing data. The probe follows the newest exposed identities, not every item in a batch or every metadata edit.</p>
+<p class="evidence-note">Snapshot checked ${recordedTime(status.checked_at)}. A named fallback witness may stand in for a source with no fact.</p>
+${groups.filter(([state]) => model[state]).map(([state, title]) => `<details class="coverage-group"${state === 'comparable' ? '' : ' open'}><summary>${esc(title)} · ${model[state]}</summary><ul class="coverage-rows">${model.checks.filter((c) => c.state === state).map((c) => `<li data-coverage="${c.state}" data-hop="${c.hop.id}" data-kind="${esc(c.kind)}"><a href="#action-${c.hop.id}-${esc(c.kind)}"><strong>${c.hop.id} · ${esc(systemName(c.hop.from))} → ${esc(systemName(c.hop.to))}</strong><span>${esc(KIND_LABEL[c.kind] ?? c.kind)}</span></a><div><strong>${esc(COVERAGE_LABEL[c.state])}</strong><span>${c.row ? esc(STATUS_LABEL[c.row.status] ?? c.row.status) : 'No recorded result'}${c.witness ? ` · source witness: ${esc(systemName(c.witness))}` : ''}</span><span>${esc(nextAction(c).title)}</span></div></li>`).join('')}</ul></details>`).join('')}`;
+}
+
+function evidencePoint(point, role, kind) {
+  const value = point.absent ? 'Explicit absence recorded for this item' : point.item ? itemLabel(kind, point.item) : `No readable ${kind} fact`;
+  return `<li><a href="#fact-${esc(point.system)}">${esc(role)} · ${esc(systemName(point.system))}</a><span>${esc(value)}</span><span>Evidence checked ${recordedTime(point.checked_at)}</span></li>`;
+}
+
+export function connectionActions(hop, status, checks) {
+  const trigger = hop.trigger;
+  const zone = trigger?.tz === 'America/Chicago' ? ' (US Central)' : trigger?.tz ? ` (${trigger.tz})` : '';
+  const timing = trigger?.type === 'clock' && trigger.schedule ? `Recorded schedule: ${trigger.schedule}${zone}.`
+    : trigger?.event ? `Recorded trigger: ${trigger.event}.` : trigger?.type === 'live' ? 'Read on demand.' : 'No trigger detail is recorded.';
+  const runner = [trigger?.runs_on, trigger?.runner].filter(Boolean).join(' · ');
+  return `<section class="connection-actions" aria-labelledby="actions-${hop.id}"><h3 id="actions-${hop.id}">What to do next</h3>
+${checks.map((c) => {
+  const action = nextAction(c);
+  return `<article class="check-action" id="action-${hop.id}-${esc(c.kind)}" tabindex="-1"><h4>${esc(KIND_LABEL[c.kind] ?? c.kind)} · ${esc(action.title)}</h4><p>${esc(action.detail)}</p>
+${c.row?.why ? `<p class="evidence-note">Recorded result: ${esc(c.row.why)}</p>` : ''}
+${c.witness ? `<p class="evidence-note">No direct source fact from ${esc(systemName(hop.from))}; this comparison uses ${esc(systemName(c.witness))}.</p>` : ''}
+<ul class="check-evidence">${evidencePoint(c.source, c.witness ? 'Source witness' : 'Source', c.kind)}${evidencePoint(c.destination, 'Destination', c.kind)}</ul>
+${c.row?.reported_at ? `<p class="evidence-note">Arrival reported ${recordedTime(c.row.reported_at)}.</p>` : ''}</article>`;
+}).join('')}
+<dl class="operation-record"><dt>When it runs</dt><dd>${esc(timing)}${runner ? ` Runner: ${esc(runner)}.` : ''}</dd>
+<dt>Recorded operation</dt><dd>${esc(hop.mechanism || 'No operation is recorded.')}</dd>
+<dt>How to verify</dt><dd>${esc(hop.verify || 'No verification contract is recorded.')}</dd>
+${hop.hold ? `<dt>Recorded hold</dt><dd>${esc(hop.hold)}</dd>` : ''}</dl>
+<p class="evidence-note">Snapshot checked ${recordedTime(status.checked_at)}. Guidance describes this snapshot; it does not run a worker or repair data. The flows contract supplies the operation and verification steps.</p>
+</section>`;
 }
 
 /** How this run started, for the lede. */
