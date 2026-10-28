@@ -34,7 +34,7 @@ ${atlasArtwork()}
 ${content}</main>
 <footer class="site-footer">${landscape('footer-landscape', true)}<div class="footer-line"><span>Jamie Thingelstad · Things in flow</span><a href="/flows/">Flows contract</a><a href="https://github.com/jthingelstad/sync.thingelstad.xyz">Source</a></div>
 <details class="colophon"><summary>Snapshot &amp; data</summary><p>${checked} A snapshot, refreshed on events and the half-hour clock. Reload for the latest.</p>
-${status?.code ? `<p>Published by the sync probe (<code>${esc(status.code)}</code>).</p>` : ''}<p><a href="/status.json">Status JSON</a> · <a href="/journeys.json">Current journeys</a> · <a href="/journeys/index.json">Journey history</a> · <a href="/facts/wt-builder.json">Publisher fact</a></p><p>Each receipt is at <code>/receipts/&lt;kind&gt;.json</code>. The probe also checks at 2, 5, 10, 15, 30, 45 and 60 minutes after a published send. No browser script or automatic refresh.</p></details></footer>
+${status?.code ? `<p>Published by the sync probe (<code>${esc(status.code)}</code>).</p>` : ''}<p><a href="/status.json">Status JSON</a> · <a href="/journeys.json">Current journeys</a> · <a href="/journeys/index.json">Journey history</a> · <a href="/facts/wt-builder.json">Publisher fact</a></p><p>Each receipt is at <code>/receipts/&lt;kind&gt;.json</code>. After receiving a publication event, the probe schedules checks at 2, 5, 10, 15, 30, 45 and 60 minutes. Discovery and delivery can happen after publication. No browser script or automatic refresh.</p></details></footer>
 </body></html>`;
 }
 

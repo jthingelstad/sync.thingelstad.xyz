@@ -103,7 +103,7 @@ export function triggerText(t) {
     case 'event':
       return `on the published event for the ${esc(t.leg)} leg of ${esc(shortItem(t.kind, { id: t.id }))}${t.rehearsal ? ' (a rehearsal: nothing recorded)' : ''}`;
     case 'follow-up':
-      return `${esc(String(t.minutes))} min after the ${esc(t.leg)} leg of ${esc(shortItem(t.kind, { id: t.id }))} went out`;
+      return `on the ${esc(String(t.minutes))} min follow-up for the ${esc(t.leg)} leg of ${esc(shortItem(t.kind, { id: t.id }))}`;
     case 'received':
       return `on ${esc(systemName(t.system))}'s reported arrival of ${esc(shortItem(t.kind, { id: t.id }))}`;
     case 'deploy':

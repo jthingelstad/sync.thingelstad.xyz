@@ -2,14 +2,14 @@
 
 The sync page: what each of Jamie's systems holds right now, how far behind
 each hop runs, a receipt for the newest item of each kind, and the journey
-each item is on. One Lambda probe writes a scriptless HTML page, `status.json`,
+each item is on. One Lambda probe writes four scriptless HTML pages, `status.json`,
 `receipts/<kind>.json`, `journeys.json` and `facts/wt-builder.json` into a
 private S3 bucket that CloudFront serves. It runs on a half-hour EventBridge
-schedule and on `published` and `received` events. After each published send
-leg it runs again
-at 2, 5, 10, 15, 30, 45 and 60 minutes after the event (one-off Scheduler
-schedules it makes for itself), so an item is watched as it moves. Public by
-design (Jamie, 2026-10-26: "seems fine if that is public"): it holds ids and
+schedule and on `published` and `received` events. After consuming each
+published send-leg event it schedules checks for 2, 5, 10, 15, 30, 45 and 60
+minutes later. Those delays start at event consumption, not publication time.
+It makes one-off Scheduler schedules for itself, so an item is watched as it
+moves. Public by design (Jamie, 2026-10-26: "seems fine if that is public"): it holds ids and
 times, never a secret and never a visitor. It is Jamie's own tool: never in
 the sites strip, and `noindex` (Jamie, 2026-10-27: "Sync is NOT for the site
 strip. This is a me tool only.").
