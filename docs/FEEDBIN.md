@@ -22,7 +22,9 @@ HTTP versus HTTPS, redirects or different URLs for the same article.
 
 ## Reliability and evidence
 
-`facts/feedbin.json` is the journal. It stores article identities, titles,
+`facts/feedbin.json` is the private runtime journal. CloudFront is explicitly
+denied this object at the bucket policy, independently of request-path
+encoding. The Lambda's existing access is unchanged. It stores article identities, titles,
 URLs, first-observation times, pending state and confirmed save receipts.
 The queue lands before any external request, then each confirmation lands
 before the next item. A crash after a save retries the exact lookup;
@@ -90,7 +92,7 @@ output; logs and failures use generic messages or HTTP status codes.
 ## Continuing to Linking Things
 
 Jamie requested the next leg on 2026-10-27. Hop 23 captures only confirmed
-explicitly public Pinboard records into Links' private S3 inbox. The public
+explicitly public Pinboard records into Links' private S3 inbox. The private
 journal stores only a digest pointer, link id and capture time. A metadata-only
 `pinboard/bookmarks-ready` event wakes Linking Things' AWS publisher. The
 Pinboard credential and private raw account export stay in their existing

@@ -5,6 +5,7 @@ import { shortItem } from './map.mjs';
 import { age, central } from './time.mjs';
 import { landmark } from './folio.mjs';
 import { coverageModel, COVERAGE_LABEL, nextAction } from './coverage.mjs';
+import { bookmarkBatchLink } from './bookmark-batch-page.mjs';
 const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 const STATUS_LABEL = { fresh: 'fresh', moving: 'moving', late: 'late', held: 'held', 'no-fact': 'no fact yet', unknown: 'unknown' };
@@ -131,6 +132,7 @@ ${checks.map((c) => {
   return `<article class="check-action" id="action-${hop.id}-${esc(c.kind)}" tabindex="-1"><h4>${esc(KIND_LABEL[c.kind] ?? c.kind)} · ${esc(action.title)}</h4><p>${esc(action.detail)}</p>
 ${c.row?.why ? `<p class="evidence-note">Recorded result: ${esc(c.row.why)}</p>` : ''}
 ${c.witness ? `<p class="evidence-note">No direct source fact from ${esc(systemName(hop.from))}; this comparison uses ${esc(systemName(c.witness))}.</p>` : ''}
+${c.kind === 'star' && status.bookmark_batch ? `<p class="evidence-note">This comparison follows the newest star only. ${bookmarkBatchLink(status.bookmark_batch)} Older items retain their own batch checks and next steps.</p>` : ''}
 <ul class="check-evidence">${evidencePoint(c.source, c.witness ? 'Source witness' : 'Source', c.kind)}${evidencePoint(c.destination, 'Destination', c.kind)}</ul>
 ${c.row?.reported_at ? `<p class="evidence-note">Arrival reported ${recordedTime(c.row.reported_at)}.</p>` : ''}</article>`;
 }).join('')}

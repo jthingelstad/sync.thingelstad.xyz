@@ -1,5 +1,5 @@
 // Public Pinboard records go to Linking Things' private inbox. The bus and
-// public journal carry identities only; neither carries bookmark commentary.
+// private journal carry identities only; neither carries bookmark commentary.
 import { createHash } from 'node:crypto';
 
 export const BOOKMARK_PREFIX = 'bookmarks/';

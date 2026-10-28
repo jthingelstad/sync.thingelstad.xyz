@@ -21,6 +21,7 @@ import { acknowledgeBlog, blogPlan, BLOG_PRODUCER_KEY, BLOG_PUBLISHER_KEY } from
 import { FEEDBIN_KEY, feedbinConfig, importStars, readFeedbin } from './feedbin.mjs';
 import { pinboardClient } from './pinboard.mjs';
 import { captureBookmark, handoffBookmarks } from './bookmarks.mjs';
+import { collectBookmarkBatch } from './bookmark-batch.mjs';
 
 const s3 = new S3Client({});
 const bus = new EventBridgeClient({});
@@ -64,7 +65,7 @@ export function triggerOf(event, published, received = null) {
   return { type: 'manual' };
 }
 
-export async function run({ now = stamp(), env = process.env, trigger = { type: 'clock' }, journeys = null, history = null, received = null, microblog = null, context = null, pinboard = null } = {}) {
+export async function run({ now = stamp(), env = process.env, trigger = { type: 'clock' }, journeys = null, history = null, received = null, microblog = null, context = null, pinboard = null, remaining = () => Infinity } = {}) {
   const ctx = context ?? {
     now,
     env,
@@ -102,6 +103,8 @@ export async function run({ now = stamp(), env = process.env, trigger = { type: 
     }
   }
   const result = observe({ flows, facts, now, code: env.SYNC_CODE ?? null, trigger, journeys, history: recorded, received: queue });
+  const batch = await collectBookmarkBatch(ctx, { remaining, clock: ctx.clock ?? stamp });
+  if (batch) result.status.bookmark_batch = batch;
   const pages = renderSite(result.status, result.journeys, result.history);
   return { ...result, blog, pages, page: pages['index.html'] };
 }
@@ -267,7 +270,7 @@ export async function handler(event = {}, context = {}) {
   const journeys = await s3Get(bucket, JOURNEYS_KEY);
   const history = await s3Get(bucket, HISTORY_KEY);
   const microblog = process.env.PUBLISHING_BUS ? { producer: await s3Get(bucket, BLOG_PRODUCER_KEY), publisher: await s3Get(bucket, BLOG_PUBLISHER_KEY) } : null;
-  const result = await run({ now, trigger, journeys, history, received: reports, microblog, pinboard });
+  const result = await run({ now, trigger, journeys, history, received: reports, microblog, pinboard, remaining: () => context.getRemainingTimeInMillis?.() ?? Infinity });
   for (const rejection of result.rejected_received) console.error(JSON.stringify({ received_event: 'rejected', ...rejection }));
   const blog_events = await announceBlog(bucket, result.blog, now, process.env.PUBLISHING_BUS);
   await publish(bucket, result);
