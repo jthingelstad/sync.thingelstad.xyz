@@ -73,11 +73,13 @@ export function pocketAtlas(status, journeys, helpers) {
   const routes = flows.hops.map((h) => {
     const { status: state, row, kinds } = hopSummary(status.hops, h.id);
     const item = row?.source ? shortItem(row.kind, row.source) : row?.kind ?? 'connection';
+    const current = status.receipts.some((r) => r.kind === row?.kind && r.item
+      && String(r.item.id) === String(journeys[r.kind]?.item.id));
     return `<article class="pocket-route${h.id === featured ? ' pocket-route--default' : ''}" id="route-${h.id}" tabindex="-1">
 <header class="pocket-route__heading"><h3>${esc(heading(state, placeName(h.to)))}</h3><p>${esc(item)}${item !== row?.kind ? ` · ${esc(row?.kind ?? 'connection')}` : ''}</p></header>
 ${scene(h, row, state, status, journeys, helpers, false)}
 ${scene(h, row, state, status, journeys, helpers, true)}
-<nav class="pocket-actions" aria-label="Details for connection ${h.id}"><a href="#hop-${h.id}">Hop ${h.id} details →</a><a href="#journeys">Journey &amp; arrivals →</a></nav>
+<nav class="pocket-actions" aria-label="Details for connection ${h.id}"><a href="#hop-${h.id}">Hop ${h.id} details →</a>${current ? `<a href="/journeys/#journey-${row.kind}">Journey &amp; arrivals →</a>` : ''}</nav>
 ${row?.measured_from && row.measured_from !== h.from ? `<p class="pocket-kind-note">Measured as ${esc(systemName(row.measured_from))} has it; no source fact yet.</p>` : ''}
 ${kinds.length > 1 ? `<p class="pocket-kind-note">${kinds.length} kinds on this road; the sign shows the worst status. <a href="#hop-${h.id}">All kinds and evidence</a>.</p>` : ''}
 </article>`;

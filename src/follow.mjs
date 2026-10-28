@@ -6,7 +6,8 @@ import { atlasCovers, atlasSvg } from './atlas.mjs';
 import { hopSummary, nodeState, shortItem } from './map.mjs';
 import { holds } from './probe.mjs';
 import { duration, itemLabel, KIND_LABEL, measuredHours } from './stories.mjs';
-import { age, central } from './time.mjs';
+import { age } from './time.mjs';
+import { landmark } from './folio.mjs';
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const CHOICE = { issue: 'Weekly Thing', post: 'Blog post', link: 'Saved link', episode: 'Podcast', audio: 'Audio edition', star: 'Feedbin star' };
@@ -46,17 +47,12 @@ export function followModels(status, journeys) {
   });
 }
 
-export function followPicker(models, selected = null) {
+export function followPicker(models, selected = null, { prefix = '#follow-', all = true } = {}) {
   if (!models.length) return '';
-  return `<nav class="follow-picker" aria-label="Follow an item">${models.map((m) => `<a href="#follow-${m.kind}"${m.kind === selected ? ' aria-current="true"' : ''}><span>${esc(CHOICE[m.kind] ?? m.kind)}</span>${['issue', 'audio'].includes(m.kind) ? `<strong>${esc(itemLabel(m.kind, m.item))}</strong>` : ''}</a>`).join('')}<a href="#all-connections"${selected === null ? ' aria-current="true"' : ''}><span>All connections</span></a></nav>`;
-}
-
-function arrivalText(model, system) {
-  const arrival = model.journey.arrivals?.[system];
-  if (!arrival) return 'Arrival time unmeasured';
-  const lag = measuredHours(model.journey, arrival);
-  const method = arrival.via ? 'Reported' : arrival.observed ? 'Seen' : 'Confirmed';
-  return `${method} ${central(arrival.at)}${lag == null ? arrival.observed ? ' · elapsed time unmeasured' : ' · arrival time unmeasured' : ` · ${duration(lag)} after publication`}${arrival.observed && arrival.resolution_seconds ? ` · ${duration(arrival.resolution_seconds / 3600)} ${arrival.via ? 'resolution' : 'check interval'}` : ''}`;
+  const nav = `<nav class="follow-picker" aria-label="Follow an item">${models.map((m) => `<a href="${prefix}${m.kind}"${m.kind === selected ? ' aria-current="true"' : ''}><span>${esc(CHOICE[m.kind] ?? m.kind)}</span>${['issue', 'audio'].includes(m.kind) ? `<strong>${esc(itemLabel(m.kind, m.item))}</strong>` : ''}</a>`).join('')}${all ? `<a href="#all-connections"${selected === null ? ' aria-current="true"' : ''}><span>All connections</span></a>` : ''}</nav>`;
+  const current = models.find((m) => m.kind === selected);
+  const label = current ? `${CHOICE[current.kind]}${['issue', 'audio'].includes(current.kind) ? ` · ${itemLabel(current.kind, current.item)}` : ''}` : 'All connections';
+  return `<div class="item-picker"><div class="wide-picker">${nav}</div><details class="compact-picker"><summary><span>Follow an item</span><strong>${esc(label)}</strong></summary>${nav}</details></div>`;
 }
 
 function summary(model) {
@@ -66,7 +62,7 @@ function summary(model) {
   return `<div class="follow-summary">${groups.map(([state, title]) => {
     const holders = model.holders.filter((h) => h.state === state);
     if (!holders.length) return '';
-    return `<section class="follow-group follow-group--${state}"><h4>${title}</h4><ul>${holders.map((h) => `<li><a href="#fact-${h.system}">${esc(systemName(h.system))}${h.label ? ` (${esc(h.label)})` : ''}</a><span>${esc(h.origin ? 'Source fact' : state === 'has' ? arrivalText(model, h.system) : state === 'behind' && h.newest ? `Holds ${itemLabel(h.kind, h.newest)}` : h.why ?? 'No readable fact for this item.')}</span></li>`).join('')}</ul></section>`;
+    return `<section class="follow-group follow-group--${state}"><h4>${title}</h4><ul>${holders.map((h) => `<li><a href="#fact-${h.system}">${esc(systemName(h.system))}${h.label ? ` (${esc(h.label)})` : ''}</a>${state === 'behind' && h.newest ? `<span>Holds ${esc(itemLabel(h.kind, h.newest))}</span>` : ''}</li>`).join('')}</ul></section>`;
   }).join('')}</div>`;
 }
 
@@ -105,10 +101,9 @@ function itemMap(model, status) {
 export function followAtlas(status, journeys, models = followModels(status, journeys)) {
   return models.map((model, i) => `<section class="follow-view${i === 0 ? ' follow-view--default' : ''}" id="follow-${model.kind}" tabindex="-1" aria-labelledby="follow-${model.kind}-title">
 ${followPicker(models, model.kind)}
-<header class="follow-heading"><p class="kicker">Follow this item · ${esc(KIND_LABEL[model.kind])}</p><h3 id="follow-${model.kind}-title">${esc(itemLabel(model.kind, model.item))}</h3>${model.item.title && ['issue', 'audio'].includes(model.kind) ? `<p>${esc(model.item.title)}</p>` : ''}<p class="muted">${model.item.at ? `Dated ${esc(central(model.item.at))}` : model.kind === 'star' ? 'Star time unknown' : 'Publication time unknown'} · from ${esc(systemName(model.origin))}</p></header>
+<header class="follow-heading">${landmark(model.origin, 'follow-art')}<div><p class="kicker">Follow this item · ${esc(KIND_LABEL[model.kind])}</p><h2 id="follow-${model.kind}-title">${esc(itemLabel(model.kind, model.item))}</h2>${model.item.title && ['issue', 'audio'].includes(model.kind) ? `<p>${esc(model.item.title)}</p>` : ''}</div></header>
 ${summary(model)}
 ${itemMap(model, status)}
-<details class="follow-connections"><summary>${model.hops.length} connections and their evidence</summary><ol>${model.hops.map((h) => `<li><a href="#hop-${h.id}">${h.id}. ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</a><strong>${esc(followEdgeText(model, h.id).split(' · ').slice(2).join(' · '))}</strong>${witness(h) ? `<span>${esc(witness(h))}</span>` : ''}${h.why ? `<span>${esc(h.why)}</span>` : ''}</li>`).join('')}</ol></details>
-<p class="follow-note">Only this item’s kinds are shown. “Waiting upstream” means the source has not confirmed this item; matching older copies do not prove arrival. <a href="#journey-${model.kind}">This item’s journey lanes ↓</a> · <a href="#history">History ↓</a></p>
+<p class="follow-actions"><a class="primary-link" href="/journeys/#journey-${model.kind}">View journey &amp; receipts →</a></p>
 </section>`).join('\n');
 }

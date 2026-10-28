@@ -12,7 +12,7 @@ import { followUps, mergePublished, publishedEvent, receivedEvent } from './even
 import { collect, PUBLISHER_FACT_KEY } from './facts.mjs';
 import { flows } from './flows.mjs';
 import { archiveKey, copyHistory, summarise } from './journey.mjs';
-import { renderPage } from './page.mjs';
+import { renderSite } from './page.mjs';
 import { probe } from './probe.mjs';
 import { copyReceived, queueReceived, RECEIVED_KEY, reportedFacts } from './received.mjs';
 import { observe } from './observe.mjs';
@@ -102,7 +102,8 @@ export async function run({ now = stamp(), env = process.env, trigger = { type: 
     }
   }
   const result = observe({ flows, facts, now, code: env.SYNC_CODE ?? null, trigger, journeys, history: recorded, received: queue });
-  return { ...result, blog, page: renderPage(result.status, result.journeys, result.history) };
+  const pages = renderSite(result.status, result.journeys, result.history);
+  return { ...result, blog, pages, page: pages['index.html'] };
 }
 
 const emitBlog = (event, eventBus) => bus.send(new PutEventsCommand({ Entries: [{ EventBusName: eventBus, Source: event.source, DetailType: event['detail-type'], Detail: JSON.stringify(event.detail), Time: new Date(event.detail.at) }] }));
@@ -126,12 +127,12 @@ export async function announceBlog(bucket, blog, now, eventBus, emit = emitBlog,
   return made;
 }
 
-export async function publish(bucket, { status, journeys, history, retired = [], received, page }, write = put) {
+export async function publish(bucket, { status, journeys, history, retired = [], received, page, pages }, write = put) {
   // A failed archive cannot advance the index or discard the current journey.
   for (const r of retired) await write(bucket, r.key, JSON.stringify(r.journey, null, 1));
   await write(bucket, HISTORY_KEY, JSON.stringify(history, null, 1));
   await Promise.all([
-    write(bucket, 'index.html', page, 'text/html; charset=utf-8'),
+    ...Object.entries(pages ?? { 'index.html': page }).map(([key, html]) => write(bucket, key, html, 'text/html; charset=utf-8')),
     write(bucket, 'status.json', JSON.stringify(status, null, 1)),
     write(bucket, JOURNEYS_KEY, JSON.stringify(journeys, null, 1)),
     ...status.receipts.map((r) => write(bucket, `receipts/${r.kind}.json`, JSON.stringify(r, null, 1))),

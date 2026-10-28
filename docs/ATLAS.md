@@ -1,5 +1,12 @@
 # The storybook atlas
 
+The 2026-10-28 [field guide redesign](FIELD-GUIDE.md) extends this atlas's
+look across four focused pages. The map keeps compact holder summaries;
+stories, lanes and receipts are on Journeys, finished journeys on History,
+and tables and facts on Records. Signs and places link to their Records
+fragments. The older deployment notes below describe the atlas's original
+one-page integration.
+
 Jamie chose the storybook atlas on 2026-10-27, approved its local preview with
 “Go”, and approved production deployment with “Deploy to production.” The
 approved references are the desktop atlas and paired portrait/landscape

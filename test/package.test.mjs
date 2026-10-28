@@ -48,4 +48,8 @@ test('the deployable package includes both atlas assets beside the renderer', as
     assert.ok(packaged?.length > 10000, `${name} is present, not a placeholder`);
     assert.ok(packaged.equals(await fs.readFile(new URL(`../data/atlas/${name}.webp`, import.meta.url))));
   }
+  for (const name of ['fraunces.woff2', 'source-sans-3.woff2', 'OFL-Fraunces.txt', 'OFL-SourceSans3.txt']) {
+    const packaged = files.get(`data/atlas/fonts/${name}`);
+    assert.ok(packaged?.equals(await fs.readFile(new URL(`../data/atlas/fonts/${name}`, import.meta.url))), name);
+  }
 });

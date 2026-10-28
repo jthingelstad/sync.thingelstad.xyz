@@ -146,11 +146,15 @@ This exception does not authorize repairs on any other hop, including WT354.
   An id seen again after an origin's reader failed resumes its recorded
   arrivals from the index, or its archive once outside the last fifty;
   a fallback must not erase a measured lag.
-- `src/page.mjs` — the HTML. No script, `--jt-` colours, Central time. It
-  opens with the item-focused atlas, then this week's journey stories,
-  arrival lanes and ten finished journeys per kind; the receipts, matrix, hops and facts
-  follow (Jamie, 2026-10-26: "visual and interesting. Pipes and flows."). The
-  sites strip and story in the title/description wait for Jamie.
+- `src/page.mjs` — four scriptless HTML pages from one snapshot, in Central
+  time: Map (`/`), Journeys (`/journeys/`), History (`/history/`) and Records
+  (`/records/`). The home page follows one item; stories, arrival lanes and
+  receipts have their own page, as do ten finished journeys per kind. Records
+  selects Inventory, one Hop, or Facts. Old evidence fragments offer a native
+  link to their new page. `src/evidence.mjs` owns evidence tables and receipts;
+  `src/folio.mjs` reuses decorative atlas landmarks. Jamie, 2026-10-28:
+  "The site is just way too much on one page too." `docs/FIELD-GUIDE.md`
+  records the redesign. No sites strip; always noindex.
 - `src/follow.mjs` — follow the current item of a kind. Native fragment links
   select its receipt, holders and atlas roads; unrelated kinds cannot mask
   its state. Matching older upstream/downstream copies never prove the
@@ -166,8 +170,11 @@ This exception does not authorize repairs on any other hop, including WT354.
 - `src/page.css`, `src/style.mjs`, `data/style/` — the page's clothes over
   the shared type. `npm run style:sync` vendors tokens, fonts and licences
   byte for byte; `style:check` catches drift. The fonts and CSS are inlined
-  so opening the page makes no font-service or asset request. Inter is 19px,
-  Inter Tight heads use the house scale, and no sans text is italic.
+  so opening the page makes no font-service or asset request. Jamie authorized
+  custom type on 2026-10-28: Fraunces upright headings and controls, Source
+  Sans 3 upright body at 19px, with licences and provenance in
+  `data/atlas/fonts/`. The field guide overrides the shared faces locally;
+  no sans text is italic.
 - `src/map.mjs`, `src/atlas.mjs`, `src/pocket.mjs`, `data/atlas/` — the storybook atlas,
   drawn on every run as SVG over two inline illustration assets from the vendored
   `data/flows.json` and this run's status: one node per system saying what

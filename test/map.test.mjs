@@ -65,14 +65,16 @@ test('the map colours each hop by its worst kind and marks systems without a fac
   // The page carries the map, and each hop's label has rows to open.
   const journeys = advanceAll(await journeysFixture(), status);
   const page = renderPage(status, journeys);
+  const records = renderPage(status, journeys, null, 'records');
+  const journal = renderPage(status, journeys, null, 'journeys');
   assert.match(page, /<div class="map"[^>]*>\s*<svg/);
-  assert.match(page, /<tr class="status--[a-z-]+" id="hop-6">/);
-  assert.match(page, /<h2 id="journeys">Journeys<\/h2>/);
-  assert.match(page, /<strong>2 min 1 sec<\/strong> · seen Sat Oct 24, 7:02 a.m. CDT/);
-  assert.match(page, /not yet · 2 d 9 h 59 min 48 sec so far/);
-  assert.match(page, /lane--no-fact">\s*<span class="lane__name">Buttondown/);
+  assert.match(records, /<tr class="status--[a-z-]+" id="hop-6">/);
+  assert.match(page, /href="\/records\/#hop-6"/);
+  assert.match(journal, /<strong>2 min 1 sec<\/strong> · seen Sat Oct 24, 7:02 a.m. CDT/);
+  assert.match(journal, /not yet · 2 d 9 h 59 min 48 sec so far/);
+  assert.match(journal, /lane--no-fact">\s*<span class="lane__name">[\s\S]*?<span>Buttondown/);
   assert.match(page, /Checked Mon Oct 26, 5:00 p.m. CDT, on the half-hour clock/);
   assert.doesNotMatch(page, /<script/);
-  assert.doesNotMatch(renderPage(status), /class="lane lane--/, 'no journeys, no lanes');
-  assert.match(renderPage(status), /No item is on a journey yet/);
+  assert.doesNotMatch(renderPage(status, {}, null, 'journeys'), /class="lane lane--/, 'no journeys, no lanes');
+  assert.match(renderPage(status, {}, null, 'journeys'), /No item is on a journey yet/);
 });

@@ -1,4 +1,3 @@
-Each lane is time since publication, with its scale above. A circle says seen in a poll; a square says reported by an event. A dashed marker is the median from finished, measured journeys. Polls give the check interval when known; reports have one-second resolution. First confirmations have no measured lag and no time mark.
 Weekly Thing issue
 WT356
 from WT Builder

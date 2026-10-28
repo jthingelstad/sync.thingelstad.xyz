@@ -8,10 +8,11 @@ const root = fileURLToPath(new URL('../.build/site/', import.meta.url));
 for (const name of await scenarioNames()) {
   const out = path.join(root, name);
   const result = renderScenario(await loadScenario(name));
-  result.page = result.page
-    .replace('<body>', `<body><aside class="preview-note">Scenario preview · ${name.replaceAll('-', ' ')} · fixed test data. <a href="/#map">Published snapshot</a></aside>`)
+  result.pages = Object.fromEntries(Object.entries(result.pages).map(([key, html]) => [key, html
+    .replace(/<body\b[^>]*>/, (body) => `${body}<aside class="preview-note">Scenario preview · ${name.replaceAll('-', ' ')} · fixed test data. <a href="/#map">Published snapshot</a></aside>`)
     .replace(/href="\/(?!\/)/g, `href="/${name}/`)
-    .replace(`href="/${name}/#map"`, 'href="/#map"');
+    .replace(`href="/${name}/#map"`, 'href="/#map"')]));
+  result.page = result.pages['index.html'];
   await writeSite(out, result);
   console.log(path.join(out, 'index.html'));
 }

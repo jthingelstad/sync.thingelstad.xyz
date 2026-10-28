@@ -94,6 +94,7 @@ export async function packageProbe() {
     { name: 'data/flows.json', data: await fs.readFile(path.join(ROOT, 'data/flows.json')) },
     { name: 'data/github-repositories.json', data: await fs.readFile(path.join(ROOT, 'data/github-repositories.json')) },
     ...(await Promise.all(['landmarks.webp', 'terrain.webp'].map(async (f) => ({ name: `data/atlas/${f}`, data: await fs.readFile(path.join(ROOT, 'data/atlas', f)) })))),
+    ...(await Promise.all((await fs.readdir(path.join(ROOT, 'data/atlas/fonts'))).map(async (f) => ({ name: `data/atlas/fonts/${f}`, data: await fs.readFile(path.join(ROOT, 'data/atlas/fonts', f)) })))),
     ...(await Promise.all(style.map(async (f) => ({ name: `data/style/${f}`, data: await fs.readFile(path.join(ROOT, 'data/style', f)) })))),
     { name: 'package.json', data: Buffer.from('{"type":"module"}\n') },
     ...(await vendorPele()),

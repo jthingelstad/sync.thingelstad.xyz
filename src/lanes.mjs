@@ -4,6 +4,7 @@ import { systemName } from './flows.mjs';
 import { typicalLag } from './journey.mjs';
 import { central, hoursBetween } from './time.mjs';
 import { duration, itemLabel, KIND_LABEL, measuredHours } from './stories.mjs';
+import { landmark } from './folio.mjs';
 
 const esc = (value) => String(value ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const nonnegative = (n) => Number.isFinite(n) && n >= 0 ? n : null;
@@ -28,7 +29,7 @@ export function laneModel(journey, history, now) {
 
 function rowText(row) {
   if (row.lag != null) return `<strong>${esc(duration(row.lag))}</strong> · ${row.state} ${esc(central(row.arrival.at))}${row.arrival.resolution_seconds ? `<span class="muted"> · ${esc(duration(row.arrival.resolution_seconds / 3600))} ${row.state === 'reported' ? 'resolution' : 'check interval'}</span>` : ''}`;
-  if (row.arrival) return `confirmed ${esc(central(row.arrival.at))}<span class="muted"> · arrival unmeasured</span>`;
+  if (row.arrival) return `${row.arrival.via ? 'reported' : row.arrival.observed ? 'seen' : 'confirmed'} ${esc(central(row.arrival.at))}<span class="muted"> · ${row.arrival.observed ? 'elapsed time unmeasured' : 'arrival unmeasured'}${row.arrival.observed && row.arrival.resolution_seconds ? ` · ${esc(duration(row.arrival.resolution_seconds / 3600))} ${row.arrival.via ? 'resolution' : 'check interval'}` : ''}</span>`;
   if (row.state === 'waiting') return `not yet${row.elapsed == null ? '' : ` · ${esc(duration(row.elapsed))} so far`}`;
   return row.state === 'unknown' ? 'reader unavailable' : 'no fact yet';
 }
@@ -40,7 +41,7 @@ export function journeyLanes(journey, history, now) {
 <p class="journey__date muted">${journey.item.at ? `dated ${esc(central(journey.item.at))}` : 'publication time unknown'} · watching since ${esc(central(journey.started_at))}</p>
 <div class="lane-axis" aria-hidden="true"><span>Publication</span><span>${esc(duration(horizon / 2))}</span><span>${esc(duration(horizon))}</span></div>
 <ol class="lanes">${rows.map((row) => `<li class="lane lane--${row.state}">
-<span class="lane__name">${esc(systemName(row.system))}</span>
+<span class="lane__name">${landmark(row.system)}<span>${esc(systemName(row.system))}</span></span>
 <span class="lane__track" aria-hidden="true">${row.typical == null ? '' : `<span class="lane__typical" style="left:${percent(row.typical, horizon)}%"></span>`}${row.lag == null ? '' : `<span class="lane__travel" style="width:${percent(row.lag, horizon)}%"></span><span class="lane__arrival" style="left:${percent(row.lag, horizon)}%"></span>`}${row.elapsed == null ? '' : `<span class="lane__waiting" style="width:${percent(row.elapsed, horizon)}%"></span>`}${row.state === 'unmeasured' ? '<span class="lane__unmeasured">unmeasured</span>' : ''}</span>
 <span class="lane__detail">${rowText(row)}${row.typical == null ? '' : `<span class="lane__baseline muted">typical ${esc(duration(row.typical))} · ${row.samples} measured ${row.samples === 1 ? 'journey' : 'journeys'}</span>`}</span>
 </li>`).join('\n')}</ol>

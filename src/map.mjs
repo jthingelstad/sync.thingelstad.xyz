@@ -101,7 +101,7 @@ export function mapSource(status, journeys) {
  */
 export function pipeMapSvg(status, journeys = {}) {
   const key = new Map(flows.systems.map((s, i) => [s.id, `n${i}`]));
-  let { svg } = render(mapSource(status, journeys), { fontFamily: 'Inter, system-ui, sans-serif', fontSize: 17, padding: 24, idPrefix: 'map', autoDirection: false });
+  let { svg } = render(mapSource(status, journeys), { fontFamily: 'Source Sans 3, system-ui, sans-serif', fontSize: 17, padding: 24, idPrefix: 'map', autoDirection: false });
   // Pele fits the drawing to its container; the page shows it at its own
   // size and scrolls, so the labels stay readable.
   svg = svg.replace('max-width:100%;height:auto;', '');
