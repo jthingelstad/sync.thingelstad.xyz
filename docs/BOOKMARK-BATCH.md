@@ -176,4 +176,48 @@ unchecked follow-up whose identity is absent. Map and connection guidance
 retain that distinction beside the fresh newest-star comparison. Native and
 keyboard disclosures, guidance, Back and reload pass; no overflow, script or
 console error. The normal viewport control works with the refreshed runtime;
-no DevTools access was requested. Release awaits independent review.
+no DevTools access was requested.
+
+### Fairness release receipt
+
+Application head `ec06d427d1f30d79e531261104ca7b56fadf2ff2` passed independent
+engineering review and exact-head CI (run `40730019130`). Automated code review
+completed on that same head with no findings. The established cloud-engineer
+plan/apply released package
+`cba0e74cb9dd39f0070876c9441a8faafb1f8aa16b8a327a34ded9e747ff495b` at
+12:01:46 p.m. CDT. Only existing package references changed; the deployed
+template matches the reviewed template. Reserved concurrency was verified as
+one before and after deployment. The existing journal deny and access logging
+remain in place, with no new permission, credential, resource or schedule.
+
+The whole-site invalidation `I12BYL07RK08ZGG0GB7KJB4LE8` was observed
+**Completed** at 12:03:34. Both hostnames serve the expected package. The
+canonical journal path and two encoded aliases return 404 to HEAD requests
+through both hostnames; no raw journal body or access log was requested.
+
+The actual scheduled observation started at 12:04:25 and finished its batch
+at 12:04:50. It checked six public records and reported retained attempts for
+16 of 52 candidates. A separate normal manual observation, invoked with an
+empty payload at 12:07:59, started at 12:08:00 and finished its batch at
+12:08:25. It checked six different public records, and retained history grew
+to 22 of 52. Public exact-record and association readbacks passed for both
+samples. Every row had a fresh source check. The second invocation selected
+no clock importer, follow-up or publishing event; its report contains no blog
+events. This confirms private progress survives between real invocations
+without reading or publishing cursor keys. Persistent gaps and crash recovery
+remain regression-test evidence, rather than manufactured live failures.
+
+The current page accurately distinguishes six fresh public rows from 22
+retained attempts, with 30 candidates lacking retained history. That history
+is not a current full-account audit. Live in-app browser checks at actual
+1280- and 390-pixel widths confirm the counts, real timestamps and working
+evidence disclosures, with no overflow, script or console error. A stale
+browser handle was recovered through the supported runtime reset; no DevTools
+access was requested. Temporary viewport overrides were reset after testing.
+
+The rate schedule remains enabled every 30 minutes. Its next natural
+observation is expected around 12:34 p.m. CDT; that future execution is not
+claimed by this receipt. A crash after public publication but before the
+private checkpoint can repeat read checks; it cannot replay an import on a
+non-clock observation. The 27 unobserved connection/kind checks and the
+separate natural nightly WT354 acceptance remain open work.
