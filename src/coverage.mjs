@@ -2,6 +2,7 @@
 // in an existing snapshot; it never collects, retries or repairs a handoff.
 import { flows, systemName } from './flows.mjs';
 import { MATRIX_KINDS } from './probe.mjs';
+import { isRegistryHop } from './registry.mjs';
 
 const COMPARABLE = new Set(['fresh', 'moving', 'late', 'held']);
 export const COVERAGE_LABEL = { comparable: 'Comparable evidence', unobserved: 'Unobserved', unavailable: 'Reader unavailable' };
@@ -11,21 +12,24 @@ export function coverageModel(status, contract = flows) {
   const results = new Map((status.hops ?? []).map((r) => [`${r.id}:${r.kind}`, r]));
   const checks = contract.hops.flatMap((hop) => hop.kinds.map((kind) => {
     const row = results.get(`${hop.id}:${kind}`);
+    const registry = isRegistryHop(hop, kind);
+    const sourceItem = registry ? facts[hop.from]?.registry : facts[hop.from]?.newest?.[kind];
+    const destinationItem = registry ? facts[hop.to]?.registry : facts[hop.to]?.newest?.[kind];
     const from = row?.measured_from ?? hop.from;
     const absence = facts[hop.to]?.absent?.[kind];
     const absent = Boolean(row?.source && absence && String(absence.id) === String(row.source.id));
     let state, reason;
     if (row?.status === 'unknown') [state, reason] = ['unavailable', 'reader'];
     else if (COMPARABLE.has(row?.status) && row.source && (row.target || absent)) [state, reason] = ['comparable', 'comparison'];
-    else if (row?.status === 'no-fact') [state, reason] = ['unobserved', MATRIX_KINDS.includes(kind) ? 'endpoint' : 'kind'];
+    else if (row?.status === 'no-fact') [state, reason] = ['unobserved', registry || MATRIX_KINDS.includes(kind) ? 'endpoint' : 'kind'];
     else [state, reason] = ['unobserved', 'result'];
     const missing = [
-      !facts[hop.from]?.newest?.[kind] && { role: 'source', system: hop.from },
-      !facts[hop.to]?.newest?.[kind] && !absent && { role: 'destination', system: hop.to },
+      !sourceItem && { role: 'source', system: hop.from },
+      !destinationItem && !absent && { role: 'destination', system: hop.to },
     ].filter(Boolean);
     return { hop, kind, row, state, reason, missing, witness: from !== hop.from ? from : null,
-      source: { system: from, item: row?.source ?? facts[from]?.newest?.[kind], checked_at: facts[from]?.checked_at },
-      destination: { system: hop.to, item: row?.target ?? facts[hop.to]?.newest?.[kind], checked_at: facts[hop.to]?.checked_at, absent },
+      source: { system: from, item: row?.source ?? (registry ? sourceItem : facts[from]?.newest?.[kind]), checked_at: facts[from]?.checked_at },
+      destination: { system: hop.to, item: row?.target ?? destinationItem, checked_at: facts[hop.to]?.checked_at, absent },
     };
   }));
   const count = (state) => checks.filter((c) => c.state === state).length;
@@ -40,6 +44,12 @@ export function coverageModel(status, contract = flows) {
 /** Guidance is conditional on evidence, not a diagnosis of the worker. */
 export function nextAction(check) {
   const { hop, kind, row, state, reason, missing } = check;
+  if (isRegistryHop(hop, kind)) {
+    if (state === 'unavailable') return { title: 'Check the registry evidence reader', detail: 'Restore the public things.json read or the library object HEAD before judging the import. Reader failure does not prove the archive lacks the registry.' };
+    if (state === 'unobserved') return { title: 'Wait for stored snapshot evidence', detail: 'Inspect the public registry and library metadata below. A normal library upload from the updated producer adds the revision of its exact stored snapshot. Missing metadata is not proof of a missing import. No import or rebuild is triggered here.' };
+    if (row.comparison === 'matches') return { title: 'Registry archive snapshot matches', detail: 'The current public registry revision matches the imported snapshot in the versioned library object. This proves archive storage only; it does not establish corpus freshness, serving, or individual Thing publication times.' };
+    return { title: 'Inspect the next ordinary Things import', detail: 'The archive snapshot and current public registry differ. Inspect the normal library round’s Things pull and successful conditional upload, then compare the next observed library version. No source change time is known, so no wait deadline or propagation lag is inferred. This page does not ingest or rebuild.' };
+  }
   if (state === 'unavailable') return {
     title: 'Check the reader first',
     detail: 'Inspect the linked facts and restore a successful read before deciding whether the item is missing. A reader failure is not evidence of an absent item.',

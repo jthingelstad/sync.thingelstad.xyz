@@ -16,6 +16,7 @@ import { createHash } from 'node:crypto';
 import { sourceReceiptTodo } from './blog.mjs';
 import { FEEDBIN_KEY, feedbinConfig, feedbinFact, readFeedbin } from './feedbin.mjs';
 import { pinboardClient } from './pinboard.mjs';
+import { REGISTRY_URL, registrySource, registryStored } from './registry.mjs';
 
 export const URLS = {
   weeklyFeed: 'https://weekly.thingelstad.com/feed.json',
@@ -300,8 +301,17 @@ const READERS = {
   },
 
   async xyz(ctx) {
-    const entry = parseActivity(await text(ctx, URLS.xyzActivity));
-    return { newest: {}, extra: { activity_at: entry?.at ?? null, activity: entry?.title ?? null } };
+    const fact = { newest: {}, extra: {} };
+    try {
+      fact.registry = registrySource(JSON.parse(await text(ctx, REGISTRY_URL)));
+      fact.extra.registry = fact.registry;
+    } catch (error) { fact.errors = { registry: readerFailure(error) }; }
+    try {
+      const entry = parseActivity(await text(ctx, URLS.xyzActivity));
+      fact.extra.activity_at = entry?.at ?? null;
+      fact.extra.activity = entry?.title ?? null;
+    } catch { fact.extra.activity_unavailable = true; }
+    return fact;
   },
 
   // Each corpus object says what it holds in its S3 metadata (since
@@ -312,6 +322,9 @@ const READERS = {
     for (const [name, key] of Object.entries(LIBRARIAN_ARTIFACTS)) {
       const head = await ctx.s3Head(LIBRARIAN_BUCKET, key);
       const meta = head.metadata ?? {};
+      if (name === 'library') {
+        extra.registry = registryStored(head);
+      }
       extra[name] = {
         key,
         version_id: head.versionId ?? null,
@@ -327,7 +340,7 @@ const READERS = {
       const item = parseCorpusFact(kind, (await ctx.s3Head(LIBRARIAN_BUCKET, key)).metadata);
       if (item) newest[kind] = item;
     }
-    const fact = { newest, extra };
+    const fact = { newest, extra, registry: extra.registry };
     if (!Object.keys(newest).length) fact.none = 'The corpus objects carry no newest-item metadata yet (they will after their next upload); these are the artifact times in S3.';
     return fact;
   },

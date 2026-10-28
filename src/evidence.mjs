@@ -11,9 +11,9 @@ const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').
 const STATUS_LABEL = { fresh: 'fresh', moving: 'moving', late: 'late', held: 'held', 'no-fact': 'no fact yet', unknown: 'unknown' };
 const HOLDER_LABEL = { has: 'has it', behind: 'behind', 'no-fact': 'no fact yet', unknown: 'unknown' };
 
-const pill = (status) => `<span class="pill pill--${esc(status)}">${esc(STATUS_LABEL[status] ?? status)}</span>`;
+const pill = (status, label = null) => `<span class="pill pill--${esc(status)}">${esc(label ?? STATUS_LABEL[status] ?? status)}</span>`;
 
-const when = (item) => (item?.at ? `<span class="muted">${esc(central(item.at))}</span>` : '');
+const when = (item) => (item?.scope === 'public-registry-snapshot' ? '<span class="muted">Whole public registry · archive storage only</span>' : item?.at ? `<span class="muted">${esc(central(item.at))}</span>` : '');
 
 export function receiptCard(r) {
   if (!r.item) {
@@ -70,7 +70,7 @@ export function hopsTable(hops) {
 <td>${h.source ? `${esc(itemLabel(h.kind, h.source))}${h.measured_from && h.measured_from !== h.from ? ` <span class="muted">(as ${esc(systemName(h.measured_from))} has it)</span>` : ''}<br>${when(h.source)}` : '<span class="muted">—</span>'}</td>
 <td>${h.target ? `${esc(itemLabel(h.kind, h.target))}<br>${when(h.target)}` : '<span class="muted">—</span>'}</td>
 <td class="num">${h.lag_hours == null ? '<span class="muted">—</span>' : `${esc(age(h.lag_hours))}<br><span class="muted">of ${esc(age(h.expected_lag_hours))}</span>`}</td>
-<td>${pill(h.status)}${h.why ? `<br><span class="muted">${esc(h.why)}</span>` : ''}</td>
+<td>${pill(h.status, h.comparison)}${h.why ? `<br><span class="muted">${esc(h.why)}</span>` : ''}</td>
 </tr>`,
     )
     .join('\n');
@@ -84,14 +84,16 @@ export function factsList(facts) {
   return entries
     .map(([id, fact]) => {
       const sys = systemsById.get(id);
-      const state = fact.error ? pill('unknown') : fact.none && !Object.keys(fact.newest ?? {}).length ? pill('no-fact') : pill('fresh');
+      const error = fact.error ?? fact.errors?.registry;
+      const state = error ? pill('unknown') : fact.none && !fact.registry && !Object.keys(fact.newest ?? {}).length ? pill('no-fact') : pill('fresh');
       const newest = Object.entries(fact.newest ?? {})
         .map(([kind, item]) => `<li><code>${esc(kind)}</code> ${esc(itemLabel(kind, item))}${item.at ? ` <span class="muted">${esc(central(item.at))}</span>` : ''}${item.url ? ` <a class="muted" href="${esc(item.url)}">↗</a>` : ''}</li>`)
         .join('');
       const extra = Object.keys(fact.extra ?? {}).length ? `<pre>${esc(JSON.stringify(fact.extra, null, 1))}</pre>` : '';
-      return `<details class="fact" id="fact-${esc(id)}"><summary>${state} ${landmark(id, 'fact-art')}<strong>${esc(sys?.name ?? id)}</strong>${fact.error ? ` <span class="muted">${esc(fact.error)}</span>` : fact.none ? ` <span class="muted">${esc(fact.none)}</span>` : ''}</summary>
+      return `<details class="fact" id="fact-${esc(id)}"><summary>${state} ${landmark(id, 'fact-art')}<strong>${esc(sys?.name ?? id)}</strong>${error ? ` <span class="muted">${esc(error)}</span>` : fact.none ? ` <span class="muted">${esc(fact.none)}</span>` : ''}</summary>
 ${sys?.fact ? `<p class="muted">${esc(sys.fact)}</p>` : ''}
 ${newest ? `<ul>${newest}</ul>` : ''}
+${fact.registry ? `<p><a href="${esc(fact.registry.url)}">${esc(itemLabel('thing', fact.registry))}</a> · whole public registry; archive storage only</p>` : ''}
 ${extra}
 </details>`;
     })
@@ -117,7 +119,8 @@ ${groups.filter(([state]) => model[state]).map(([state, title]) => `<details cla
 
 function evidencePoint(point, role, kind) {
   const value = point.absent ? 'Explicit absence recorded for this item' : point.item ? itemLabel(kind, point.item) : `No readable ${kind} fact`;
-  return `<li><a href="#fact-${esc(point.system)}">${esc(role)} · ${esc(systemName(point.system))}</a><span>${esc(value)}</span><span>Evidence checked ${recordedTime(point.checked_at)}</span></li>`;
+  const stored = point.item?.scope === 'public-registry-snapshot' && point.item.library_version;
+  return `<li><a href="#fact-${esc(point.system)}">${esc(role)} · ${esc(systemName(point.system))}</a><span>${esc(value)}</span><span>Evidence checked ${recordedTime(point.checked_at)}</span>${stored ? `<span>Library uploaded ${recordedTime(point.item.uploaded_at)} · version <code>${esc(point.item.library_version)}</code></span>` : ''}</li>`;
 }
 
 export function connectionActions(hop, status, checks) {

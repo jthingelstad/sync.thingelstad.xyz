@@ -14,6 +14,7 @@ import { advanceAll, historyFor } from '../src/journey.mjs';
 import { renderNotFound, renderSite } from '../src/page.mjs';
 import { probe } from '../src/probe.mjs';
 import { loadScenario, pageText, renderScenario } from './scenarios.mjs';
+import { REGISTRY_URL } from '../src/registry.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, '.build/site');
@@ -38,6 +39,7 @@ const FIXTURE_FACTS = {
 export async function fixtureContext(now = '2026-10-26T22:00:00Z', { publisher = true } = {}) {
   const read = (name) => fs.readFile(path.join(ROOT, 'test/fixtures', name), 'utf8');
   const bodies = {
+    [REGISTRY_URL]: async () => JSON.stringify(JSON.parse(await read('registry-revisions.json')).vectors[0].payload),
     [URLS.weeklyFeed]: () => read('weekly-feed.json'),
     [URLS.weeklyPodcast]: () => read('weekly-podcast.xml'),
     [URLS.blogFeed]: () => read('blog-feed.json'),

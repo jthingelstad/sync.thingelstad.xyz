@@ -7,6 +7,7 @@ export const KIND_LABEL = { issue: 'Weekly Thing issue', post: 'Blog post', link
 
 export function itemLabel(kind, item) {
   if (!item) return '';
+  if (item.scope === 'public-registry-snapshot') return `Registry snapshot ${String(item.id).slice(0, 10)}`;
   if (kind === 'issue' || kind === 'audio') return /^\d+$/.test(String(item.id)) ? `WT${item.id}` : String(item.id);
   if (kind === 'link') return item.at ? `saved ${central(item.at)}` : String(item.id);
   if (kind === 'post' && !String(item.title ?? '').trim()) return item.at ? `post ${centralDay(item.at)}` : String(item.id);
