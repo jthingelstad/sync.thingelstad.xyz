@@ -91,7 +91,7 @@ Counts separate record presence from matching, empty, different and unavailable
 notes. Connection guidance names the sampled view without claiming a newest-note
 fact. There is no page overflow, script, console error or canary content in the
 DOM. Normal viewport overrides were reset, with no DevTools access requested.
-Independent review and live release acceptance are still pending for this slice.
+The reviewed release and live acceptance receipt is recorded below.
 
 ## Bounds and next actions
 
@@ -277,3 +277,55 @@ claimed by this receipt. A crash after public publication but before the
 private checkpoint can repeat read checks; it cannot replay an import on a
 non-clock observation. The 27 unobserved connection/kind checks and the
 separate natural nightly WT354 acceptance remain open work.
+
+## Note-parity release receipt
+
+Application head `1d5901eeeec97126b25362277ef035821283b02c` passed independent
+engineering review and exact-head CI (run `40737028233`). Automated code review
+also completed on that exact head with no findings. All 148 tests and ten
+scenarios pass. The established cloud-engineer plan/apply released package
+`a1139bf428ab97f6797d1cf68430546d89aa35000f01b9d34654c2ade01a6fda` at
+12:53:38 p.m. CDT on October 28. Only `CodeKey` and the pinned package's
+`CodeVersion` changed. Its S3 checksum and version match the prepared artifact.
+The live template matches review; reserved concurrency is one before and after.
+The journal deny, access logging, grants, credentials and schedule are unchanged.
+
+Whole-site invalidation `IDJ9WUGFP8RVAYWWEY73NZBCVV` was observed
+**Completed** at 12:54:52. Both hostnames' health and all four pages report the
+expected package. The canonical journal path and two encoded aliases return
+404 to HEAD through both hostnames. No raw journal, credential, access log,
+real note contents or note digest was printed or saved in acceptance evidence.
+Exact public record bodies were used only in memory to verify identity and
+the destination note field's shape. Public note metadata is strictly one of
+the comparison states and its two real check times.
+
+The deployment observation started at 12:53:08 and completed its batch at
+12:53:34. Its six public records and associations were present: one nonempty
+note matched and five pairs were empty. There were no differences, missing
+fields, mismatches, failed reads or deferrals in that sample. Retained attempt
+history had advanced from the natural 12:34 baseline's 28 to 32 of 52.
+
+A separate normal manual observation started at 12:56:28 and completed its
+batch at 12:56:53. Its six records were different from the deployment sample;
+one nonempty note matched and five pairs were empty again. Retained history
+advanced to 38 of 52, with 14 lacking retained history and no eviction. This
+is 12 distinct public records across two actual observations, not a current
+full-account audit. The manual payload was empty, selecting no clock import,
+publishing replay or repair. Both invocations reported no follow-ups or blog
+events.
+
+All six journey identities and their recorded arrivals match the captured
+pre-release baseline. The newest-star journey and receipt still match the
+source fact. Coverage remains 14 comparable checks out of 41, with 27
+unobserved and no unavailable readers; connection 5's note kind remains
+unobserved. Sampled note comparisons do not manufacture a newest-note fact.
+
+Live in-app browser checks at actual 1280 by 720 and 390 by 844 verify the
+current counts, note disclosure and separate source/destination check times,
+keyboard access, Map-to-batch navigation, connection guidance, Back and reload.
+There is no page overflow, script or console error. No real note text appears
+in these views. Temporary viewport overrides were reset; no DevTools access
+was requested. Stale/different and other failure cases remain offline regression
+evidence rather than manufactured production failures. The next natural Sync
+observation is expected around 1:04 p.m. CDT; this receipt does not claim that
+future execution or the separate natural nightly WT354 acceptance.
