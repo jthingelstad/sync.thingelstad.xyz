@@ -78,3 +78,50 @@ The deployed phone view contains all 41 checks and its dated next steps.
 Both the independent engineering review and GitHub Codex review of application
 head `ffe850f92302f7eac4a24a135bf86f16809230c1` completed with no blockers or
 findings; inline review comments were empty. This receipt changes no code.
+
+## WT354 repair acceptance
+
+The bounded manual test passed at 8:28:24 a.m. CDT on October 28, after the
+existing Links main release pipeline completed successfully. The source was
+Weekly revision `8495f487cdeba183014b30fbf85579363139ef08`; the published Links
+merge was `139ff5989ac5e452c04aeec94899f2ee42572899`
+([Links PR #32](https://github.com/jthingelstad/links.thingelstad.xyz/pull/32),
+[release run](https://github.com/jthingelstad/links.thingelstad.xyz/actions/runs/40695212976)).
+
+| Evidence | Before | Verified after publication |
+| --- | --- | --- |
+| Public issue | `/issues/354/` answered 404 | 23 saved links, seven Notable and sixteen Briefly |
+| Search | `wt:354` returned not found | All 23 expected record identities and issue associations |
+| Existing records | All 23 JSON twins already existed | Original bookmark fields unchanged; only issue associations added |
+| Full mirror | Pinboard stamp `2026-10-27T14:29:20Z` | Unchanged; this was not an account-wide import |
+| Sync hop 6 | Source WT354, destination WT353, late | Source/destination WT354, fresh |
+| Arrival | No Linking Things arrival for WT354 | `site-deploy`, 8:25:56 a.m. CDT; observed by Sync one second later |
+
+All 354 prior derived issue entries are unchanged; only
+WT354's issue and its 23 associations were added. The unchanged-field checks
+cover ids, URLs, titles, notes, voice, saved dates, tags, read flags and kinds.
+The actual destination report has one-second resolution and is retained in
+the current issue journey. A successful join or publisher exit was never used
+alone as acceptance. Independent public browser checks at 9:43–9:44 a.m. CDT
+corroborated the issue, search and Sync result.
+
+The shared contract records the corrected pinned-main mechanism and observed
+arrival in [thingelstad.com PR #14](https://github.com/jthingelstad/thingelstad.com/pull/14).
+The gap status is reconciled with the actual receipt; WT Builder and Buttondown
+still lack their issue facts, and the 27 wider unobserved checks remain visible.
+Known-gap regression tests now supply an explicit gap contract instead of
+requiring this live connection to stay broken.
+
+This was the authorized manual bounded test. The next natural 00:30 Central
+nightly is separate scheduled-run acceptance. The source fix leaves active
+working checkouts untouched and does not enable the guarded bus join.
+
+The reconciled contract was deployed at 10:19 a.m. CDT on October 28 in
+package `1fc2e37c183ff2153ecab525152b8abb4bbd646349cebe662d493353f760942c`.
+Alias/distribution health, all four pages, the public contract and status
+were independently fetched at 10:20:37 a.m. CDT. Hop 6 remains fresh with
+the actual 8:25:56 a.m. receipt, and Records no longer asks to reconcile a
+known contract gap. The live infrastructure template matched this checkout;
+only package references changed, preserving the separately released access
+logging configuration. Application head `ab433e0` passed CI and Codex review
+with no findings or inline comments. This release receipt changes no code.

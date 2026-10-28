@@ -94,6 +94,12 @@ WT354 validation permission below was added on October 28.
   Weekly main revision, through its normal publication workflow; completion
   needs public issue/search evidence, a destination receipt and a subsequent
   Sync observation. It does not authorize other repairs or bookmark changes.
+  That bounded test passed on October 28: 23 WT354 associations, unchanged
+  bookmark fields, `site-deploy` receipt at 13:25:56Z and Sync confirmation at
+  13:25:57Z. The normal nightly now fetches and pins Weekly main independently
+  of any active checkout; its next natural 00:30 run is separate acceptance.
+  `docs/COVERAGE.md` preserves the before/after evidence. The old hold is
+  historical; do not recreate a resolved gap.
 - It is not the alarm. Thresholds come after two weeks of observation
   (step 4 of the plan in `../AGENTS.md`); the page is step 2.
 

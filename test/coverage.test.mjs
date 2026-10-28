@@ -66,7 +66,9 @@ test('an explicit exact absence is comparable; an empty fact is not', () => {
 
 test('next actions distinguish known gaps, ordinary late work, waits, holds and unsent legs', async () => {
   const late = renderScenario(await loadScenario('late-hop')).status;
-  const gap = coverageModel(late).checks.find((c) => c.hop.id === 6);
+  const contract = structuredClone(flows);
+  contract.hops.find((h) => h.id === 6).status = 'gap';
+  const gap = coverageModel(late, contract).checks.find((c) => c.hop.id === 6);
   assert.equal(nextAction(gap).title, 'Review the recorded gap before rerunning');
   assert.doesNotMatch(nextAction(gap).detail, /WT354|share-images|23|00:30/);
   assert.equal(nextAction({ ...gap, hop: { ...gap.hop, status: 'ok' } }).title, 'Inspect the destination runner');
