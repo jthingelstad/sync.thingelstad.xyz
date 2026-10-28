@@ -15,6 +15,11 @@ public identity is never carried forward as a fallback. Rendering an existing
 snapshot does no network or source operation. A withdrawal disappears in the
 next published observation, plus up to a minute of page caching. This does not
 claim to retract older exports from Linking Things or to delete a bookmark.
+Existing newest-item journeys, archived journeys and destination exports retain
+their existing history contracts; this sampled view does no retroactive
+withdrawal or redaction of those records. The exact-object journal deny closes
+that runtime object's CloudFront route, rather than claiming a historical
+privacy audit of every public output.
 
 Public output explicitly selects public link id, article URL/title and real
 first-observation, save-confirmation, capture and check times. It excludes the
@@ -76,4 +81,42 @@ three mixed outcomes visibly. In-app browser checks at actual widths 1280 and
 Both layouts have no page overflow, script or console error. The old phone tab
 kept its actual 390-pixel viewport despite a requested override; a fresh tab
 provided the measured 1280-pixel desktop check, without requesting DevTools
-access. Deployment receipts follow after independent review.
+access. The reviewed release receipt follows below.
+
+## October 28 release receipt
+
+Application head `eabde6463280f3014651cc7c3e00110c653dc01e` passed independent
+engineering review and exact-head CI (run `40717976986`). Automated review's
+one selection-boundary finding was fixed with the exact-cap restart regression;
+the obsolete thread is resolved. All 134 tests and ten scenarios pass.
+
+The existing cloud-engineer plan/apply released package
+`13bb7ea5e056af9e473da5c73114fa17b7c1722ab6cd30ce16d65eaa5db48fce`.
+Sync's deployment observation started at 10:45:10 a.m. CDT; the batch completed
+its own checks at 10:45:35. The whole-site invalidation
+`IA434OS4YTW4TM1ASLGIA0O4KD` was observed **Completed** at 10:45:58.
+Acceptance passed at 10:46:23: both hostnames' health, all four pages, six
+sanitized public rows with exact record/association readback, and the unchanged
+newest-star journey/receipt identity. All six sampled candidates were present;
+46 of 52 candidates were outside this snapshot. This is sampled evidence.
+
+The live bucket policy and completed stack match the reviewed template. Only
+the existing package references and exact-object CloudFront deny changed;
+there is no added grant, identity, resource or schedule. After invalidation
+completed, HEAD requests for the canonical journal path and two encoded-key
+aliases answered 404 through both the site alias and distribution hostname.
+No raw journal body was requested. The Lambda still read its existing journal
+and Pinboard source to produce the six current public checks.
+
+Before release, read-only inspection confirmed the existing CloudFront-wide
+bucket read, matching live dotted-path rewrite and journal object metadata.
+That establishes the configured exposure path, not any third-party access or
+breach. There was no public journal request or access-history inspection.
+
+Live in-app browser acceptance at actual 1280 and 390 pixels confirms the six
+rows and their real timestamps, disclosure behavior, no overflow, no script
+and no console errors. A stale browser handle after review was recovered with
+the documented runtime reset; no DevTools access was requested. No bookmark
+was created, replayed or repaired for this observation-only release. The wider
+27 unobserved checks, WT Builder/Buttondown facts and next natural nightly
+acceptance remain separate work. This receipt changes no application code.
