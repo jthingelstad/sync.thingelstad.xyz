@@ -147,8 +147,8 @@ This exception does not authorize repairs on any other hop, including WT354.
   arrivals from the index, or its archive once outside the last fifty;
   a fallback must not erase a measured lag.
 - `src/page.mjs` — the HTML. No script, `--jt-` colours, Central time. It
-  opens with the item-focused atlas, then this week's journey stories, arrival lanes
-  and ten finished journeys per kind; the receipts, matrix, hops and facts
+  opens with the item-focused atlas, then this week's journey stories,
+  arrival lanes and ten finished journeys per kind; the receipts, matrix, hops and facts
   follow (Jamie, 2026-10-26: "visual and interesting. Pipes and flows."). The
   sites strip and story in the title/description wait for Jamie.
 - `src/follow.mjs` — follow the current item of a kind. Native fragment links

@@ -10,6 +10,8 @@ import { age, central } from './time.mjs';
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const CHOICE = { issue: 'Weekly Thing', post: 'Blog post', link: 'Saved link', episode: 'Podcast', audio: 'Audio edition', star: 'Feedbin star' };
+const witness = (row) => row.measured_from && row.measured_from !== row.from
+  ? `Measured as ${systemName(row.measured_from)} has it; no source fact yet.` : '';
 
 /** Use the receipt for the very same current journey, never a mixed snapshot. */
 export function followModels(status, journeys) {
@@ -94,8 +96,10 @@ function itemMap(model, status) {
           : h?.state === 'unknown' ? 'reader unavailable' : 'no fact yet';
     },
   }, { inlineArt: false, hopIds: model.hops.map((h) => h.id), prefix: `follow-${model.kind}-` });
+  const witnesses = model.hops.filter((h) => witness(h));
+  const attribution = witnesses.length ? `<ul class="follow-witnesses" id="follow-${model.kind}-witnesses">${witnesses.map((h) => `<li><a href="#hop-${h.id}">Hop ${h.id}: ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</a> · ${esc(witness(h))}</li>`).join('')}</ul>` : '';
   return `<a class="follow-map-link" href="#follow-${model.kind}-map">Explore this item’s map ↓</a>
-<div class="follow-map" id="follow-${model.kind}-map" tabindex="-1"><a class="follow-map-back" href="#follow-${model.kind}">Back to this item’s summary ↑</a><div class="map" tabindex="0" role="region" aria-label="Atlas for ${esc(itemLabel(model.kind, model.item))}, scroll sideways to explore">${svg}</div></div>`;
+<div class="follow-map" id="follow-${model.kind}-map" tabindex="-1"><a class="follow-map-back" href="#follow-${model.kind}">Back to this item’s summary ↑</a><div class="map" tabindex="0" role="region" aria-label="Atlas for ${esc(itemLabel(model.kind, model.item))}, scroll sideways to explore"${witnesses.length ? ` aria-describedby="follow-${model.kind}-witnesses"` : ''}>${svg}</div>${attribution}</div>`;
 }
 
 export function followAtlas(status, journeys, models = followModels(status, journeys)) {
@@ -104,7 +108,7 @@ ${followPicker(models, model.kind)}
 <header class="follow-heading"><p class="kicker">Follow this item · ${esc(KIND_LABEL[model.kind])}</p><h3 id="follow-${model.kind}-title">${esc(itemLabel(model.kind, model.item))}</h3>${model.item.title && ['issue', 'audio'].includes(model.kind) ? `<p>${esc(model.item.title)}</p>` : ''}<p class="muted">${model.item.at ? `Dated ${esc(central(model.item.at))}` : model.kind === 'star' ? 'Star time unknown' : 'Publication time unknown'} · from ${esc(systemName(model.origin))}</p></header>
 ${summary(model)}
 ${itemMap(model, status)}
-<details class="follow-connections"><summary>${model.hops.length} connections and their evidence</summary><ol>${model.hops.map((h) => `<li><a href="#hop-${h.id}">${h.id}. ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</a><strong>${esc(followEdgeText(model, h.id).split(' · ').slice(2).join(' · '))}</strong>${h.why ? `<span>${esc(h.why)}</span>` : ''}</li>`).join('')}</ol></details>
+<details class="follow-connections"><summary>${model.hops.length} connections and their evidence</summary><ol>${model.hops.map((h) => `<li><a href="#hop-${h.id}">${h.id}. ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</a><strong>${esc(followEdgeText(model, h.id).split(' · ').slice(2).join(' · '))}</strong>${witness(h) ? `<span>${esc(witness(h))}</span>` : ''}${h.why ? `<span>${esc(h.why)}</span>` : ''}</li>`).join('')}</ol></details>
 <p class="follow-note">Only this item’s kinds are shown. “Waiting upstream” means the source has not confirmed this item; matching older copies do not prove arrival. <a href="#journey-${model.kind}">This item’s journey lanes ↓</a> · <a href="#history">History ↓</a></p>
 </section>`).join('\n');
 }

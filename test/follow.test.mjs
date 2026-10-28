@@ -69,6 +69,11 @@ test('a fallback witness retains its measured waiting state, failed readers stay
   assert.equal(hop.measured_from, 'weekly');
   assert.equal(hop.status, 'late');
   assert.equal(hop.waiting_upstream, undefined);
+  const html = followAtlas(status, { issue: s.journeys.issue }, [model]);
+  assert.match(html, /aria-describedby="follow-issue-witnesses"/);
+  const evidence = pageText(html.match(/<details class="follow-connections">[\s\S]*?<\/details>/)[0]);
+  assert.match(evidence, /10\. WT Builder → Librarian.*late[\s\S]*?Measured as Weekly Thing \(web\) has it; no source fact yet\./);
+  assert.match(html, /Hop 10: WT Builder → Librarian<\/a> · Measured as Weekly Thing \(web\) has it; no source fact yet\./);
 });
 
 test('first confirmations gain no lag, reported arrivals keep their time and unknown publication gains no duration', async () => {

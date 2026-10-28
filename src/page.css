@@ -301,6 +301,8 @@ footer { margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--jt-line
 .follow-connections li { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:0.3rem 1rem; padding:0.75rem 0; border-top:1px solid var(--jt-line); }
 .follow-connections li > span { grid-column:1 / -1; color:var(--jt-text-muted); font-size:var(--jt-size-label); }
 .follow-note { color:var(--jt-text-muted); font-size:var(--jt-size-label); max-width:85ch; }
+.follow-witnesses { padding-left:1.25rem; color:var(--jt-text-muted); font-size:var(--jt-size-label); }
+.follow-witnesses li { margin-block:0.5rem; }
 @media (max-width:70rem) {
   .follow-map { display:none; }
   .follow-map:target,.follow-map:has(:target) { display:block; }
