@@ -371,6 +371,15 @@ h3 { font-size:25px; }
 .follow-art { width:150px; height:120px; }
 .follow-view { display:none; flex-direction:column; }
 .follow-view--default { display:flex; }
+.handoff-note { order:2; margin:0 0 1.25rem; padding:1rem 1.25rem; border:3px double var(--folio-gold); background:var(--folio-paper); overflow-wrap:anywhere; }
+.handoff-note--complete { border-color:var(--jt-fresh); }
+.handoff-note h3 { font-size:25px; margin:0 0 0.4rem; }
+.handoff-note p { max-width:80ch; margin:0.35rem 0; }
+.handoff-steps { list-style:none; margin:0; padding:0; }
+.handoff-steps li + li { border-top:1px solid var(--jt-line); margin-top:0.6rem; padding-top:0.6rem; }
+.handoff-branch > summary { font:650 20px/1.3 var(--jt-font-heading); padding-block:0.6rem; min-height:44px; cursor:pointer; }
+.handoff-next,.handoff-evidence { font-size:16px; color:var(--jt-text-muted); }
+.handoff-link { display:inline-flex; align-items:center; min-height:44px; font-size:17px; }
 .atlas-section--following:has(:where(.follow-view:target,.follow-view :target,.atlas-overview:target,.atlas-overview :target)) .follow-view { display:none; }
 .atlas-section--following .follow-view:target,.atlas-section--following .follow-view:has(:target) { display:flex; }
 .follow-picker { order:0; }
@@ -384,7 +393,7 @@ h3 { font-size:25px; }
 .follow-group--behind h4::before { background:var(--jt-moving); }
 .follow-group--unknown h4::before { background:var(--jt-held); }
 .follow-group li { border:0; padding:0.2rem 0; }
-.follow-group a { font:600 18px/1.45 var(--jt-font-body); text-decoration:none; }
+.follow-group a { font:600 18px/1.45 var(--jt-font-body); text-decoration:none; overflow-wrap:anywhere; }
 .follow-group a:hover { text-decoration:underline; }
 .follow-actions { order:4; margin:0.75rem 0; text-align:right; }
 .map { margin-inline:calc(50% - 50vw + 22px); }

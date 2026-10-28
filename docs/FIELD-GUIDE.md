@@ -18,6 +18,18 @@ some custom fonts."
 - Records (`/records/`): Inventory, Hops and Facts panes. Hops opens one
   actual connection at a time; map signs link straight to that connection.
 
+Each selected item opens with a short handoff explanation above its map.
+It names the first unconfirmed destinations on each branch and groups known
+downstream waits under them. Unsent legs, recorded holds, overdue handoffs
+and unavailable readers keep their distinct meanings. Missing evidence
+prevents an all-destinations-confirmed message; a reader failure never proves
+absence. A schedule or trigger is quoted only from the flows contract,
+without predicting an arrival or the next run. Each handoff links to its
+existing Records entry. This is a presentation of the snapshot, with no new
+reader, journal, schedule or repair.
+When several branches are waiting, their names remain visible and native
+disclosures open one explanation at a time to keep the opening compact.
+
 Ivory paper #faf7ed, forest ink #253d31, muted olive #6e725f, tan rules
 #d5ccb5, pale sage #e8eddf. Semantic status colours retain their evidence
 meaning. Fine double rules, notched paper tabs, generous folio margins and
@@ -123,3 +135,25 @@ screenshots were inspected with `view_image`. Both typefaces load with no
 external request, no page overflows and no console errors. Codex's review
 of the application commit completed with no findings; inline threads were
 also checked.
+
+### Handoff explanation acceptance
+
+Deployed 2026-10-28 at 6:47 a.m. CDT,
+[PR #23](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/23).
+All 119 tests pass on Node 24, including nine focused handoff tests; all ten
+offline scenarios render. The alias, distribution health and all four pages
+identify package
+`b438f51e2d55d9e17bf1269998e5511ef4e80890ea4ec8f1b67213fa800b978e`.
+The change set updates the existing shared function package and its dependent
+references, with no added resource or grant.
+
+JavaScript-disabled Chromium checks passed locally and live at 1536, 768,
+390 and 320px. Checked the selected blog post's first handoff, the upstream
+Thingy wait, recorded schedule, keyboard Records link and Back, item
+selection, reload, successful star completion and journey receipt. Offline
+checks also exercised native branch disclosures, unannounced audio/archive
+legs, unavailable readers and Friday holds. Light and dark screenshots were
+inspected. No page overflow, script, external asset request or console error.
+The Browser plugin was unavailable; the frontend testing skill's Playwright
+fallback supplied the checks. Codex reviewed the application commit without
+findings, including no inline threads. WT354's recorded gap remains late.
