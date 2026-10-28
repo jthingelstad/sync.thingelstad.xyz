@@ -57,3 +57,24 @@ unimplemented kinds, failed readers, fallback witnesses, exact absence,
 ordinary waits, holds, missing send legs and recorded gaps. All ten existing
 scenarios retain every connection/kind and working evidence/action anchors.
 The renderer remains scriptless and escapes all public evidence text.
+
+## Visibility release
+
+Deployed October 28 at 8:04 a.m. CDT through the existing cloud-engineer
+CloudFormation plan/apply. Package
+`62ee4c6d458ab926c0f2c40670f1f98ceb291ebb5c7a27187ec68d546c84b56a`
+is verified through both alias/distribution health and all four public pages.
+The live infrastructure template is unchanged; the change set modifies the
+existing shared function package and its dependent references, with no new
+resource or grant. The deployment observation ran no bookmark importer and
+announced no blog event. WT354 remains late as the repair-test baseline.
+
+All 126 tests and ten scenarios pass. In-app browser checks at 1536, 768, 390
+and 320 pixels verify Map → Coverage → kind action → fact → Back, native
+sections, keyboard Records navigation and reload. Unknown-reader, hold and
+unsent-leg fixtures retain distinct actions. Light/dark screenshots were
+inspected; no page overflow, browser script, external asset or console error.
+The deployed phone view contains all 41 checks and its dated next steps.
+Both the independent engineering review and GitHub Codex review of application
+head `ffe850f92302f7eac4a24a135bf86f16809230c1` completed with no blockers or
+findings; inline review comments were empty. This receipt changes no code.
