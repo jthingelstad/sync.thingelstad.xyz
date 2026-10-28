@@ -1,7 +1,7 @@
 {
   "$comment": "The data flows between Jamie's systems: every hop content takes, who owns each field, and what watches each hop today. This file is the contract; shared/flows.html is rendered from it by `node shared/build-flows.mjs`. A hop is a row here before it is code anywhere. Times are America/Chicago unless a cron says otherwise.",
   "version": 1,
-  "updated": "2026-10-27",
+  "updated": "2026-10-28",
   "kinds": {
     "issue": "a Weekly Thing issue",
     "post": "a blog post on www.thingelstad.com",
@@ -267,16 +267,16 @@
         "issue"
       ],
       "moves": "Which issue carried each link (the /issues/<n>/ pages and wt: search).",
-      "mechanism": "join_issues.py reads the issue pages' front matter from the sibling checkout ../thingelstad.com/weekly.thingelstad.com/apps/site/archive on the Mac, inside the nightly run.",
+      "mechanism": "Inside tools/nightly.sh, join_issues.py fetches Weekly public refs/heads/main into an isolated temporary repository, resolves its full revision once and exports apps/site/archive from that immutable tree. It never reads or switches an active Weekly checkout. Existing main CI delivers the canonical source package to the single AWS publisher, which publishes the generated associations.",
       "trigger": {
         "type": "clock",
         "schedule": "00:30 daily, inside hop 5",
         "runs_on": "mac"
       },
       "expected_lag_hours": 28,
-      "verify": "links_stats latest_issue equals the newest issue on weekly.thingelstad.com.",
-      "status": "gap",
-      "notes": "Broken on 2026-10-26: WT354 was sent 2026-10-24, the nightly ran green, and Linking Things still reports 353. The sibling checkout was on a feature branch without 354.md. Fix: read weekly's published archive over HTTPS, or origin main, never a working checkout; and nudge the join from the send (hop 10). Arrival reporting contract (sync plan step 4): source links, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 5 Linking Things receipt contract: the public build publishes only its imported change stamp and newest joined issue id/time in sync-fact.json. The deploy compares a known earlier public fact with the tested build and a verified public readback, then source links reports received via site-deploy. A local join or stats write alone is not arrival; unknown baselines, unchanged facts and regressions report nothing. This sender is proposed off, and does not fix the WT354 join or enable a subscriber. Step 8 proposed subscriber: published website leg may invoke a guarded Links join workflow through an API destination; this rule and any actual join remain disabled until Jamie explicitly approves repairing the WT354 example. Connections and real-work rules default off; ping targets dry-run workflows only. Repository-scoped Actions-write tokens live as new keys in sync-runtime, never in a session. Trigger labels remain the deployed clock/nudge until activation."
+      "verify": "The expected issue is present in public issues.json and /issues/<n>/; its saved-link records and wt:<n> search carry the associations. links_stats and sync-fact.json report the joined issue. A destination received event follows verified public readback; Sync then observes the handoff as fresh.",
+      "status": "ok",
+      "notes": "Gap recorded on 2026-10-26: WT354 was published on 2026-10-24, the nightly join ran successfully, and Linking Things still reported 353 because its local Weekly checkout was on a feature branch without 354.md. Jamie lifted the worked-example hold on 2026-10-28: \"the hold repair was to use it as a test which we are now ready to do...\". Links PR #32 fixed the default source path and restored only WT354 and its 23 associations; all 354 prior issue entries and bookmark fields were preserved. The bounded repair used Weekly revision 8495f487cdeba183014b30fbf85579363139ef08 and Links main 139ff5989ac5e452c04aeec94899f2ee42572899, released by existing CI run 40695212976. Public issue/search and all 23 record twins passed readback. Links reported received via site-deploy at 2026-10-28T13:25:56Z; Sync observed source/target 354 and fresh at 2026-10-28T13:25:57Z. The full-mirror stamp was unchanged. This was the approved manual bounded test; the next natural 00:30 US Central nightly remains separate acceptance. Source failures leave the derived join unchanged. The guarded bus-join workflow remains off; no subscriber, credential or grant was enabled."
     },
     {
       "id": 7,

@@ -7,6 +7,10 @@ after the first night: the bus, the WT Builder sender, the probe, the
 journeys, the runtime map, the Pinboard and micro.blog secrets, and the
 Discord activity stream are live. Steps 1 through 4, 6 and 7 are now live. Destination senders and
 subscribers (5 and 8) remain PR work; 0, 9 and 10 are not part of this night.
+Later acceptance: the public bookmark path became active on October 27, and
+WT354's bounded issue-join repair passed on October 28 (`docs/COVERAGE.md`).
+The prepared-PR status below is historical, not a current activation inventory;
+verify the destination's actual state before duplicating or enabling work.
 
 Each step is one pull request, small enough for an evening. Any session,
 Claude's or Codex's, picks up the lowest unchecked step cold: this file,
@@ -51,8 +55,9 @@ Tick a step here in its own PR when it is live, with the date.
 - **Reviews.** Every PR gets a Codex review (`@codex review`) and its findings
   are answered before merge. A finding that changes what readers see is
   Jamie's call, not a fix.
-- **WT354 stays late on hop 6** until Jamie says otherwise. It is the worked
-  example.
+- **WT354 was held as the worked example** until Jamie lifted that hold on
+  October 28. Its 23 associations and actual destination/Sync receipts are
+  now verified. Preserve that evidence; do not recreate the gap.
 
 ## Steps
 
@@ -250,7 +255,9 @@ previews pass, both health URLs serve package `1aafe26…`. Hop 13 separates
 repository evidence refresh from verified registry publication into the
 library. Jamie adds repository Actions-token keys, reviews permissions,
 rehearses and approves activation; clocks/nudges remain until natural
-acceptance. Hop 6 also needs Jamie's explicit repair decision.
+acceptance. Jamie's hop-6 test hold was lifted on October 28, and the bounded
+source fix and associations were verified. Bus subscriber activation remains
+separate from that manual acceptance.
 2026-10-27: the sync-side scaffolding (sync #10 and #11) was removed again
 at Jamie's ask, to keep the stack hobby-sized; `docs/SUBSCRIBERS.md` keeps
 the shape, and the first real subscriber comes back as its own PR.
@@ -300,8 +307,10 @@ missing event.
   reach it. Revisit when Jamie wants to send without the Mac awake. The
   one thing to confirm now: `wt-builder.db` is in the 04:30 critical-state
   backup.
-- **Fixing hop 6 for WT354.** Jamie's call; step 5 and 8 make the fix a
-  flag flip when it comes.
+- **Additional hop-6 automation.** The approved WT354 source fix is complete
+  through Links PR #32, with its existing CI/AWS publisher. It was not a flag
+  flip or a bus activation. The corrected nightly source still awaits its
+  next natural 00:30 Central run; no new subscriber was enabled.
 - **Strava, or any post on Jamie's behalf.** Jamie, 2026-10-27: "That was
   just an idea. Don't want that in here yet." It comes back, if ever, as a
   flows row first.
