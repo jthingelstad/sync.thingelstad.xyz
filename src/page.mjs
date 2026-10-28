@@ -7,7 +7,8 @@ import { pageStyles, sharedStyles } from './style.mjs';
 import { hopSummary, mapSvg, pocketMap } from './map.mjs';
 import { atlasArtwork, atlasNavigation } from './atlas.mjs';
 import { followAtlas, followModels, followPicker } from './follow.mjs';
-import { factsList, hopsTable, matrixTable, receiptCard, triggerText } from './evidence.mjs';
+import { connectionActions, coverageLedger, coverageSummary, factsList, hopsTable, matrixTable, receiptCard, triggerText } from './evidence.mjs';
+import { coverageModel } from './coverage.mjs';
 import { landmark, landscape } from './folio.mjs';
 import { central } from './time.mjs';
 export { itemLabel } from './stories.mjs';
@@ -69,7 +70,7 @@ ${followAtlas(status, journeys, models)}
 <div class="map" tabindex="0" role="region" aria-label="Publishing atlas, scroll sideways to explore">${mapSvg(status, journeys, { inlineArt: false })}</div>
 <p class="atlas-caption">A snapshot, not continuous tracking. Geography and road length are illustrative. Roof colours identify places; words and arrows carry state.</p></section>
 <details class="atlas-key"><summary>Map key</summary><p>A signpost quotes a lag only for a measured arrival. Reported arrivals come from events; seen arrivals come from polls. Dashed roads run on a clock; solid roads run on an event or nudge. No fact yet means no readable evidence; unknown means the reader failed.</p></details></div></section>`;
-  return legacyLinks(status, journeys) + evidenceLinks(atlas) + attention(status);
+  return legacyLinks(status, journeys) + evidenceLinks(atlas) + attention(status) + coverageSummary(status);
 }
 
 function feedbinReceipt(fact) {
@@ -104,14 +105,16 @@ ${rows.some((r) => !r.active) ? `<!-- history-lanes -->${historyLanes({ ...histo
 }
 
 function recordsTabs(selected) {
-  return `<nav class="records-tabs" aria-label="Records views">${[['inventory', 'Inventory'], ['hops', 'Hops'], ['facts', 'Facts']].map(([id, name]) => `<a href="#${id}"${selected === id ? ' aria-current="true"' : ''}>${name}</a>`).join('')}</nav>`;
+  return `<nav class="records-tabs" aria-label="Records views">${[['inventory', 'Inventory'], ['coverage', 'Coverage'], ['hops', 'Hops'], ['facts', 'Facts']].map(([id, name]) => `<a href="#${id}"${selected === id ? ' aria-current="true"' : ''}>${name}</a>`).join('')}</nav>`;
 }
 
 function recordsPage(status) {
+  const coverage = coverageModel(status);
   const featured = status.open[0]?.id ?? flows.hops[0].id;
   const connections = `<details class="connection-picker"><summary>Choose a connection · ${flows.hops.length}</summary><nav aria-label="Choose a connection">${flows.hops.map((h) => `<a href="#hop-${h.id}"><span>${h.id}. ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</span>${pill(hopSummary(status.hops, h.id).status)}</a>`).join('')}</nav></details>
-<div class="hop-records">${flows.hops.map((h) => `<article class="hop-record${h.id === featured ? ' hop-record--default' : ''}"><header class="connection-heading"><div><h2>${h.id} · ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</h2><p>${h.kinds.map(esc).join(' · ')}</p></div><div class="connection-art">${landmark(h.from)}<span aria-hidden="true">→</span>${landmark(h.to)}</div></header><div class="scroll">${hopsTable(status.hops.filter((r) => r.id === h.id))}</div><p class="evidence-note">“Behind” is the source item's age, against this hop's expected lag. A fallback witness is named explicitly; an unknown or missing fact never proves absence.</p><a class="contract-link" href="/flows/#hop-${h.id}">Read this hop's flows contract →</a></article>`).join('')}</div>`;
+<div class="hop-records">${flows.hops.map((h) => `<article class="hop-record${h.id === featured ? ' hop-record--default' : ''}"><header class="connection-heading"><div><h2>${h.id} · ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</h2><p>${h.kinds.map(esc).join(' · ')}</p></div><div class="connection-art">${landmark(h.from)}<span aria-hidden="true">→</span>${landmark(h.to)}</div></header><div class="scroll">${hopsTable(status.hops.filter((r) => r.id === h.id))}</div><p class="evidence-note">“Behind” is the source item's age, against this hop's expected lag. A fallback witness is named explicitly; an unknown or missing fact never proves absence.</p>${connectionActions(h, status, coverage.checks.filter((c) => c.hop.id === h.id))}<a class="contract-link" href="/flows/#hop-${h.id}">Read this hop's flows contract →</a></article>`).join('')}</div>`;
   return `<div class="records-views"><section class="records-panel records-panel--default" id="inventory" tabindex="-1">${recordsTabs('inventory')}<div class="paper-panel"><h2>What each system holds</h2><div class="scroll" tabindex="0" role="region" aria-label="Inventory, scroll sideways to explore">${matrixTable(status.matrix)}</div><p class="evidence-note">A cell describes the worst incoming hop for its kind. The item and date are the system's own newest fact.</p></div></section>
+<section class="records-panel" id="coverage" tabindex="-1">${recordsTabs('coverage')}<div class="paper-panel">${coverageLedger(status, coverage)}</div></section>
 <section class="records-panel" id="hops" tabindex="-1">${recordsTabs('hops')}<div class="paper-panel">${connections}</div></section>
 <section class="records-panel" id="facts" tabindex="-1">${recordsTabs('facts')}<div class="paper-panel"><h2>Facts, as read</h2><p class="section-note">Open a system to inspect the evidence the probe read.</p>${factsList(status.facts)}</div></section></div>`;
 }
