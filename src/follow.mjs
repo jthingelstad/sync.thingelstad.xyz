@@ -8,6 +8,7 @@ import { holds } from './probe.mjs';
 import { duration, itemLabel, KIND_LABEL, measuredHours } from './stories.mjs';
 import { age } from './time.mjs';
 import { landmark } from './folio.mjs';
+import { handoffSummary } from './handoffs.mjs';
 
 const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const CHOICE = { issue: 'Weekly Thing', post: 'Blog post', link: 'Saved link', episode: 'Podcast', audio: 'Audio edition', star: 'Feedbin star' };
@@ -66,6 +67,22 @@ function summary(model) {
   }).join('')}</div>`;
 }
 
+function handoffNote(model) {
+  const note = handoffSummary(model);
+  const names = (rows) => rows.map((h) => `<a href="#fact-${h.system}">${esc(systemName(h.system))}</a>`).join(', ');
+  const unknown = note.unavailable.filter((h) => h.state === 'unknown');
+  const missing = note.unavailable.filter((h) => h.state === 'no-fact');
+  const body = (step) => `<p>${esc(step.detail)}${step.waiting.length ? ` ${esc(step.waiting.map(systemName).join(', '))} ${step.waiting.length === 1 ? 'is' : 'are'} waiting on ${esc(systemName(step.to))}.` : ''}</p>${step.next ? `<p class="handoff-next">${esc(step.next)}</p>` : ''}<a class="handoff-link" href="#hop-${step.hop}">Inspect handoff →</a>`;
+  return `<section class="handoff-note${note.complete ? ' handoff-note--complete' : ''}" aria-labelledby="follow-${model.kind}-handoff-title">
+<h3 id="follow-${model.kind}-handoff-title">${esc(note.title)}</h3>
+${note.complete ? '<p>Every destination on this item’s route has confirmed arrival.</p>' : ''}
+${note.steps.length ? `<ul class="handoff-steps">${note.steps.map((step, i) => `<li>${note.steps.length > 1 ? `<details class="handoff-branch" name="follow-${model.kind}-handoffs"${i === 0 ? ' open' : ''}><summary>${esc(step.title)}</summary>${body(step)}</details>` : body(step)}</li>`).join('')}</ul>` : ''}
+${unknown.length ? `<p class="handoff-evidence">Reader unavailable; arrival unknown: ${names(unknown)}.</p>` : ''}
+${missing.length ? `<p class="handoff-evidence">No arrival evidence yet: ${names(missing)}.</p>` : ''}
+${note.other.length ? `<p class="handoff-evidence">Also unconfirmed: ${names(note.other)}. Upstream evidence is incomplete.</p>` : ''}
+</section>`;
+}
+
 export function followEdgeText(model, id) {
   const row = model.hops.find((h) => h.id === id);
   const name = shortItem(model.kind, model.item).replace(/star \d{8,}/, 'saved star');
@@ -102,6 +119,7 @@ export function followAtlas(status, journeys, models = followModels(status, jour
   return models.map((model, i) => `<section class="follow-view${i === 0 ? ' follow-view--default' : ''}" id="follow-${model.kind}" tabindex="-1" aria-labelledby="follow-${model.kind}-title">
 ${followPicker(models, model.kind)}
 <header class="follow-heading">${landmark(model.origin, 'follow-art')}<div><p class="kicker">Follow this item · ${esc(KIND_LABEL[model.kind])}</p><h2 id="follow-${model.kind}-title">${esc(itemLabel(model.kind, model.item))}</h2>${model.item.title && ['issue', 'audio'].includes(model.kind) ? `<p>${esc(model.item.title)}</p>` : ''}</div></header>
+${handoffNote(model)}
 ${summary(model)}
 ${itemMap(model, status)}
 <p class="follow-actions"><a class="primary-link" href="/journeys/#journey-${model.kind}">View journey &amp; receipts →</a></p>

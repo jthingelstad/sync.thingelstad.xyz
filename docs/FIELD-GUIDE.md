@@ -18,6 +18,18 @@ some custom fonts."
 - Records (`/records/`): Inventory, Hops and Facts panes. Hops opens one
   actual connection at a time; map signs link straight to that connection.
 
+Each selected item opens with a short handoff explanation above its map.
+It names the first unconfirmed destinations on each branch and groups known
+downstream waits under them. Unsent legs, recorded holds, overdue handoffs
+and unavailable readers keep their distinct meanings. Missing evidence
+prevents an all-destinations-confirmed message; a reader failure never proves
+absence. A schedule or trigger is quoted only from the flows contract,
+without predicting an arrival or the next run. Each handoff links to its
+existing Records entry. This is a presentation of the snapshot, with no new
+reader, journal, schedule or repair.
+When several branches are waiting, their names remain visible and native
+disclosures open one explanation at a time to keep the opening compact.
+
 Ivory paper #faf7ed, forest ink #253d31, muted olive #6e725f, tan rules
 #d5ccb5, pale sage #e8eddf. Semantic status colours retain their evidence
 meaning. Fine double rules, notched paper tabs, generous folio margins and
