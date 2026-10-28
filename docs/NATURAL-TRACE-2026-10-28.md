@@ -31,6 +31,9 @@ CloudWatch `/aws/lambda/sync` confirms the natural clock, publication event,
 both Links receipts and the 2, 5, 10 and 15 minute follow-up runs. An error
 query over the preceding two hours matched only clock reports containing
 `error: null`; it found no import failure or execution exception.
+The next natural clock at 1:04:28 a.m. checked/added/captured zero bookmarks,
+had zero pending imports or unacknowledged captures, and sent no wake-up or
+duplicate blog event. The post's 30-minute follow-up then ran at 1:05:02.
 
 ## Factual correction
 
@@ -55,3 +58,14 @@ The other star's real Links report remains in the one-hour unmatched-receipt
 queue because it has no current or archived journey. Its public destination
 record still proves delivery. Individual journey history for every star in a
 batch would require extending that contract; this trace leaves it unchanged.
+
+## Correction deployed
+
+The wording correction was deployed at 1:09 a.m. Central through the existing
+cloud-engineer plan/apply, [PR #22](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/22).
+Both public alias and distribution health, and all four HTML pages, identify
+package `8fce18585ef81b5d29f78bf25f3413ffc16bf48826c650bc04cfc7918bac77e1`.
+The live colophons carry the new explanation. JavaScript-disabled browser
+checks of all four pages pass at 1440×1000 and 390×844. The application review
+completed with no findings; inline threads were checked too. The deployment
+observation announced no blog event and did not run the bookmark importer.
