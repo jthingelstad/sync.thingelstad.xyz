@@ -115,3 +115,13 @@ requiring this live connection to stay broken.
 This was the authorized manual bounded test. The next natural 00:30 Central
 nightly is separate scheduled-run acceptance. The source fix leaves active
 working checkouts untouched and does not enable the guarded bus join.
+
+The reconciled contract was deployed at 10:19 a.m. CDT on October 28 in
+package `1fc2e37c183ff2153ecab525152b8abb4bbd646349cebe662d493353f760942c`.
+Alias/distribution health, all four pages, the public contract and status
+were independently fetched at 10:20:37 a.m. CDT. Hop 6 remains fresh with
+the actual 8:25:56 a.m. receipt, and Records no longer asks to reconcile a
+known contract gap. The live infrastructure template matched this checkout;
+only package references changed, preserving the separately released access
+logging configuration. Application head `ab433e0` passed CI and Codex review
+with no findings or inline comments. This release receipt changes no code.
