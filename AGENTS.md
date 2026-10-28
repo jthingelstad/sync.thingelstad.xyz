@@ -14,6 +14,11 @@ times, never a secret and never a visitor. It is Jamie's own tool: never in
 the sites strip, and `noindex` (Jamie, 2026-10-27: "Sync is NOT for the site
 strip. This is a me tool only.").
 
+CloudFront's access logs go to the CloudWatch log group `/sync/web-access`,
+kept 24 months (731 days; Jamie, 2026-10-28), through the `sync-web-access`
+delivery, the other sites' shape: path, method, status, bytes, range, user
+agent and cache result, never the client IP or the query string.
+
 ## The publishing bus
 
 This stack owns the EventBridge bus `thingelstad-publishing` (Jamie,
