@@ -133,3 +133,133 @@ footer { margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--jt-line
   th,td { padding:0.6rem; }
 }
 @media print { .map { overflow:visible; margin:1rem 0; padding:0; background:none; } .map svg { max-width:100%; height:auto; } .scroll { overflow:visible; } }
+
+/* The atlas is a light paper illustration in either page theme. Its roof
+   colors are identity, while only SVG roads and signposts carry status. */
+.atlas-artwork { position:absolute; width:0; height:0; overflow:hidden; }
+.atlas-guide { margin:0.5rem 0; font-size:var(--jt-size-small); }
+.atlas-guide summary { cursor:pointer; min-height:44px; padding:0.5rem 0; }
+.atlas-places { display:flex; flex-wrap:wrap; gap:0.25rem 1rem; font-size:var(--jt-size-label); }
+.atlas-places a { display:inline-flex; align-items:center; min-height:44px; text-underline-offset:4px; }
+.map:has(.atlas-world) { padding:0; background:#faf7ed; border-block:1px solid #d8d1bc; }
+.map .atlas-world { display:block; width:100%; min-width:1320px; max-width:2240px; height:auto; margin:0 auto; font-family:var(--jt-font-body); color:#302e29; background:#faf7ed; }
+.atlas-world .hop--fresh,.pocket-atlas .hop--fresh { --pipe:#1d7348; }
+.atlas-world .hop--moving,.pocket-atlas .hop--moving { --pipe:#1a5eb6; }
+.atlas-world .hop--late,.pocket-atlas .hop--late { --pipe:#b3123f; }
+.atlas-world .hop--held,.pocket-atlas .hop--held { --pipe:#99531c; }
+.atlas-world .hop--no-fact,.pocket-atlas .hop--no-fact { --pipe:#736e64; }
+.atlas-world .hop--unknown,.pocket-atlas .hop--unknown { --pipe:#665c82; }
+.atlas-road path { fill:none; stroke-linejoin:round; stroke-linecap:round; }
+.atlas-road .pipe-case { stroke:#fffdf3; stroke-width:12px; }
+.atlas-road .atlas-road__ink { stroke:var(--pipe); stroke-width:3.5px; }
+.atlas-world marker path { fill:var(--pipe); }
+.atlas-sign__post { stroke:#8c7449; stroke-width:5; fill:none; stroke-linecap:round; }
+.atlas-sign__board { fill:#fff6dc; stroke:var(--pipe); stroke-width:1.6; }
+.atlas-sign text { font-size:24px; fill:#302e29; font-weight:600; }
+.atlas-sign text tspan:last-child { fill:var(--pipe); }
+.atlas-place__ground { fill:#c3bb85; opacity:0.42; }
+.atlas-place__clearing { fill:#faf5e2; fill-opacity:0.9; filter:url(#atlas-clearing-blend); }
+.atlas-place__name { font-size:30px; font-weight:750; fill:#22241f; }
+.atlas-place__fact { font-size:24px; fill:#4c4e42; }
+.atlas-place__name,.atlas-place__fact { paint-order:stroke; stroke:#fff9e8; stroke-width:5px; stroke-linejoin:round; }
+.atlas-world a { outline:none; }
+.atlas-world a:hover .atlas-sign__board,.atlas-world a:focus-visible .atlas-sign__board { stroke:#22241f; stroke-width:3; }
+.atlas-world a:hover text,.atlas-world a:focus-visible text { text-decoration:underline; }
+.atlas-place__clearing:target { stroke:#1a5eb6; stroke-width:4; filter:none; }
+.atlas-place__clearing { scroll-margin:100px; outline:none; }
+.atlas-caption { font-size:var(--jt-size-label); color:var(--jt-text-muted); max-width:90ch; margin-top:0.75rem; }
+.fact:target { outline:2px solid var(--jt-moving); outline-offset:4px; scroll-margin-top:2rem; }
+@media (max-width:60rem) {
+  .atlas-places { gap:0.2rem 1rem; }
+}
+@media print {
+  .atlas-guide { display:none; }
+  .map .atlas-world { min-width:0; width:100%; }
+}
+.preview-note { padding:0.75rem 1.5rem; background:var(--jt-weekly-soft); color:var(--jt-ink); font-size:var(--jt-size-label); text-align:center; }
+.preview-note a { display:inline-flex; min-height:32px; align-items:center; }
+.atlas-attention { display:flex; flex-wrap:wrap; align-items:center; gap:0.3rem 0.6rem; margin:0.75rem 0; padding:0.65rem 1rem; border-left:3px solid var(--jt-late); background:var(--jt-another-soft); font-size:var(--jt-size-small); }
+.atlas-attention a { display:flex; align-items:center; max-width:100%; min-height:44px; }
+.atlas-attention__state { white-space:nowrap; }
+.atlas-attention__label { font-weight:600; }
+.atlas-key { margin:1rem 0 2rem; font-size:var(--jt-size-small); color:var(--jt-text-muted); }
+.atlas-key summary { min-height:44px; cursor:pointer; font-weight:600; }
+.atlas-key p { max-width:80ch; }
+@media (max-width:40rem) {
+  .atlas-attention { display:grid; grid-template-columns:minmax(0,1fr) auto; }
+  .atlas-attention__label { grid-column:1 / -1; }
+}
+@media (max-height:500px) and (orientation:landscape) {
+  .atlas-attention { padding:0 0.75rem; margin:0.4rem 0; }
+  .map:has(.atlas-world) { margin-top:0.4rem; }
+}
+
+/* The pocket atlas leads with one real connection. Fragment selection,
+   exploration and return to the whole map all work without browser script. */
+.pocket-atlas,.atlas-back { display:none; }
+.pocket-atlas:has(.pocket-route:target) { display:block; max-width:42rem; margin-inline:auto; }
+.pocket-toolbar { display:flex; align-items:center; justify-content:space-between; gap:1rem; min-height:44px; font-size:var(--jt-size-small); }
+.pocket-toolbar a,.pocket-actions a { display:flex; align-items:center; min-height:44px; }
+.pocket-route { display:none; scroll-margin-top:5rem; outline:none; }
+.pocket-route--default { display:block; }
+.pocket-atlas:has(.pocket-route:target) .pocket-route--default { display:none; }
+.pocket-atlas .pocket-route:target { display:block; }
+.pocket-route__heading { margin:0.6rem 0; }
+.pocket-route__heading h3 { font-size:26px; line-height:1.15; margin:0 0 0.4rem; }
+.pocket-route__heading p { color:var(--jt-text-muted); font-size:var(--jt-size-label); margin:0; }
+.pocket-scene { display:block; width:100%; height:auto; border-radius:10px; background:#faf7ed; font-family:var(--jt-font-body); }
+.pocket-scene--landscape { display:none; }
+.pocket-road__case { fill:none; stroke:#fff9e8; stroke-width:13; }
+.pocket-road__ink { fill:none; stroke:var(--pipe); stroke-width:4; }
+.pocket-place__name,.pocket-place__fact { fill:#262a22; paint-order:stroke; stroke:#fff9e8; stroke-width:6; stroke-linejoin:round; }
+.pocket-place__name { font-size:30px; font-weight:750; }
+.pocket-place__name--long { font-size:27px; }
+.pocket-place__fact { font-size:27px; }
+.pocket-sign text { fill:#302e29; font-size:24px; font-weight:650; }
+.pocket-scene--portrait .pocket-sign text { font-size:26px; }
+.pocket-sign text tspan:last-child { fill:var(--pipe); }
+.pocket-scene a:hover text,.pocket-scene a:focus-visible text { text-decoration:underline; }
+.pocket-scene a:focus-visible { outline:3px solid #1a5eb6; outline-offset:3px; }
+.pocket-actions { display:flex; flex-wrap:wrap; gap:0.5rem 1rem; font-size:var(--jt-size-small); margin-top:0.5rem; }
+.pocket-kind-note,.pocket-caveat { color:var(--jt-text-muted); font-size:var(--jt-size-label); margin:0.5rem 0; }
+.pocket-choices { margin:1rem 0; border-block:1px solid var(--jt-line); font-size:var(--jt-size-small); }
+.pocket-choices summary { min-height:48px; cursor:pointer; padding-block:0.6rem; font-weight:600; }
+.pocket-choices nav { display:grid; }
+.pocket-choices nav a { display:flex; align-items:center; justify-content:space-between; gap:1rem; min-height:52px; padding:0.5rem 0; border-top:1px solid var(--jt-line); text-decoration:none; }
+.pocket-choices nav a span:first-child { text-decoration:underline; }
+@media (max-width:70rem) {
+  body { font-size:18px; }
+  .masthead .lede,.atlas-intro { display:none; }
+  .masthead h1 { font-size:40px; margin:0.4rem 0; }
+  .masthead .checked { font-size:14px; line-height:1.5; margin:0.6rem 0; }
+  .masthead .kicker { font-size:14px; }
+  .jump { flex-wrap:nowrap; gap:1.25rem; overflow-x:auto; font-size:16px; }
+  .jump a { flex:none; }
+  .atlas-section { margin-top:1.25rem; }
+  .atlas-section > h2 { position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip-path:inset(50%); white-space:nowrap; }
+  .pocket-atlas { display:block; }
+  .atlas-full { display:none; }
+  .atlas-full:target,.atlas-full:has(:target),.atlas-full--fallback { display:block; }
+  .atlas-back { display:flex; align-items:center; min-height:48px; margin:1rem 0; }
+  .atlas-key { margin-block:0.75rem 2rem; }
+}
+@media (min-width:45rem), (orientation:landscape) {
+  .pocket-scene--portrait { display:none; }
+  .pocket-scene--landscape { display:block; }
+  .pocket-scene--landscape .pocket-place__name { font-size:24px; }
+  .pocket-scene--landscape .pocket-place__name--long { font-size:22px; }
+  .pocket-scene--landscape .pocket-place__fact { font-size:22px; }
+  .pocket-route__heading { display:flex; align-items:baseline; justify-content:space-between; gap:0.75rem; }
+  .pocket-route__heading h3 { font-size:24px; }
+  .pocket-route__heading p { flex:none; }
+}
+@media print {
+  .pocket-atlas,.atlas-back { display:none !important; }
+  .atlas-full { display:block; }
+}
+@media (max-width:70rem) and (max-height:500px) and (orientation:landscape) {
+  .pocket-route__heading { margin:0.2rem 0 0.4rem; }
+  .pocket-route__heading h3 { font-size:22px; margin:0; }
+  .pocket-scene--landscape { max-height:200px; }
+  .pocket-actions { margin-top:0.25rem; }
+}

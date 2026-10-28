@@ -1,11 +1,10 @@
-// The map on the page, drawn on every run with Pele (https://pele.run, the
-// renderer Things I've built draws its connection diagrams with) from the
-// vendored flows and this run's status: one node per system, showing what
-// it holds; one edge per hop, labelled with the item on it and how it is
-// doing; each coloured by its status. Pele ships in the Lambda zip
-// (tools/package.mjs copies it from node_modules), so the drawing is as
-// current as the facts, and no script runs in the browser.
+// The atlas and diagnostic pipe diagram share these evidence words. Both
+// are drawn from the vendored flows and this run's status, without scripts.
+// Pele remains the complete fallback when the flows outgrow the hand-drawn
+// geography, and mapSource remains the readable scenario snapshot.
 import { render } from 'pele';
+import { atlasCovers, atlasSvg } from './atlas.mjs';
+import { pocketAtlas } from './pocket.mjs';
 import { flows, systemName } from './flows.mjs';
 import { lagAt } from './journey.mjs';
 import { MATRIX_KINDS, SEVERITY } from './probe.mjs';
@@ -100,7 +99,7 @@ export function mapSource(status, journeys) {
  * and class (hop--<status>), titled, and linked to the hop's rows; each node
  * tagged with its system and class (node--<state>).
  */
-export function mapSvg(status, journeys = {}) {
+export function pipeMapSvg(status, journeys = {}) {
   const key = new Map(flows.systems.map((s, i) => [s.id, `n${i}`]));
   let { svg } = render(mapSource(status, journeys), { fontFamily: 'Inter, system-ui, sans-serif', fontSize: 17, padding: 24, idPrefix: 'map', autoDirection: false });
   // Pele fits the drawing to its container; the page shows it at its own
@@ -134,4 +133,15 @@ export function mapSvg(status, journeys = {}) {
   svg = svg.replace(/(<g class="pele-edge hop--[^"]+"[^>]*>[\s\S]*?)(<path d="([^"]+)"[^>]*>)/g,
     '$1<path class="pipe-case" d="$3" aria-hidden="true"/>$2');
   return `${svg}\n`;
+}
+
+/** The atlas uses the very same facts and wording as the diagnostic map. */
+export function mapSvg(status, journeys = {}, options = {}) {
+  if (!atlasCovers(flows)) return pipeMapSvg(status, journeys);
+  return atlasSvg(status, journeys, { edgeText, nodeText, nodeState, hopSummary }, options);
+}
+
+export function pocketMap(status, journeys = {}) {
+  if (!atlasCovers(flows)) return '';
+  return pocketAtlas(status, journeys, { edgeText, nodeText, nodeState, hopSummary, shortItem });
 }

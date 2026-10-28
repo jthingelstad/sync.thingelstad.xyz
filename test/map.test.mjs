@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { collect } from '../src/facts.mjs';
 import { flows } from '../src/flows.mjs';
 import fs from 'node:fs/promises';
-import { edgeText, hopSummary, mapSource, mapSvg, nodeState, nodeText, shortItem } from '../src/map.mjs';
+import { edgeText, hopSummary, mapSource, pipeMapSvg as mapSvg, nodeState, nodeText, shortItem } from '../src/map.mjs';
 import { advanceAll } from '../src/journey.mjs';
 import { renderPage } from '../src/page.mjs';
 import { probe } from '../src/probe.mjs';

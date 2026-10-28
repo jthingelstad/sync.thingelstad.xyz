@@ -15,6 +15,7 @@
     "probe": "node tools/probe.mjs",
     "probe:fixtures": "node tools/probe.mjs --fixtures",
     "preview": "node tools/preview.mjs",
+    "preview:published": "node tools/preview-published.mjs",
     "github:sync": "node tools/sync-github.mjs",
     "package": "node tools/package.mjs",
     "plan": "node tools/deploy.mjs plan",
