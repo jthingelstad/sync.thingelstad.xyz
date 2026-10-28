@@ -1,12 +1,13 @@
 # The storybook atlas
 
-Jamie chose the storybook atlas on 2026-10-27 and approved building the local
-preview with “Go”. The approved references are the desktop atlas and paired
-portrait/landscape concepts in that conversation. Scope: a working preview
-before production review. This change does not deploy or change a publishing
-connection, collector, importer, threshold, event, or journey calculation.
+Jamie chose the storybook atlas on 2026-10-27, approved its local preview with
+“Go”, and approved production deployment with “Deploy to production.” The
+approved references are the desktop atlas and paired portrait/landscape
+concepts in that conversation. The atlas changes the presentation; publishing
+connections, collectors, importers, thresholds, events and journey calculations
+retain their existing behavior.
 
-The next local revision addresses Jamie's feedback: buildings were in the
+The revised composition addresses Jamie's feedback: buildings were in the
 water, labels needed to belong to the design, and the phone crop was unusable.
 The revised desktop composition and portrait/landscape route studies are
 `exec-7849daf2-1bea-4623-ab8c-06737eb62728.png` and
