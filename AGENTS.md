@@ -126,11 +126,23 @@ WT354 validation permission below was added on October 28.
   per-item observation of hops 22/23, alongside the newest-star journey. Each
   displayed item needs a fresh explicit-public exact Pinboard check. Private,
   deleted or unverifiable sources publish counts only. Up to six candidates
-  per run; unresolved rows get priority, remaining slots rotate. A processed
+  per run; unresolved checks get priority, with a cursor slot reserved so six
+  unresolved checks cannot starve other candidates. `src/bookmark-progress.mjs`
+  retains up to 256 private outcomes and the cursor inside the already-protected
+  Feedbin journal. Eviction prefers resolved history and explicitly counts any
+  overflow, including unresolved history. No retained history means unretained,
+  not never checked or resolved. A processed
   capture is acknowledgement only; both exact public record and matching star
   association establish current presence. Real observation/confirmation/capture
   times stay distinct; no publication-derived lag or guessed arrival time.
-  Observation never imports, checkpoints, writes the inbox or announces events.
+  The collector prepares progress without writing. After every public snapshot
+  write, including health, succeeds, the probe re-reads the private journal and
+  merges only check metadata. Failure before that point cannot advance the
+  cursor; a checkpoint failure may repeat checks. It never imports, writes the
+  inbox or announces events outside the existing clock importer. Rendering an
+  existing snapshot never performs I/O or advances progress. Omitted unresolved
+  candidates publish counts only; no stale identity or check time is presented
+  as current.
   The raw Feedbin journal is blocked to CloudFront by an explicit bucket-policy
   deny, while the Lambda retains its existing access. `docs/BOOKMARK-BATCH.md`
   records the limits and acceptance cases. No per-item private source identity,

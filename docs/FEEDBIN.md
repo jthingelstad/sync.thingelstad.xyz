@@ -39,6 +39,15 @@ timeout for observation and publishing. Initial catch-up may take several
 half-hour rounds. Normal publishing events, deploy invocations, rehearsals
 and journey follow-ups never import.
 
+The bounded bookmark observer also keeps a sweep cursor and up to 256
+timestamped outcomes in this same private journal. Collection prepares these
+without writing; only after the complete public snapshot, including health,
+succeeds does the probe re-read the journal and merge its owned check metadata.
+Import and outbox fields are preserved. A crash or failed publication cannot
+advance the sweep; a failed private checkpoint safely repeats checks. This
+metadata-only checkpoint does not import, re-save, replay a capture or emit an
+event. `docs/BOOKMARK-BATCH.md` describes its fairness and privacy limits.
+
 The map distinguishes a `star` (one exact article, Feedbin to Pinboard) from
 a `link` (Pinboard's change stamp, watched downstream as before). A newer
 unrelated bookmark cannot prove a star arrived. The feed gives article
