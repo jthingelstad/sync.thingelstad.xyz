@@ -156,6 +156,21 @@ test('deployed run publishes only the sanitized batch, keeping newest-item recei
   assert.equal(h.calls.length, calls);
 });
 
+test('an unresolved queue exactly at the cap is retained across snapshots before rotating resolved items', async () => {
+  const items = Array.from({ length: 12 }, (_, i) => make(i + 1));
+  const unresolved = items.slice(0, BATCH_LIMIT);
+  const prior = { rows: unresolved.map(i => ({ id: md5(i.url).slice(0, 12), state: 'pending' })) };
+  const records = Object.fromEntries(unresolved.map(i => [i.url, 404]));
+  const first = await collect(harness(items, { prior, records }).ctx);
+  const expected = unresolved.map(i => md5(i.url).slice(0, 12)).sort();
+  assert.deepEqual(first.rows.map(r => r.id).sort(), expected);
+  assert.ok(first.rows.every(r => r.state === 'pending' && r.acknowledgement.state === 'acknowledged'));
+  const next = harness([...items].reverse(), { prior: first, records });
+  next.ctx.now = '2026-10-28T16:00:00Z';
+  const second = await collect(next.ctx);
+  assert.deepEqual(second.rows.map(r => r.id).sort(), expected);
+});
+
 test('origin policy denies the raw journal to CloudFront while retaining runtime access and public facts', async () => {
   const template = JSON.parse(await fs.readFile(new URL('../infra/sync.json', import.meta.url)));
   const statements = template.Resources.SiteBucketPolicy.Properties.PolicyDocument.Statement;

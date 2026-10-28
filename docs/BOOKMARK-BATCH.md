@@ -62,12 +62,14 @@ separate missing-observation work.
 
 ## Acceptance
 
-Seven added tests cover a three-item batch (newest present, middle 404, oldest
+Eight added tests cover a three-item batch (newest present, middle 404, oldest
 reader failure); acknowledged captures with mismatched/absent destinations;
 private/deleted/unverifiable source suppression; retries, deduplication,
 reordering and restart; deterministic caps, priority, rotation and runtime/rate
 deferral; full-run sanitized output with existing journey preservation; and
-the exact CloudFront deny. All 133 tests and ten existing page scenarios pass.
+the exact CloudFront deny. A review regression retains all six unresolved
+items when they fit exactly within the cap, across an acknowledged-capture
+restart and reordered input. All 134 tests and ten existing page scenarios pass.
 The offline preview (`node tools/preview-bookmark-batch.mjs`) preserves these
 three mixed outcomes visibly. In-app browser checks at actual widths 1280 and
 390 verify native disclosures, exact connection guidance, Back and reload.

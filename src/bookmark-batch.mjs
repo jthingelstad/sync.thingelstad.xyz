@@ -30,7 +30,7 @@ function selection(items, previous, processed, now, limit) {
   const unresolved = new Set((Array.isArray(previous?.rows) ? previous.rows : []).filter(r => r?.state !== 'present').map(r => r?.id));
   const priority = items.filter(i => unresolved.has(linkId(i.url)) || (captureId(i) && processed && !processed.has(captureId(i))));
   // Leave one rotating slot when the priority queue alone exceeds the cap.
-  const first = priority.slice(0, Math.max(1, limit - 1));
+  const first = priority.slice(0, priority.length > limit ? Math.max(1, limit - 1) : limit);
   const rest = items.filter(i => !first.includes(i));
   const offset = rest.length ? Math.floor(Date.parse(now) / 1_800_000) % rest.length : 0;
   return [...first, ...rest.slice(offset), ...rest.slice(0, offset)].slice(0, limit);
