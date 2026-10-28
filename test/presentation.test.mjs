@@ -4,9 +4,29 @@ import { archiveUrl, historyLanes, journeyLanes, laneModel } from '../src/lanes.
 import { summarise } from '../src/journey.mjs';
 import { movedThisWeek, storyFor } from '../src/stories.mjs';
 import { loadScenario, pageText, renderScenario } from '../tools/scenarios.mjs';
+import { followUps } from '../src/events.mjs';
+import { renderSite } from '../src/page.mjs';
 
 const now = '2026-10-28T02:07:00Z';
 const base = () => ({ kind: 'issue', item: { id: '355', at: '2026-10-28T02:02:00Z' }, origin: 'wt-builder', started_at: now, updated_at: now, arrivals: {}, observations: {} });
+
+test('delayed publication discovery labels the scheduled follow-up without inventing publication age', async () => {
+  const event = { kind: 'post', id: 'https://example.test/new-post', leg: 'website', at: '2026-10-28T05:14:09Z' };
+  const first = followUps(event, '2026-10-28T05:34:58Z')[0];
+  assert.equal(first.at, '2026-10-28T05:36:58');
+  assert.equal((Date.parse(first.at + 'Z') - Date.parse(event.at)) / 1000, 22 * 60 + 49);
+  const { status, journeys, history } = renderScenario(await loadScenario('blog-event-arrived'));
+  status.checked_at = first.at + 'Z';
+  status.trigger = { type: 'follow-up', ...first.input.follow_up };
+  for (const html of Object.values(renderSite(status, journeys, history))) {
+    const text = pageText(html);
+    assert.ok(text.includes('on the 2 min follow-up for the website leg of post'));
+    assert.ok(text.includes('After receiving a publication event, the probe schedules checks'));
+    const checked = pageText(html.match(/<p class="checked">([\s\S]*?)<\/p>/)[1]);
+    assert.doesNotMatch(checked, /2 min after|went out/);
+    assert.ok(!text.includes('after a published send'));
+  }
+});
 
 test('stories quote only observed timing and never invent a schedule, hold or destination', () => {
   const j = base();

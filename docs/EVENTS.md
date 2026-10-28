@@ -12,6 +12,13 @@ The archive also retains `subscriber`, `pushed` and `activity` signals; those do
 not match the probe rule. `ping` matches neither. The clock and published-event follow-ups still
 reconcile the public facts.
 
+Follow-up delays (2, 5, 10, 15, 30, 45 and 60 minutes) start when the probe
+consumes a publication event. They are not the item's age since publication.
+In particular, a blog post can be discovered by the next half-hour poll and
+then announce its earlier publication time. The checked line names the
+nominal follow-up rather than claiming the post went out that many minutes
+ago. The publication receipt and journey retain the original publication time.
+
 ## Who may put what
 
 | Source | Detail type | Writer | State |
