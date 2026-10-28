@@ -11,6 +11,7 @@ import { connectionActions, coverageLedger, coverageSummary, factsList, hopsTabl
 import { coverageModel } from './coverage.mjs';
 import { landmark, landscape } from './folio.mjs';
 import { central } from './time.mjs';
+import { bookmarkBatch, bookmarkBatchLink } from './bookmark-batch-page.mjs';
 export { itemLabel } from './stories.mjs';
 export { triggerText } from './evidence.mjs';
 
@@ -70,7 +71,7 @@ ${followAtlas(status, journeys, models)}
 <div class="map" tabindex="0" role="region" aria-label="Publishing atlas, scroll sideways to explore">${mapSvg(status, journeys, { inlineArt: false })}</div>
 <p class="atlas-caption">A snapshot, not continuous tracking. Geography and road length are illustrative. Roof colours identify places; words and arrows carry state.</p></section>
 <details class="atlas-key"><summary>Map key</summary><p>A signpost quotes a lag only for a measured arrival. Reported arrivals come from events; seen arrivals come from polls. Dashed roads run on a clock; solid roads run on an event or nudge. No fact yet means no readable evidence; unknown means the reader failed.</p></details></div></section>`;
-  return legacyLinks(status, journeys) + evidenceLinks(atlas) + attention(status) + coverageSummary(status);
+  return legacyLinks(status, journeys) + evidenceLinks(atlas) + attention(status) + coverageSummary(status) + (status.bookmark_batch ? `<p class="page-actions">${bookmarkBatchLink(status.bookmark_batch)}</p>` : '');
 }
 
 function feedbinReceipt(fact) {
@@ -81,15 +82,16 @@ function feedbinReceipt(fact) {
 
 function journeysPage(status, journeys, history) {
   const models = followModels(status, journeys);
-  if (!models.length) return '<p class="empty">No item is on a journey yet. <a href="/">Back to the map</a>.</p>';
+  const batch = bookmarkBatch(status.bookmark_batch);
+  if (!models.length) return '<p class="empty">No item is on a journey yet. <a href="/">Back to the map</a>.</p>' + batch;
   return `<div class="journal-views">${models.map((m, i) => `<article class="journal-view${i === 0 ? ' journal-view--default' : ''}" tabindex="-1">
 ${followPicker(models, m.kind, { prefix: '#journey-', all: false })}
 <div class="page-actions"><a href="/#follow-${m.kind}">← Back to the map</a><a href="/history/#history-${m.kind}">View history →</a></div>
 <div class="paper-panel journal-paper">${landmark(m.origin, 'journal-art')}
 <!-- story:${movedThisWeek(m.journey, status.checked_at) ? 'recent' : 'older'} --><section class="story"><h2 class="sr-only">${esc(KIND_LABEL[m.kind])}</h2><p>${esc(storyFor(m.journey))}</p></section><!-- /story -->
 <!-- journey-lanes -->${journeyLanes(m.journey, history, status.checked_at)}<!-- /journey-lanes -->
-</div><details class="receipt-disclosure"><summary>Receipt · ${m.holders.length} systems</summary><div id="receipt-${m.kind}">${receiptCard(m)}</div></details>${m.kind === 'star' ? feedbinReceipt(status.facts.feedbin) : ''}
-</article>`).join('')}</div><details class="reading-key"><summary>How to read the journey</summary><p>Each lane is time since publication, on a linear scale. A circle means seen in a poll; a square means reported by an event. The dashed marker is the median of finished measured journeys. First confirmations have no measured lag or time mark. Polls show their check interval; reports show one-second resolution.</p></details>`;
+</div><details class="receipt-disclosure"><summary>Receipt · ${m.holders.length} systems</summary><div id="receipt-${m.kind}">${receiptCard(m)}</div></details>${m.kind === 'star' ? feedbinReceipt(status.facts.feedbin) + bookmarkBatch(status.bookmark_batch) : ''}
+</article>`).join('')}</div>${models.some(m => m.kind === 'star') ? '' : batch}<details class="reading-key"><summary>How to read the journey</summary><p>Each lane is time since publication, on a linear scale. A circle means seen in a poll; a square means reported by an event. The dashed marker is the median of finished measured journeys. First confirmations have no measured lag or time mark. Polls show their check interval; reports show one-second resolution.</p></details>`;
 }
 
 function historyPage(status, journeys, history) {

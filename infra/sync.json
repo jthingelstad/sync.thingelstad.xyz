@@ -334,6 +334,17 @@
               }
             },
             {
+              "Sid": "CloudFrontCannotReadPrivateFeedbinJournal",
+              "Effect": "Deny",
+              "Principal": {
+                "Service": "cloudfront.amazonaws.com"
+              },
+              "Action": "s3:GetObject",
+              "Resource": {
+                "Fn::Sub": "${SiteBucket.Arn}/facts/feedbin.json"
+              }
+            },
+            {
               "Sid": "CloudFrontReadsSite",
               "Effect": "Allow",
               "Principal": {

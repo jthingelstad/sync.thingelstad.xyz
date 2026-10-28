@@ -122,6 +122,19 @@ WT354 validation permission below was added on October 28.
   journal checkpoint, then bus acknowledgement; retries continue until the
   deployed Links fact acknowledges each capture. `LinksBookmarkMode` is one
   off/active switch. The destination owns its AWS publisher and event rule; no GitHub key is used.
+- `src/bookmark-batch.mjs`, `src/bookmark-batch-page.mjs` — bounded public-only
+  per-item observation of hops 22/23, alongside the newest-star journey. Each
+  displayed item needs a fresh explicit-public exact Pinboard check. Private,
+  deleted or unverifiable sources publish counts only. Up to six candidates
+  per run; unresolved rows get priority, remaining slots rotate. A processed
+  capture is acknowledgement only; both exact public record and matching star
+  association establish current presence. Real observation/confirmation/capture
+  times stay distinct; no publication-derived lag or guessed arrival time.
+  Observation never imports, checkpoints, writes the inbox or announces events.
+  The raw Feedbin journal is blocked to CloudFront by an explicit bucket-policy
+  deny, while the Lambda retains its existing access. `docs/BOOKMARK-BATCH.md`
+  records the limits and acceptance cases. No per-item private source identity,
+  capture key, commentary or API exception may enter this batch's public output.
 - `src/feedbin.mjs`, `src/pinboard.mjs` — RSS discovery, the durable additive
   import and a paced Pinboard API client. Feedbin's `star` fact names an exact
   article independently of the existing Pinboard `link` change stamp. The feed
