@@ -11,7 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { collect, LIBRARIAN_ARTIFACTS, LIBRARIAN_HEALTH, PUBLISHER_FACT_KEY, URLS } from '../src/facts.mjs';
 import { flows } from '../src/flows.mjs';
 import { advanceAll, historyFor } from '../src/journey.mjs';
-import { renderPage } from '../src/page.mjs';
+import { renderNotFound, renderSite } from '../src/page.mjs';
 import { probe } from '../src/probe.mjs';
 import { loadScenario, pageText, renderScenario } from './scenarios.mjs';
 
@@ -94,10 +94,15 @@ async function liveContext() {
   };
 }
 
-export async function writeSite(out, { status, journeys, history = null, retired = [], received, page }) {
+export async function writeSite(out, { status, journeys, history = null, retired = [], received, page, pages }) {
   await fs.mkdir(path.join(out, 'receipts'), { recursive: true });
-  await fs.writeFile(path.join(out, 'index.html'), page);
-  await fs.writeFile(path.join(out, 'page.txt'), pageText(page));
+  for (const [key, html] of Object.entries(pages ?? { 'index.html': page })) {
+    const file = path.join(out, key);
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(file, html);
+    await fs.writeFile(path.join(path.dirname(file), 'page.txt'), pageText(html));
+  }
+  await fs.writeFile(path.join(out, '404.html'), renderNotFound());
   await fs.writeFile(path.join(out, 'status.json'), `${JSON.stringify(status, null, 1)}\n`);
   await fs.writeFile(path.join(out, 'journeys.json'), `${JSON.stringify(journeys, null, 1)}\n`);
   await fs.mkdir(path.join(out, 'journeys'), { recursive: true });
@@ -128,7 +133,8 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const status = probe({ flows, facts, now: ctx.now, code: fixtures ? 'fixtures' : 'local', trigger: { type: 'manual' } });
     const journeys = advanceAll(fixtures ? JSON.parse(await fs.readFile(path.join(ROOT, 'test/fixtures/journeys.json'), 'utf8')) : null, status);
     const kept = historyFor(null, null, journeys, ctx.now);
-    result = { status, journeys, history: kept.index, retired: kept.retired, page: renderPage(status, journeys, kept.index) };
+    const pages = renderSite(status, journeys, kept.index);
+    result = { status, journeys, history: kept.index, retired: kept.retired, pages, page: pages['index.html'] };
   }
   const out = name ? path.join(OUT, name) : OUT;
   await writeSite(out, result);

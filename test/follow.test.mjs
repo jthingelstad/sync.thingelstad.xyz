@@ -3,6 +3,8 @@ import { test } from 'node:test';
 import { followAtlas, followEdgeText, followModels } from '../src/follow.mjs';
 import { flows } from '../src/flows.mjs';
 import { probe } from '../src/probe.mjs';
+import { journeyLanes } from '../src/lanes.mjs';
+import { renderPage } from '../src/page.mjs';
 import { loadScenario, pageText, renderScenario, scenarioNames } from '../tools/scenarios.mjs';
 
 test('following an issue reveals its fresh Thingy hop and includes its audio edition', async () => {
@@ -71,8 +73,8 @@ test('a fallback witness retains its measured waiting state, failed readers stay
   assert.equal(hop.waiting_upstream, undefined);
   const html = followAtlas(status, { issue: s.journeys.issue }, [model]);
   assert.match(html, /aria-describedby="follow-issue-witnesses"/);
-  const evidence = pageText(html.match(/<details class="follow-connections">[\s\S]*?<\/details>/)[0]);
-  assert.match(evidence, /10\. WT Builder → Librarian.*late[\s\S]*?Measured as Weekly Thing \(web\) has it; no source fact yet\./);
+  const evidence = pageText(renderPage(status, { issue: s.journeys.issue }, null, 'records'));
+  assert.match(evidence, /as Weekly Thing \(web\) has it/);
   assert.match(html, /Hop 10: WT Builder → Librarian<\/a> · Measured as Weekly Thing \(web\) has it; no source fact yet\./);
 });
 
@@ -88,8 +90,8 @@ test('first confirmations gain no lag, reported arrivals keep their time and unk
   assert.match(followEdgeText(model, 16), /reported 2 min$/);
   model.journey.item = { ...model.item, at: null };
   assert.match(followEdgeText(model, 16), /reported$/);
-  const words = pageText(followAtlas(status, journeys, [model]));
-  assert.match(words, /Reported .*elapsed time unmeasured.*1 sec resolution/);
+  const words = pageText(journeyLanes(model.journey, null, status.checked_at));
+  assert.match(words, /reported .*elapsed time unmeasured.*1 sec resolution/);
   assert.doesNotMatch(words, /2 min after publication/);
   delete model.journey.arrivals.thingy.via;
   assert.match(followEdgeText(model, 16), /seen$/);

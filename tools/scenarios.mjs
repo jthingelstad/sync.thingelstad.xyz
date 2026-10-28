@@ -3,7 +3,8 @@
 import fs from 'node:fs/promises';
 import { flows } from '../src/flows.mjs';
 import { mapSource } from '../src/map.mjs';
-import { renderPage } from '../src/page.mjs';
+import { renderSite } from '../src/page.mjs';
+import { historyLanes } from '../src/lanes.mjs';
 import { mergePublished, publishedEvent, receivedEvent } from '../src/events.mjs';
 import { queueReceived } from '../src/received.mjs';
 import { observe } from '../src/observe.mjs';
@@ -46,7 +47,8 @@ export function renderScenario({ facts, journeys, history = null, events = [], m
   const blog=microblog?blogPlan({state:microblog.producer,publisher:microblog.publisher,fact:facts.microblog,current:journeys?.post?.item,now}):null;
   if(blog) facts.microblog=blog.fact;
   const result = observe({ flows, facts, journeys, history, received, now, code: 'fixtures', trigger });
-  return { ...result, blog, page: renderPage(result.status, result.journeys, result.history) };
+  const pages = renderSite(result.status, result.journeys, result.history);
+  return { ...result, blog, pages, page: pages['index.html'] };
 }
 
 /** Readable rendered text for the snapshots and each PR's send-in-progress page. */
@@ -62,10 +64,10 @@ export function pageText(html) {
     .split('\n').map((s) => s.replace(/\s+/g, ' ').trim()).filter(Boolean).join('\n') + '\n';
 }
 
-export function scenarioSnapshot({ status, journeys, page }) {
-  const journey = page.match(/<h2 id="journeys">Journeys<\/h2>([\s\S]*?)<h2 id="history">History<\/h2>/)?.[1];
-  if (!journey) throw new Error('The page has no journeys section to snapshot');
-  const stories = page.match(/<h2>The newest stories<\/h2>([\s\S]*?)<ul class="counts">/)?.[1];
-  const history = page.match(/<h2 id="history">History<\/h2>([\s\S]*?)<h2>Needs a look<\/h2>/)?.[1];
-  return { map: `${mapSource(status, journeys)}\n`, journeys: pageText(journey), stories: pageText(stories), history: pageText(history) };
+export function scenarioSnapshot({ status, journeys, pages }) {
+  const extract = (html, name) => [...html.matchAll(new RegExp(`<!-- ${name} -->([\\s\\S]*?)<!-- /${name.split(':')[0]} -->`, 'g'))].map((m) => m[1]).join('\n');
+  const lanes = extract(pages['journeys/index.html'], 'journey-lanes');
+  const stories = extract(pages['journeys/index.html'], 'story:recent');
+  const history = extract(pages['history/index.html'], 'history-lanes') || historyLanes(null);
+  return { map: `${mapSource(status, journeys)}\n`, journeys: pageText(lanes), stories: pageText(stories), history: pageText(history) };
 }

@@ -19,14 +19,15 @@ test('the handler keeps a superseded journey before the index and publishes heal
   assert.deepEqual(JSON.parse(writes[1].body).kinds.issue.map((j) => j.item.id), ['356', '355']);
   assert.equal(writes.at(-1).key, 'health.json');
   assert.equal(JSON.parse(writes.find((w) => w.key === 'journeys.json').body).issue.item.id, '356');
-  for (const fail of ['journeys/issue/355.json', HISTORY_KEY, 'receipts/issue.json']) {
+  for (const key of ['index.html', 'journeys/index.html', 'history/index.html', 'records/index.html']) assert.ok(writes.some((w) => w.key === key), key);
+  for (const fail of ['journeys/issue/355.json', HISTORY_KEY, 'receipts/issue.json', 'journeys/index.html', 'records/index.html']) {
     const called = [];
     await assert.rejects(publish('fixture-bucket', result, async (bucket, key) => {
       called.push(key);
       if (key === fail) throw new Error('fixture write failed');
     }), /fixture write failed/);
     assert.ok(!called.includes('health.json'));
-    if (fail !== 'receipts/issue.json') assert.ok(!called.includes('journeys.json'));
+    if (['journeys/issue/355.json', HISTORY_KEY].includes(fail)) assert.ok(!called.includes('journeys.json'));
   }
 });
 

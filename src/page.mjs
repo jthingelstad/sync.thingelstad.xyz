@@ -1,238 +1,136 @@
-// The sync page: one scriptless HTML page from a status. Facts only, so it
-// is fine to publish: newest ids and ages, never a secret, never a visitor.
-import { systemName, systemsById } from './flows.mjs';
+// Four small scriptless pages from the same observation. Rendering never
+// collects facts or advances a journal. JSON routes and archives stay put.
+import { flows, systemName } from './flows.mjs';
 import { historyLanes, journeyLanes } from './lanes.mjs';
-import { itemLabel, KIND_LABEL, movedThisWeek, storyFor } from './stories.mjs';
+import { KIND_LABEL, itemLabel, movedThisWeek, storyFor } from './stories.mjs';
 import { pageStyles, sharedStyles } from './style.mjs';
-export { itemLabel } from './stories.mjs';
-import { mapSvg, pocketMap, shortItem } from './map.mjs';
+import { hopSummary, mapSvg, pocketMap } from './map.mjs';
 import { atlasArtwork, atlasNavigation } from './atlas.mjs';
 import { followAtlas, followModels, followPicker } from './follow.mjs';
-import { age, central } from './time.mjs';
+import { factsList, hopsTable, matrixTable, receiptCard, triggerText } from './evidence.mjs';
+import { landmark, landscape } from './folio.mjs';
+import { central } from './time.mjs';
+export { itemLabel } from './stories.mjs';
+export { triggerText } from './evidence.mjs';
 
-const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const esc = (s) => String(s ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+const PAGES = [['map', 'Map', '/'], ['journeys', 'Journeys', '/journeys/'], ['history', 'History', '/history/'], ['records', 'Records', '/records/']];
+const pill = (s) => `<span class="pill pill--${s}">${s === 'no-fact' ? 'no fact yet' : s}</span>`;
 
-const STATUS_LABEL = { fresh: 'fresh', moving: 'moving', late: 'late', held: 'held', 'no-fact': 'no fact yet', unknown: 'unknown' };
-const HOLDER_LABEL = { has: 'has it', behind: 'behind', 'no-fact': 'no fact yet', unknown: 'unknown' };
-
-const pill = (status) => `<span class="pill pill--${esc(status)}">${esc(STATUS_LABEL[status] ?? status)}</span>`;
-
-const when = (item) => (item?.at ? `<span class="muted">${esc(central(item.at))}</span>` : '');
-
-function receiptCard(r) {
-  if (!r.item) {
-    return `<section class="receipt"><h3>${esc(KIND_LABEL[r.kind] ?? r.kind)}</h3><p class="muted">No system publishes a fact for the newest ${esc(r.kind)} yet.</p></section>`;
-  }
-  const rows = r.holders
-    .map(
-      (h) => `<li class="holder holder--${esc(h.state)}"><span class="holder__mark" aria-hidden="true"></span><span class="holder__name">${esc(systemName(h.system))}${h.label ? ` <span class="muted">(${esc(h.label)})</span>` : ''}</span><span class="holder__state">${esc(HOLDER_LABEL[h.state])}${h.state === 'behind' && h.newest ? `: ${esc(itemLabel(h.kind, h.newest))}` : ''}${h.state !== 'has' && h.why ? `<span class="muted"> · ${esc(h.why)}</span>` : ''}</span></li>`,
-    )
-    .join('\n');
-  const title = r.item.url ? `<a href="${esc(r.item.url)}">${esc(itemLabel(r.kind, r.item))}</a>` : esc(itemLabel(r.kind, r.item));
-  return `<section class="receipt">
-<h3>${esc(KIND_LABEL[r.kind] ?? r.kind)}</h3>
-<p class="receipt__item">${title}${r.item.title && !['post', 'episode', 'star'].includes(r.kind) ? ` <span class="muted">${esc(r.item.title.replace(new RegExp(`^${itemLabel(r.kind, r.item)}\\s*[—–-]?\\s*`), ''))}</span>` : ''}</p>
-<p class="muted">${r.item.at ? `${esc(central(r.item.at))}, ${esc(age(r.age_hours))} ago` : 'undated'} · from ${esc(systemName(r.origin))}</p>
-<ul class="holders">
-${rows}
-</ul>
-</section>`;
-}
-
-function matrixTable(matrix) {
-  const columns = [];
-  for (const row of matrix) for (const c of row.cells) if (!columns.includes(c.system)) columns.push(c.system);
-  const header = columns.map((s) => `<th>${esc(systemName(s))}</th>`).join('');
-  const body = matrix
-    .map((row) => {
-      const cells = columns
-        .map((system) => {
-          const cell = row.cells.find((c) => c.system === system);
-          if (!cell) return '<td class="cell cell--blank"></td>';
-          const status = cell.status ?? (cell.newest ? 'fresh' : 'no-fact');
-          const inner = cell.fact_error
-            ? `<span class="muted">unknown</span>`
-            : cell.newest
-              ? `<strong>${esc(itemLabel(row.kind, cell.newest))}</strong>${cell.newest.at ? `<br><span class="muted">${esc(central(cell.newest.at))}</span>` : ''}`
-              : `<span class="muted">no fact yet</span>`;
-          return `<td class="cell cell--${esc(status)}">${inner}</td>`;
-        })
-        .join('');
-      return `<tr><th scope="row">${esc(KIND_LABEL[row.kind] ?? row.kind)}</th>${cells}</tr>`;
-    })
-    .join('\n');
-  return `<table class="matrix"><thead><tr><th></th>${header}</tr></thead><tbody>${body}</tbody></table>`;
-}
-
-function hopsTable(hops) {
-  const seen = new Set();
-  const rows = hops
-    .map(
-      (h) => `<tr class="status--${esc(h.status)}"${seen.has(h.id) ? '' : (seen.add(h.id), ` id="hop-${h.id}"`)}>
-<td class="num"><a href="/flows/#hop-${h.id}">${h.id}</a></td>
-<td><strong>${esc(systemName(h.from))}</strong> → <strong>${esc(systemName(h.to))}</strong><br><span class="muted">${esc(h.kind)}</span></td>
-<td>${h.source ? `${esc(itemLabel(h.kind, h.source))}${h.measured_from && h.measured_from !== h.from ? ` <span class="muted">(as ${esc(systemName(h.measured_from))} has it)</span>` : ''}<br>${when(h.source)}` : '<span class="muted">—</span>'}</td>
-<td>${h.target ? `${esc(itemLabel(h.kind, h.target))}<br>${when(h.target)}` : '<span class="muted">—</span>'}</td>
-<td class="num">${h.lag_hours == null ? '<span class="muted">—</span>' : `${esc(age(h.lag_hours))}<br><span class="muted">of ${esc(age(h.expected_lag_hours))}</span>`}</td>
-<td>${pill(h.status)}${h.why ? `<br><span class="muted">${esc(h.why)}</span>` : ''}</td>
-</tr>`,
-    )
-    .join('\n');
-  return `<table class="hops"><thead><tr><th>#</th><th>Hop</th><th>Source has</th><th>Destination has</th><th>Behind</th><th>Status</th></tr></thead><tbody>${rows}</tbody></table>`;
-}
-
-function factsList(facts) {
-  const entries = [...Object.entries(facts), ...[...systemsById.keys()]
-    .filter((id) => !Object.hasOwn(facts, id))
-    .map((id) => [id, { none: 'No fact was available for this system in this snapshot.' }])];
-  return entries
-    .map(([id, fact]) => {
-      const sys = systemsById.get(id);
-      const state = fact.error ? pill('unknown') : fact.none && !Object.keys(fact.newest ?? {}).length ? pill('no-fact') : pill('fresh');
-      const newest = Object.entries(fact.newest ?? {})
-        .map(([kind, item]) => `<li><code>${esc(kind)}</code> ${esc(itemLabel(kind, item))}${item.at ? ` <span class="muted">${esc(central(item.at))}</span>` : ''}${item.url ? ` <a class="muted" href="${esc(item.url)}">↗</a>` : ''}</li>`)
-        .join('');
-      const extra = Object.keys(fact.extra ?? {}).length ? `<pre>${esc(JSON.stringify(fact.extra, null, 1))}</pre>` : '';
-      return `<details class="fact" id="fact-${esc(id)}"><summary>${state} <strong>${esc(sys?.name ?? id)}</strong>${fact.error ? ` <span class="muted">${esc(fact.error)}</span>` : fact.none ? ` <span class="muted">${esc(fact.none)}</span>` : ''}</summary>
-${sys?.fact ? `<p class="muted">${esc(sys.fact)}</p>` : ''}
-${newest ? `<ul>${newest}</ul>` : ''}
-${extra}
-</details>`;
-    })
-    .join('\n');
-}
-
-/** How this run started, for the lede. */
-export function triggerText(t) {
-  if (!t) return 'on the half-hour clock';
-  switch (t.type) {
-    case 'event':
-      return `on the published event for the ${esc(t.leg)} leg of ${esc(shortItem(t.kind, { id: t.id }))}${t.rehearsal ? ' (a rehearsal: nothing recorded)' : ''}`;
-    case 'follow-up':
-      return `${esc(String(t.minutes))} min after the ${esc(t.leg)} leg of ${esc(shortItem(t.kind, { id: t.id }))} went out`;
-    case 'received':
-      return `on ${esc(systemName(t.system))}'s reported arrival of ${esc(shortItem(t.kind, { id: t.id }))}`;
-    case 'deploy':
-      return 'by a deploy';
-    case 'manual':
-      return 'by hand';
-    default:
-      return 'on the half-hour clock';
-  }
-}
-
-function journeysSection(status, journeys, history) {
-  const cards = status.receipts.filter((r) => r.item && journeys?.[r.kind]).map((r) => journeyLanes(journeys[r.kind], history, status.checked_at));
-  return cards.length ? '<div class="journeys">' + cards.join('\n') + '</div>' : '<p class="empty">No item is on a journey yet.</p>';
-}
-
-function storiesSection(journeys, now) {
-  const recent = Object.values(journeys).filter((j) => movedThisWeek(j, now));
-  return recent.length ? '<div class="stories">' + recent.map((j) => '<section class="story"><h3>' + esc(KIND_LABEL[j.kind] ?? j.kind) + '</h3><p>' + esc(storyFor(j)) + '</p></section>').join('\n') + '</div>' : '<p class="empty">No recent publication or measured arrival this week. The map below shows the latest facts.</p>';
-}
-
-function feedbinSection(fact) {
-  if (!fact?.extra?.mode) return '';
-  const f = fact.extra;
-  return `<section class="receipt" aria-label="Feedbin to Pinboard"><h2>Feedbin → Pinboard</h2>
-<p>${f.mode === 'preview' ? 'Preview: saves are off. ' : ''}<strong>${esc(f.pending)} pending</strong> · ${esc(f.confirmed)} confirmed · ${esc(f.articles_in_feed)} articles in the feed.</p>
-${f.importer_error ? `<p>${esc(f.importer_error)}</p>` : ''}
-<p class="muted">${f.last_import_at ? `Last import check ${esc(central(f.last_import_at))}. ` : ''}Existing bookmarks keep their notes, tags and dates. The feed does not give star times.</p></section>`;
-}
-
-export function renderPage(status, journeys = {}, history = null) {
-  const s = status.summary;
-  const pocket = pocketMap(status, journeys);
-  const following = followModels(status, journeys);
-  const open = status.open.length
-    ? `<ul class="open">${status.open.map((h) => `<li>${pill(h.status)} <a href="#hops">${h.id}. ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</a>, ${esc(h.kind)}${h.lag_hours != null ? `: ${esc(age(h.lag_hours))} behind, expected ${esc(age(h.expected_lag_hours))}` : ''}${h.why ? ` <span class="muted">${esc(h.why)}</span>` : ''}</li>`).join('\n')}</ul>`
-    : '<p>Every hop with a fact on both sides is fresh or moving.</p>';
-
+function frame({ active, title, intro, content, status, art = null }) {
+  const checked = status ? `Checked ${esc(central(status.checked_at))}, ${triggerText(status.trigger)}.` : '';
   return `<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sync state</title>
-<meta name="description" content="What each of Jamie's systems holds right now, how far behind each hop runs, and a receipt for the newest item of each kind.">
-<meta name="robots" content="noindex">
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>${active === 'map' ? 'Sync state' : `${esc(title)} · Sync state`}</title>
+<meta name="description" content="${esc(intro)}"><meta name="robots" content="noindex">
 <link rel="alternate" type="application/json" href="/status.json">
-<style>
-${sharedStyles}
-${pageStyles}
-</style>
-</head>
-<body>
-<main>
-<header class="masthead">
-<p class="kicker">Jamie Thingelstad / Sync state</p>
-<h1>Things in flow</h1>
-<p class="lede">The publishing pipes: what is moving, where it has arrived, and what is still waiting.</p>
-<p class="checked">Checked ${esc(central(status.checked_at))}, ${triggerText(status.trigger)}. A snapshot, refreshed on events and the half-hour clock.</p>
-<nav class="jump" aria-label="On this page"><a href="#map">Map</a><a href="#journeys">Journeys</a><a href="#history">History</a><a href="#receipts">Receipts</a><a href="#hops">Hop details</a></nav>
-</header>
-<section class="atlas-section${following.length ? ' atlas-section--following' : ''}" id="map" aria-labelledby="map-title">
-<h2 id="map-title">The map, as it is now</h2>
-<p class="section-note atlas-intro">Choose an item to follow its path, confirmations and outstanding arrivals. All connections shows every kind on each road.</p>
-${pocket ? atlasArtwork() : ''}
-${followAtlas(status, journeys, following)}
-<div class="atlas-overview" id="all-connections" tabindex="-1">
-${followPicker(following)}
-${pocket}
-<section id="whole-atlas" class="atlas-full${pocket ? '' : ' atlas-full--fallback'}" aria-label="Whole publishing atlas">
-<a class="atlas-back" href="#all-connections">Back to route view ↑</a>
-${status.open.length ? `<p class="atlas-attention"><span class="atlas-attention__label">Needs a look:</span><a href="#place-${esc(status.open[0].to)}">${esc(systemName(status.open[0].from))} → ${esc(systemName(status.open[0].to))}</a><span class="atlas-attention__state">${esc(status.open[0].kind)} ${pill(status.open[0].status)}</span></p>` : ''}
-${atlasNavigation()}
-<div class="map" tabindex="0" role="region" aria-label="Publishing atlas, scroll sideways to explore">
-${mapSvg(status, journeys, { inlineArt: !pocket })}
-</div>
-<p class="atlas-caption">A snapshot, not continuous tracking. Geography and road length are illustrative; times come from receipts. A roof’s colour identifies its place. Choose a signpost for hop details, or a place for its facts.</p>
-</section>
-<details class="atlas-key"><summary>Map key: status, timing and direction</summary><p>A signpost says <strong>in 2 min</strong> only for a measured arrival; <strong>moving</strong> is within the expected lag, <strong>late</strong> is past it. Roads are coloured by the worst of their kinds. Dashed roads run on a clock; solid roads run on an event or nudge. <strong>Held</strong> is waiting by rule, <strong>no fact yet</strong> means there is no readable fact, and <strong>unknown</strong> means the reader failed. Short posts attach signs to their own road; arrows show direction. A signpost’s link opens all its kinds below.</p></details>
-</div>
-</section>
+<style>${sharedStyles}\n${pageStyles}</style></head>
+<body class="folio folio--${active}">
+${atlasArtwork()}
+<a class="skip-link" href="#content">Skip to content</a>
+<header class="site-header"><a class="site-brand" href="/">${landmark('feedbin')}<span>${active === 'map' ? 'Jamie Thingelstad / Sync state' : 'Things in flow'}</span></a>
+<nav class="site-nav" aria-label="Site navigation">${PAGES.map(([id, name, url]) => `<a href="${url}"${active === id ? ' aria-current="page"' : ''}>${name}</a>`).join('')}</nav>${landscape('header-landscape')}</header>
+<main id="content"><header class="masthead${art ? ' masthead--illustrated' : ''}"><div><h1>${esc(title)}</h1><p class="lede">${esc(intro)}</p>${checked ? `<p class="checked">${checked}</p>` : ''}</div>${art ? landmark(art, 'masthead-art') : ''}</header>
+${content}</main>
+<footer class="site-footer">${landscape('footer-landscape', true)}<div class="footer-line"><span>Jamie Thingelstad · Things in flow</span><a href="/flows/">Flows contract</a><a href="https://github.com/jthingelstad/sync.thingelstad.xyz">Source</a></div>
+<details class="colophon"><summary>Snapshot &amp; data</summary><p>${checked} A snapshot, refreshed on events and the half-hour clock. Reload for the latest.</p>
+${status?.code ? `<p>Published by the sync probe (<code>${esc(status.code)}</code>).</p>` : ''}<p><a href="/status.json">Status JSON</a> · <a href="/journeys.json">Current journeys</a> · <a href="/journeys/index.json">Journey history</a> · <a href="/facts/wt-builder.json">Publisher fact</a></p><p>Each receipt is at <code>/receipts/&lt;kind&gt;.json</code>. The probe also checks at 2, 5, 10, 15, 30, 45 and 60 minutes after a published send. No browser script or automatic refresh.</p></details></footer>
+</body></html>`;
+}
 
-<h2>The newest stories</h2>
-${storiesSection(journeys, status.checked_at)}
-${feedbinSection(status.facts.feedbin)}
-<ul class="counts">
-<li>${pill('fresh')} ${s.fresh}</li><li>${pill('moving')} ${s.moving}</li><li>${pill('late')} ${s.late}</li><li>${pill('held')} ${s.held}</li><li>${pill('no-fact')} ${s.no_fact}</li><li>${pill('unknown')} ${s.unknown}</li>
-</ul>
+// Forward old same-page bookmarks without browser script. These short
+// links appear only when their old fragment is actually requested.
+function legacyLinks(status, journeys) {
+  const known = new Set(followModels(status, journeys).map((m) => m.kind));
+  const links = [['journeys', '/journeys/', 'journeys'], ['history', '/history/', 'history'], ['receipts', '/journeys/', 'receipts'], ['hops', '/records/#hops', 'hop details'],
+    ...[...new Set(status.hops.map((h) => h.id))].map((id) => [`hop-${id}`, `/records/#hop-${id}`, `hop ${id}`]),
+    ...flows.systems.map((s) => [`fact-${s.id}`, `/records/#fact-${s.id}`, `${s.name} facts`]),
+    ...status.receipts.map((r) => [`journey-${r.kind}`, known.has(r.kind) ? `/journeys/#journey-${r.kind}` : '/journeys/', known.has(r.kind) ? `${r.kind} journey` : 'journey records'])];
+  return `<aside class="legacy-links" aria-label="Moved evidence">${links.map(([id, url, name]) => `<a class="legacy-link" id="${id}" href="${url}">View ${esc(name)} on its new page →</a>`).join('')}</aside>`;
+}
 
-<h2 id="journeys">Journeys</h2>
-<p class="section-note">Each lane is time since publication, with its scale above. A circle says <strong>seen</strong> in a poll; a square says <strong>reported</strong> by an event. A dashed marker is the median from finished, measured journeys. Polls give the check interval when known; reports have one-second resolution. First confirmations have no measured lag and no time mark.</p>
-${journeysSection(status, journeys, history)}
+function evidenceLinks(html) {
+  return html.replace(/href="#((?:hop-|fact-)[^"]+)"/g, 'href="/records/#$1"')
+    .replace(/href="#journeys"/g, 'href="/journeys/"');
+}
 
-<h2 id="history">History</h2>
-<p class="section-note">The last ten finished journeys of each kind, as small lanes. The archive keeps the original arrival evidence.</p>
-${historyLanes(history)}
+function attention(status) {
+  if (!status.open.length) return '';
+  return `<aside class="attention"><strong>Needs a look</strong><ul>${status.open.map((h) => `<li><a href="/records/#hop-${h.id}">${esc(systemName(h.from))} → ${esc(systemName(h.to))}</a><span>${esc(h.kind)} ${pill(h.status)}</span></li>`).join('')}</ul></aside>`;
+}
 
-<h2>Needs a look</h2>
-${open}
+function mapPage(status, journeys) {
+  const models = followModels(status, journeys);
+  const pocket = pocketMap(status, journeys);
+  const atlas = `<section class="atlas-section${models.length ? ' atlas-section--following' : ''}" id="map" aria-label="The publishing atlas">
+${followAtlas(status, journeys, models)}
+<div class="atlas-overview" id="all-connections" tabindex="-1">${followPicker(models)}${pocket}
+<section id="whole-atlas" class="atlas-full${pocket ? '' : ' atlas-full--fallback'}" aria-label="Whole publishing atlas"><a class="atlas-back" href="#all-connections">Back to route view ↑</a>${atlasNavigation()}
+<div class="map" tabindex="0" role="region" aria-label="Publishing atlas, scroll sideways to explore">${mapSvg(status, journeys, { inlineArt: false })}</div>
+<p class="atlas-caption">A snapshot, not continuous tracking. Geography and road length are illustrative. Roof colours identify places; words and arrows carry state.</p></section>
+<details class="atlas-key"><summary>Map key</summary><p>A signpost quotes a lag only for a measured arrival. Reported arrivals come from events; seen arrivals come from polls. Dashed roads run on a clock; solid roads run on an event or nudge. No fact yet means no readable evidence; unknown means the reader failed.</p></details></div></section>`;
+  return legacyLinks(status, journeys) + evidenceLinks(atlas) + attention(status);
+}
 
-<h2 id="receipts">Newest of each kind</h2>
-<div class="receipts">
-${status.receipts.map(receiptCard).join('\n')}
-</div>
+function feedbinReceipt(fact) {
+  const f = fact?.extra;
+  if (!f?.mode) return '';
+  return `<details class="import-receipt"><summary>Feedbin → Pinboard · ${esc(f.pending)} pending · ${esc(f.confirmed)} confirmed${f.mode === 'preview' ? ' · preview' : ''}</summary><p>${esc(f.articles_in_feed)} articles in the feed. ${f.last_import_at ? `Last import check ${esc(central(f.last_import_at))}. ` : ''}The feed does not give star times. Existing bookmarks keep their notes, tags and dates.</p>${f.importer_error ? `<p>${esc(f.importer_error)}</p>` : ''}</details>`;
+}
 
-<h2>What each system holds</h2>
-<div class="scroll">
-${matrixTable(status.matrix)}
-</div>
-<ul class="legend"><li>A cell is coloured by the worst hop arriving there: ${pill('fresh')} holds the source's newest, ${pill('moving')} not yet but within the expected lag, ${pill('late')} past it, ${pill('held')} waiting by rule, ${pill('no-fact')} the system publishes nothing the probe can read.</li></ul>
+function journeysPage(status, journeys, history) {
+  const models = followModels(status, journeys);
+  if (!models.length) return '<p class="empty">No item is on a journey yet. <a href="/">Back to the map</a>.</p>';
+  return `<div class="journal-views">${models.map((m, i) => `<article class="journal-view${i === 0 ? ' journal-view--default' : ''}" tabindex="-1">
+${followPicker(models, m.kind, { prefix: '#journey-', all: false })}
+<div class="page-actions"><a href="/#follow-${m.kind}">← Back to the map</a><a href="/history/#history-${m.kind}">View history →</a></div>
+<div class="paper-panel journal-paper">${landmark(m.origin, 'journal-art')}
+<!-- story:${movedThisWeek(m.journey, status.checked_at) ? 'recent' : 'older'} --><section class="story"><h2 class="sr-only">${esc(KIND_LABEL[m.kind])}</h2><p>${esc(storyFor(m.journey))}</p></section><!-- /story -->
+<!-- journey-lanes -->${journeyLanes(m.journey, history, status.checked_at)}<!-- /journey-lanes -->
+</div><details class="receipt-disclosure"><summary>Receipt · ${m.holders.length} systems</summary><div id="receipt-${m.kind}">${receiptCard(m)}</div></details>${m.kind === 'star' ? feedbinReceipt(status.facts.feedbin) : ''}
+</article>`).join('')}</div><details class="reading-key"><summary>How to read the journey</summary><p>Each lane is time since publication, on a linear scale. A circle means seen in a poll; a square means reported by an event. The dashed marker is the median of finished measured journeys. First confirmations have no measured lag or time mark. Polls show their check interval; reports show one-second resolution.</p></details>`;
+}
 
-<h2 id="hops">Hops</h2>
-<div class="scroll">
-${hopsTable(status.hops)}
-</div>
-<p class="muted">"Behind" is how long ago the source's newest item appeared, against the lag the flows file expects for the hop. A hop measured "as X has it" has no fact at its own source, so the next system downstream stands in.</p>
+function historyPage(status, journeys, history) {
+  const currentKinds = new Set(followModels(status, journeys).map((m) => m.kind));
+  const kinds = [...new Set([...currentKinds, ...Object.keys(history?.kinds ?? {})])];
+  const groups = kinds.map((kind) => [kind, history?.kinds?.[kind] ?? []]);
+  if (!groups.length) return '<p class="empty">History starts with the next superseded item. A first check is not a measured journey.</p>';
+  const first = groups.find(([ , rows]) => rows.some((r) => !r.active))?.[0] ?? groups[0][0];
+  const picker = (selected) => groups.length > 1 ? `<nav class="kind-picker" aria-label="Choose a history kind">${groups.map(([kind]) => `<a href="#history-${kind}"${kind === selected ? ' aria-current="true"' : ''}>${esc(KIND_LABEL[kind] ?? kind)}</a>`).join('')}</nav>` : '';
+  return `<div class="history-views">${groups.map(([kind, rows]) => `<section class="history-view${kind === first ? ' history-view--default' : ''}" id="history-${kind}" tabindex="-1">${picker(kind)}<div class="paper-panel history-paper">${landmark(rows[0]?.origin ?? 'links', 'history-art')}
+${rows.some((r) => !r.active) ? `<!-- history-lanes -->${historyLanes({ ...history, kinds: { [kind]: rows } })}<!-- /history-lanes -->` : `<h2>${esc(KIND_LABEL[kind] ?? kind)}</h2><p class="empty">No finished journey for this kind yet. A first check is not a measured journey.</p><a href="${currentKinds.has(kind) ? `/journeys/#journey-${kind}` : '/journeys/'}">${currentKinds.has(kind) ? 'View the current journey' : 'View current journeys'} →</a>`}
+</div></section>`).join('')}</div>`;
+}
 
-<h2>Facts, as read</h2>
-${factsList(status.facts)}
+function recordsTabs(selected) {
+  return `<nav class="records-tabs" aria-label="Records views">${[['inventory', 'Inventory'], ['hops', 'Hops'], ['facts', 'Facts']].map(([id, name]) => `<a href="#${id}"${selected === id ? ' aria-current="true"' : ''}>${name}</a>`).join('')}</nav>`;
+}
 
-<footer><p>The probe runs every half hour and on every published event, then at 2, 5, 10, 15, 30, 45 and 60 minutes after each send. The <a href="/flows/">flows contract</a> explains every hop. No browser script or automatic page refresh; reload for the latest snapshot.</p>Published by the sync probe${status.code ? ` (<code>${esc(status.code)}</code>)` : ''}. The same data is at <a href="/status.json">/status.json</a>; each receipt at <code>/receipts/&lt;kind&gt;.json</code>; the current journeys at <a href="/journeys.json">/journeys.json</a>; history at <a href="/journeys/index.json">/journeys/index.json</a>; the published events, as folded, at <a href="/facts/wt-builder.json">/facts/wt-builder.json</a>. Source: <a href="https://github.com/jthingelstad/sync.thingelstad.xyz">sync.thingelstad.xyz</a>.</footer>
-</main>
-</body>
-</html>
-`;
+function recordsPage(status) {
+  const featured = status.open[0]?.id ?? flows.hops[0].id;
+  const connections = `<details class="connection-picker"><summary>Choose a connection · ${flows.hops.length}</summary><nav aria-label="Choose a connection">${flows.hops.map((h) => `<a href="#hop-${h.id}"><span>${h.id}. ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</span>${pill(hopSummary(status.hops, h.id).status)}</a>`).join('')}</nav></details>
+<div class="hop-records">${flows.hops.map((h) => `<article class="hop-record${h.id === featured ? ' hop-record--default' : ''}"><header class="connection-heading"><div><h2>${h.id} · ${esc(systemName(h.from))} → ${esc(systemName(h.to))}</h2><p>${h.kinds.map(esc).join(' · ')}</p></div><div class="connection-art">${landmark(h.from)}<span aria-hidden="true">→</span>${landmark(h.to)}</div></header><div class="scroll">${hopsTable(status.hops.filter((r) => r.id === h.id))}</div><p class="evidence-note">“Behind” is the source item's age, against this hop's expected lag. A fallback witness is named explicitly; an unknown or missing fact never proves absence.</p><a class="contract-link" href="/flows/#hop-${h.id}">Read this hop's flows contract →</a></article>`).join('')}</div>`;
+  return `<div class="records-views"><section class="records-panel records-panel--default" id="inventory" tabindex="-1">${recordsTabs('inventory')}<div class="paper-panel"><h2>What each system holds</h2><div class="scroll" tabindex="0" role="region" aria-label="Inventory, scroll sideways to explore">${matrixTable(status.matrix)}</div><p class="evidence-note">A cell describes the worst incoming hop for its kind. The item and date are the system's own newest fact.</p></div></section>
+<section class="records-panel" id="hops" tabindex="-1">${recordsTabs('hops')}<div class="paper-panel">${connections}</div></section>
+<section class="records-panel" id="facts" tabindex="-1">${recordsTabs('facts')}<div class="paper-panel"><h2>Facts, as read</h2><p class="section-note">Open a system to inspect the evidence the probe read.</p>${factsList(status.facts)}</div></section></div>`;
+}
+
+export function renderPage(status, journeys = {}, history = null, view = 'map') {
+  const spec = {
+    map: { title: 'Things in flow', intro: 'The publishing pipes: what is moving, where it has arrived, and what is still waiting.', content: () => mapPage(status, journeys) },
+    journeys: { title: 'Journeys', intro: 'One item, from its source to the places that hold it.', art: 'weekly', content: () => journeysPage(status, journeys, history) },
+    history: { title: 'History', intro: 'Finished journeys, with their original arrival evidence.', art: 'links', content: () => historyPage(status, journeys, history) },
+    records: { title: 'Records', intro: 'The evidence behind the map.', art: 'librarian', content: () => recordsPage(status) },
+  }[view];
+  if (!spec) throw new Error('Unknown guide page');
+  return frame({ ...spec, active: view, status, content: spec.content() });
+}
+
+export function renderSite(status, journeys = {}, history = null) {
+  return Object.fromEntries(PAGES.map(([id, , url]) => [`${url.slice(1)}index.html`, renderPage(status, journeys, history, id)]));
+}
+
+export function renderNotFound() {
+  return frame({ active: 'not-found', title: 'That path is not on this map.', intro: 'The publishing atlas is a good place to start.', art: 'feedbin', content: '<p><a class="primary-link" href="/">Back to the map →</a></p>' });
 }

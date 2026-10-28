@@ -33,6 +33,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { packageProbe } from './package.mjs';
 import { feedbinConfig } from '../src/feedbin.mjs';
+import { renderNotFound } from '../src/page.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const DEPLOYMENT = path.join(ROOT, 'infra/deployment.json');
@@ -191,7 +192,7 @@ async function uploadStatic(bucket) {
   await put('flows.json', await fs.readFile(path.join(ROOT, 'data/flows.json')), 'application/json');
   await put(
     '404.html',
-    '<!doctype html><meta charset="utf-8"><title>Not found</title><p>Not found. The sync page is at <a href="/">/</a> and the map at <a href="/flows/">/flows/</a>.</p>',
+    renderNotFound(),
     'text/html; charset=utf-8',
   );
   log('uploaded /flows/, /flows.json and /404.html');

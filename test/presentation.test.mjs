@@ -70,14 +70,13 @@ test('history shows at most ten retired journeys and preserves URL ids in archiv
   assert.equal(archiveUrl('journeys/post/https%3A%2F%2Fexample.com%2Fa.json'), '/journeys/post/https%253A%252F%252Fexample.com%252Fa.json');
 });
 
-test('the page is self-contained, keeps every hop anchor and leads with the map before stories, lanes and history', async () => {
-  const { page, status } = renderScenario(await loadScenario('send-in-progress'));
-  assert.ok(page.indexOf('id="map"') < page.indexOf('The newest stories'));
-  assert.ok(page.indexOf('The newest stories') < page.indexOf('id="journeys"'));
-  assert.ok(page.indexOf('id="map"') < page.indexOf('id="journeys"'));
-  assert.ok(page.indexOf('id="journeys"') < page.indexOf('id="history"'));
-  assert.ok(page.indexOf('id="history"') < page.indexOf('id="receipts"'));
-  for (const id of new Set(status.hops.map((h) => h.id))) { assert.ok(page.includes(`id="hop-${id}"`)); assert.ok(page.includes(`href="#hop-${id}"`)); }
+test('home is a self-contained atlas and evidence remains directly reachable on its own page', async () => {
+  const { page, status, pages } = renderScenario(await loadScenario('send-in-progress'));
+  assert.ok(!page.includes('class="lane lane--'));
+  assert.ok(!page.includes('<table'));
+  assert.ok(!page.includes('<pre>'));
+  assert.ok(pages['journeys/index.html'].includes('class="lane lane--'));
+  for (const id of new Set(status.hops.map((h) => h.id))) { assert.ok(pages['records/index.html'].includes(`id="hop-${id}"`)); assert.ok(page.includes(`href="/records/#hop-${id}"`)); }
   const wholeAtlas = page.match(/<section id="whole-atlas"[\s\S]*?<\/section>/)[0];
   assert.equal((wholeAtlas.match(/class="pipe-case"/g) ?? []).length, new Set(status.hops.map((h) => h.id)).size);
   assert.doesNotMatch(page, /<script\b|@import/i);

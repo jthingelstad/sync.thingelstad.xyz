@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { atlasCovers, atlasLabels, PLACES, ROADS, WORLD, roadPoint, wrapLabel } from '../src/atlas.mjs';
 import { flows } from '../src/flows.mjs';
 import { edgeText, mapSvg, nodeText, pocketMap } from '../src/map.mjs';
-import { loadScenario, renderScenario, scenarioNames } from '../tools/scenarios.mjs';
+import { loadScenario, pageText, renderScenario, scenarioNames } from '../tools/scenarios.mjs';
 
 const escape = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 const overlap = (a, b) => a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
@@ -24,22 +24,23 @@ test('atlas geography covers the actual contract and refuses a new or redirected
 
 test('every scenario keeps all real roads, facts, evidence words and working link targets', async () => {
   for (const name of await scenarioNames()) {
-    const { status, journeys, page } = renderScenario(await loadScenario(name));
+    const { status, journeys, page, pages } = renderScenario(await loadScenario(name));
     const svg = mapSvg(status, journeys);
     assert.equal((svg.match(/class="atlas-road /g) ?? []).length, flows.hops.length, name);
     assert.equal((svg.match(/class="atlas-sign /g) ?? []).length, flows.hops.length, name);
     for (const h of flows.hops) {
       assert.match(svg, new RegExp(`data-hop="${h.id}" data-from="${h.from}" data-to="${h.to}"`));
       assert.ok(svg.includes(`aria-label="${escape(edgeText(status, journeys, h.id))};`), `${name}: hop ${h.id} keeps the exact evidence`);
-      assert.ok(page.includes(`href="#hop-${h.id}"`));
-      assert.ok(page.includes(`id="hop-${h.id}"`));
+      assert.ok(page.includes(`href="/records/#hop-${h.id}"`));
+      assert.ok(pages['records/index.html'].includes(`id="hop-${h.id}"`));
     }
     for (const s of flows.systems) {
       assert.equal((svg.match(new RegExp(`data-system="${s.id}"`, 'g')) ?? []).length, 1);
-      assert.ok(page.includes(`id="fact-${s.id}"`));
-      assert.ok(page.includes(`href="#fact-${s.id}"`));
+      assert.ok(pages['records/index.html'].includes(`id="fact-${s.id}"`));
+      assert.ok(page.includes(`href="/records/#fact-${s.id}"`));
     }
-    assert.doesNotMatch(page, /<script\b|AT220|TB78/i);
+    assert.doesNotMatch(page, /<script\b/i);
+    assert.doesNotMatch(pageText(page), /AT220|TB78/i, 'sample IDs are checked as text, never as arbitrary font bytes');
     assert.match(svg, /role="group"/, 'SVG links remain exposed to assistive technology');
     assert.equal((svg.match(/data:image\/webp;base64,/g) ?? []).length, 2, 'each artwork asset is embedded only once');
     assert.ok(Buffer.byteLength(page) < 2_500_000, 'self-contained page stays under 2.5 MB');

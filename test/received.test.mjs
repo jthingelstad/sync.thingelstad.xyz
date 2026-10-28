@@ -47,7 +47,7 @@ test('published and received fixtures alone build a journey with exact reported 
   assert.equal(result.received.pending.length,0);
   assert.match(storyFor(j),/reported it 1 min 7 sec later/);
   assert.match(storyFor(j),/reported it 14 min 10 sec later/);
-  const page=renderPage(result.status,result.journeys,result.history);
+  const page=renderPage(result.status,result.journeys,result.history,'journeys');
   assert.match(page, /reported.*1 sec resolution/);
   assert.equal(edgeText(result.status,result.journeys,7),'7 · WT355 · reported 1 min 7 sec');
   assert.equal(result.history.kinds.issue[0].lags.librarian,850/3600);
