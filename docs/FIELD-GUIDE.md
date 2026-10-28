@@ -161,3 +161,16 @@ inspected. No page overflow, script, external asset request or console error.
 The Browser plugin was unavailable; the frontend testing skill's Playwright
 fallback supplied the checks. Codex reviewed the application commit without
 findings, including no inline threads. WT354's recorded gap remains late.
+
+### Page edge acceptance
+
+Deployed 2026-10-28 at 7:00 a.m. CDT,
+[PR #24](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/24), package
+`3e61cb65ff32813c70906d873e465dd06ef1480b9930e4f28e587db49140f0af`.
+All 119 tests and ten scenario previews pass on Node 24. Local and live
+JavaScript-disabled Chromium checks at 1536, 768, 390 and 320px confirm zero
+outer border and margin on all four pages, a viewport-wide atlas and no page
+overflow. Item selection, keyboard Records tabs, fact disclosures and journey
+receipts pass; light and dark screenshots were inspected. Alias and
+distribution health identify the tested package. Codex reviewed the CSS
+commit without findings, and inline threads were checked.
