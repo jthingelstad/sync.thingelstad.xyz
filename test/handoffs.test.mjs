@@ -109,7 +109,9 @@ test('holds quote the recorded reason and do not promise a send or release time'
 test('fallback witnesses are named, and a known gap never promises the scheduled job will repair it', async () => {
   const { status, journeys } = renderScenario(await loadScenario('late-hop'));
   const model = followModels(status, journeys).find((m) => m.kind === 'issue');
-  const note = handoffSummary(model);
+  const contract = structuredClone(flows);
+  contract.hops.find((h) => h.id === 6).status = 'gap';
+  const note = handoffSummary(model, contract);
   assert.equal(note.steps.find((s) => s.hop === 6).next, 'The flows contract records a gap on this connection.');
   const fallback = following('issue', {
     weekly: { newest: { issue: { id: '355', at: item.at } } },
