@@ -129,10 +129,13 @@ export function connectionActions(hop, status, checks) {
   return `<section class="connection-actions" aria-labelledby="actions-${hop.id}"><h3 id="actions-${hop.id}">What to do next</h3>
 ${checks.map((c) => {
   const action = nextAction(c);
-  return `<article class="check-action" id="action-${hop.id}-${esc(c.kind)}" tabindex="-1"><h4>${esc(KIND_LABEL[c.kind] ?? c.kind)} · ${esc(action.title)}</h4><p>${esc(action.detail)}</p>
+  const sampledNotes = hop.from === 'pinboard' && hop.to === 'links' && c.kind === 'note' && status.bookmark_batch;
+  const detail = sampledNotes && c.reason === 'kind' ? 'Connection-wide newest-note identity or revision facts are not defined. The public bookmark batch separately compares sampled current notes. A newer link or matching capture acknowledgement does not prove every note edit arrived.' : action.detail;
+  return `<article class="check-action" id="action-${hop.id}-${esc(c.kind)}" tabindex="-1"><h4>${esc(KIND_LABEL[c.kind] ?? c.kind)} · ${esc(action.title)}</h4><p>${esc(detail)}</p>
 ${c.row?.why ? `<p class="evidence-note">Recorded result: ${esc(c.row.why)}</p>` : ''}
 ${c.witness ? `<p class="evidence-note">No direct source fact from ${esc(systemName(hop.from))}; this comparison uses ${esc(systemName(c.witness))}.</p>` : ''}
 ${c.kind === 'star' && status.bookmark_batch ? `<p class="evidence-note">This comparison follows the newest star only. ${bookmarkBatchLink(status.bookmark_batch)} Older items retain their own batch checks and next steps.</p>` : ''}
+${sampledNotes ? `<p class="evidence-note">Sampled note observation checked ${recordedTime(status.bookmark_batch.checked_at)}. ${bookmarkBatchLink(status.bookmark_batch)} These results do not change connection-level coverage or establish a note-edit time.</p>` : ''}
 <ul class="check-evidence">${evidencePoint(c.source, c.witness ? 'Source witness' : 'Source', c.kind)}${evidencePoint(c.destination, 'Destination', c.kind)}</ul>
 ${c.row?.reported_at ? `<p class="evidence-note">Arrival reported ${recordedTime(c.row.reported_at)}.</p>` : ''}</article>`;
 }).join('')}

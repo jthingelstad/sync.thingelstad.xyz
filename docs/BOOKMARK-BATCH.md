@@ -37,6 +37,62 @@ reader remains unknown. Each destination check uses its own completion time.
 The view never invents an item arrival timestamp from an acknowledgement or
 build time, and never starts a timer from the article's publication date.
 
+## Sampled note parity
+
+The same fresh explicit-public Pinboard capture and exact Links JSON read now
+compare Pinboard `extended` with Links `note` in memory. The Links importer maps
+these strings directly, so equality is exact after JSON decoding: no trimming,
+Unicode normalization or whitespace rewriting. Two empty strings mean no note
+on either record; whitespace alone is a nonempty string. A valid string that
+differs is an observed difference, even when the capture is acknowledged and
+the public record and star association are present.
+
+Each row adds only `note.state`, `note.source_checked_at` and
+`note.destination_checked_at`. No note content, length, digest, exception or
+new private identity enters the public result or check history. The source
+time is its fresh public check; the destination time is that exact-record
+read's completion. A missing note field is not an empty note. A non-string
+field, failed/invalid read, identity mismatch, 404 or runtime deferral stays
+distinct and cannot establish equality. Legacy snapshots say no note comparison
+was recorded, with no invented check time.
+
+Record/association presence keeps its existing meaning. Note differences and
+unavailable comparisons are separate in row summaries, sample totals and the
+Map's batch link. They use the existing private pending/unknown outcomes for
+bounded follow-up; the continuing sweep and six-request limit remain intact.
+The view points a confirmed difference to the normal nightly Pinboard mirror
+and a subsequent exact readback, without issuing a repair or replay. A save
+time, account update or capture acknowledgement does not give a note-edit time
+or note propagation lag.
+
+This is a sampled comparison, not a newest-note fact or full-account audit.
+It does not change connection-level comparable/unobserved counters, the
+newest-star fact, receipts, journeys, producer contracts or grants. Source
+privacy/deletion/unverifiable transitions suppress the entire batch row on
+the next successful publication under the existing caching and history limits.
+`node tools/preview-bookmark-batch.mjs --note-parity` provides an offline
+six-item mixture: equality, both empty, different, missing note field, wrong
+record identity and reader failure, with a matching newest item.
+
+Six added regressions cover an acknowledged/present bookmark with a stale
+note while the newest succeeds; exact whitespace, Unicode and quote handling;
+both-empty versus missing/invalid fields; 404, identity mismatch, failed JSON
+and runtime deferral; privacy/deletion/source-failure transitions; durable note
+follow-ups across restart with continuing sweep; and legacy snapshots without
+invented times. Canary text and its digests are absent from batch JSON, HTML,
+full-run results and all mocked publication/checkpoint writes. The connection
+coverage model, summary, newest facts, receipts and journeys remain unchanged
+when only sampled note parity changes.
+
+All 148 tests and ten scenarios pass. The offline note preview passes in-app
+browser checks at actual 1280- and 390-pixel widths: Map to batch, native and
+keyboard disclosure, stale-note guidance to connection 5, Back and reload.
+Counts separate record presence from matching, empty, different and unavailable
+notes. Connection guidance names the sampled view without claiming a newest-note
+fact. There is no page overflow, script, console error or canary content in the
+DOM. Normal viewport overrides were reset, with no DevTools access requested.
+The reviewed release and live acceptance receipt is recorded below.
+
 ## Bounds and next actions
 
 At most six confirmed-save candidates are selected per observation. Up to five
@@ -221,3 +277,55 @@ claimed by this receipt. A crash after public publication but before the
 private checkpoint can repeat read checks; it cannot replay an import on a
 non-clock observation. The 27 unobserved connection/kind checks and the
 separate natural nightly WT354 acceptance remain open work.
+
+## Note-parity release receipt
+
+Application head `1d5901eeeec97126b25362277ef035821283b02c` passed independent
+engineering review and exact-head CI (run `40737028233`). Automated code review
+also completed on that exact head with no findings. All 148 tests and ten
+scenarios pass. The established cloud-engineer plan/apply released package
+`a1139bf428ab97f6797d1cf68430546d89aa35000f01b9d34654c2ade01a6fda` at
+12:53:38 p.m. CDT on October 28. Only `CodeKey` and the pinned package's
+`CodeVersion` changed. Its S3 checksum and version match the prepared artifact.
+The live template matches review; reserved concurrency is one before and after.
+The journal deny, access logging, grants, credentials and schedule are unchanged.
+
+Whole-site invalidation `IDJ9WUGFP8RVAYWWEY73NZBCVV` was observed
+**Completed** at 12:54:52. Both hostnames' health and all four pages report the
+expected package. The canonical journal path and two encoded aliases return
+404 to HEAD through both hostnames. No raw journal, credential, access log,
+real note contents or note digest was printed or saved in acceptance evidence.
+Exact public record bodies were used only in memory to verify identity and
+the destination note field's shape. Public note metadata is strictly one of
+the comparison states and its two real check times.
+
+The deployment observation started at 12:53:08 and completed its batch at
+12:53:34. Its six public records and associations were present: one nonempty
+note matched and five pairs were empty. There were no differences, missing
+fields, mismatches, failed reads or deferrals in that sample. Retained attempt
+history had advanced from the natural 12:34 baseline's 28 to 32 of 52.
+
+A separate normal manual observation started at 12:56:28 and completed its
+batch at 12:56:53. Its six records were different from the deployment sample;
+one nonempty note matched and five pairs were empty again. Retained history
+advanced to 38 of 52, with 14 lacking retained history and no eviction. This
+is 12 distinct public records across two actual observations, not a current
+full-account audit. The manual payload was empty, selecting no clock import,
+publishing replay or repair. Both invocations reported no follow-ups or blog
+events.
+
+All six journey identities and their recorded arrivals match the captured
+pre-release baseline. The newest-star journey and receipt still match the
+source fact. Coverage remains 14 comparable checks out of 41, with 27
+unobserved and no unavailable readers; connection 5's note kind remains
+unobserved. Sampled note comparisons do not manufacture a newest-note fact.
+
+Live in-app browser checks at actual 1280 by 720 and 390 by 844 verify the
+current counts, note disclosure and separate source/destination check times,
+keyboard access, Map-to-batch navigation, connection guidance, Back and reload.
+There is no page overflow, script or console error. No real note text appears
+in these views. Temporary viewport overrides were reset; no DevTools access
+was requested. Stale/different and other failure cases remain offline regression
+evidence rather than manufactured production failures. The next natural Sync
+observation is expected around 1:04 p.m. CDT; this receipt does not claim that
+future execution or the separate natural nightly WT354 acceptance.
