@@ -20,14 +20,14 @@ export function hopSummary(hops, id) {
   const rows = hops.filter((h) => h.id === id);
   let worst = rows[0] ?? null;
   for (const h of rows) if (SEVERITY[h.status] > SEVERITY[worst.status]) worst = h;
-  return { status: worst?.status ?? 'no-fact', row: worst, kinds: rows.map((h) => `${h.kind} ${h.status}`) };
+  return { status: worst?.status ?? 'no-fact', row: worst, kinds: rows.map((h) => `${h.kind} ${h.comparison ?? h.status}`) };
 }
 
 /** A system's node state: has a fact, no fact, or unknown (its reader failed). */
 export function nodeState(fact) {
   if (!fact) return 'no-fact';
-  if (fact.error) return 'unknown';
-  if (Object.keys(fact.newest ?? {}).length) return 'has';
+  if (fact.error || fact.errors?.registry) return 'unknown';
+  if (fact.registry || Object.keys(fact.newest ?? {}).length) return 'has';
   return 'no-fact';
 }
 
@@ -49,7 +49,8 @@ export function nodeText(system, fact) {
   }
   if (state === 'no-fact') return 'no fact yet';
   // An audio edition that reads the same as its issue is said once.
-  const items = [...new Set(MATRIX_KINDS.filter((k) => fact.newest[k]).map((k) => shortItem(k, fact.newest[k])))];
+  const items = [...new Set(MATRIX_KINDS.filter((k) => fact.newest?.[k]).map((k) => shortItem(k, fact.newest[k])))];
+  if (fact.registry) items.push('registry snapshot');
   return items.length ? items.join(' · ') : 'no fact yet';
 }
 
@@ -57,6 +58,7 @@ export function nodeText(system, fact) {
 export function edgeText(status, journeys, id) {
   const { status: worst, row } = hopSummary(status.hops, id);
   if (!row) return String(id);
+  if (row.comparison_scope === 'public-registry-snapshot') return `${id} · registry · ${row.comparison ?? (worst === 'unknown' ? 'unavailable' : 'unobserved')}`;
   const item = row.source ?? null;
   const what = item ? shortItem(row.kind, item) : row.kind;
   switch (worst) {

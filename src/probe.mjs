@@ -12,6 +12,7 @@
 //   no-fact  one side publishes no fact for this kind, so nothing can be said
 //   unknown  a reader failed
 import { age, centralWeekday, hoursBetween } from './time.mjs';
+import { isRegistryHop, registryComparison } from './registry.mjs';
 
 // Kinds the matrix and receipts cover: the ones some system publishes a fact
 // for. The other kinds in the flows file show in the hops table only.
@@ -118,6 +119,10 @@ export function probe({ flows, facts, now, code = null, trigger = { type: 'clock
   const hops = [];
   for (const hop of flows.hops) {
     for (const kind of hop.kinds) {
+      if (isRegistryHop(hop, kind)) {
+        hops.push({ id: hop.id, from: hop.from, to: hop.to, kind, expected_lag_hours: hop.expected_lag_hours, ...registryComparison(facts) });
+        continue;
+      }
       if (!MATRIX_KINDS.includes(kind)) {
         hops.push({ id: hop.id, from: hop.from, to: hop.to, kind, status: 'no-fact', why: hop.id===19 && facts.microblog?.source_receipt ? facts.microblog.source_receipt.why : `no system publishes a fact for ${kind} yet`, expected_lag_hours: hop.expected_lag_hours });
         continue;
