@@ -35,7 +35,7 @@ function rowText(row) {
 
 export function journeyLanes(journey, history, now) {
   const { rows, horizon } = laneModel(journey, history, now);
-  return `<section class="journey" data-journey="${esc(journey.kind)}">
+  return `<section class="journey" id="journey-${esc(journey.kind)}" data-journey="${esc(journey.kind)}">
 <div class="journey__heading"><div><p class="kicker">${esc(KIND_LABEL[journey.kind] ?? journey.kind)}</p><h3>${journey.item.url ? `<a href="${esc(journey.item.url)}">${esc(itemLabel(journey.kind, journey.item))}</a>` : esc(itemLabel(journey.kind, journey.item))}</h3></div><span class="journey__origin">from ${esc(systemName(journey.origin))}</span></div>
 <p class="journey__date muted">${journey.item.at ? `dated ${esc(central(journey.item.at))}` : 'publication time unknown'} · watching since ${esc(central(journey.started_at))}</p>
 <div class="lane-axis" aria-hidden="true"><span>Publication</span><span>${esc(duration(horizon / 2))}</span><span>${esc(duration(horizon))}</span></div>

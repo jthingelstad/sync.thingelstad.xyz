@@ -93,6 +93,36 @@ atlas coverage check selects the complete Pele pipe diagram. New data cannot
 be silently omitted or assigned the old road's geography. `mapSource` still
 supplies the existing readable Mermaid scenario snapshots.
 
+## Follow this item
+
+The atlas opens on the current Weekly Thing issue, or the first kind with a
+current receipt and matching journey. Choose a blog post, saved link,
+podcast episode, audio edition or Feedbin star with native fragment links
+such as `#follow-post`. Back and reload preserve a selection. These select
+the newest recorded item of that kind, so a bookmarked view follows the
+next item after it replaces the current one.
+
+Each view separates confirmed holders, still-waiting destinations, missing
+facts and failed readers, with recorded arrival times and their resolution.
+Only the selected kind's roads are drawn; an issue also includes its audio
+edition. Thus missing topic or thing facts do not mask an issue's confirmed
+Librarian → Thingy state. A hop with matching older copies reads **waiting
+upstream** when those systems still lack the selected item, and claims no
+hop timer. Existing fallback witnesses, holds, unsent-leg evidence and
+reader failures retain their meaning. A first confirmation gains no lag;
+an undated star can retain its reported arrival time without a duration.
+
+On phones the complete holder summary comes first; **Explore this item’s
+map** opens the illustration. The connections disclosure and journey link
+provide the evidence without requiring sideways map navigation. **All
+connections** opens the original whole/pocket atlas, including every hop
+and its worst status across kinds.
+
+The views are rendered from the same current receipts and journeys as the
+rest of the page. They neither collect facts nor advance journals. A
+receipt with no matching current journey offers no item selection. Every
+SVG has unique local IDs and reuses the two inline illustration assets.
+
 ## Preview
 
 Use Node 24:

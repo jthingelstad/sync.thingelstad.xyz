@@ -78,7 +78,8 @@ test('the page is self-contained, keeps every hop anchor and leads with the map 
   assert.ok(page.indexOf('id="journeys"') < page.indexOf('id="history"'));
   assert.ok(page.indexOf('id="history"') < page.indexOf('id="receipts"'));
   for (const id of new Set(status.hops.map((h) => h.id))) { assert.ok(page.includes(`id="hop-${id}"`)); assert.ok(page.includes(`href="#hop-${id}"`)); }
-  assert.equal((page.match(/class="pipe-case"/g) ?? []).length, new Set(status.hops.map((h) => h.id)).size);
+  const wholeAtlas = page.match(/<section id="whole-atlas"[\s\S]*?<\/section>/)[0];
+  assert.equal((wholeAtlas.match(/class="pipe-case"/g) ?? []).length, new Set(status.hops.map((h) => h.id)).size);
   assert.doesNotMatch(page, /<script\b|@import/i);
   for (const [, url] of page.matchAll(/url\(([^)]+)\)/g)) assert.match(url.replace(/^["']/, ''), /^(?:data:|#)/, 'assets are inline or local SVG fragments');
   assert.doesNotMatch(page, /<(?:link|img|iframe)[^>]+(?:src|href)="(?:https?:|\/\/)/i);

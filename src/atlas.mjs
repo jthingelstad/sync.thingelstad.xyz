@@ -163,15 +163,17 @@ export function atlasNavigation() {
   return `<details class="atlas-guide"><summary>Find a place · ${flows.systems.length} systems</summary><nav class="atlas-places" aria-label="Find a place on the atlas">${flows.systems.map((s) => `<a href="#place-${s.id}">${esc(s.name)}</a>`).join('')}</nav></details>`;
 }
 
-export function atlasSvg(status, journeys, { edgeText, nodeText, nodeState, hopSummary }, { inlineArt = true } = {}) {
+export function atlasSvg(status, journeys, { edgeText, nodeText, nodeState, hopSummary }, { inlineArt = true, hopIds = null, prefix = '' } = {}) {
   const labels = atlasLabels();
-  const roads = flows.hops.map((h) => {
+  const hops = flows.hops.filter((h) => !hopIds || hopIds.includes(h.id));
+  const systems = flows.systems.filter((s) => !hopIds || hops.some((h) => h.from === s.id || h.to === s.id));
+  const roads = hops.map((h) => {
     const { status: state, kinds } = hopSummary(status.hops, h.id);
     const title = `${h.id}. ${flows.systems.find((s) => s.id === h.from).name} → ${flows.systems.find((s) => s.id === h.to).name}: ${kinds.join(', ')}`;
     const path = ROADS[h.id][2];
-    return `<g class="atlas-road hop--${state}" data-hop="${h.id}" data-from="${h.from}" data-to="${h.to}"><title>${esc(title)}</title><path class="pipe-case" d="${path}"/><path class="atlas-road__ink" d="${path}"${h.trigger.type === 'clock' ? ' stroke-dasharray="8 6"' : ''} marker-end="url(#atlas-arrow-${state})"/></g>`;
+    return `<g class="atlas-road hop--${state}" data-hop="${h.id}" data-from="${h.from}" data-to="${h.to}"><title>${esc(title)}</title><path class="pipe-case" d="${path}"/><path class="atlas-road__ink" d="${path}"${h.trigger.type === 'clock' ? ' stroke-dasharray="8 6"' : ''} marker-end="url(#${prefix}atlas-arrow-${state})"/></g>`;
   }).join('\n');
-  const signs = flows.hops.map((h) => {
+  const signs = hops.map((h) => {
     const { status: state } = hopSummary(status.hops, h.id);
     const full = edgeText(status, journeys, h.id);
     const parts = full.split(' · ');
@@ -191,7 +193,7 @@ export function atlasSvg(status, journeys, { edgeText, nodeText, nodeState, hopS
 <text x="${cx - 3}" y="${cy - (lines.length - 1) * 13 + 8}" text-anchor="middle">${lines.map((line, i) => `<tspan x="${cx - 3}" dy="${i ? 26 : 0}"${line.length > 18 ? ' textLength="195" lengthAdjust="spacingAndGlyphs"' : ''}>${esc(line)}</tspan>`).join('')}</text>
 </a></g>`;
   }).join('\n');
-  const places = flows.systems.map((s) => {
+  const places = systems.map((s) => {
     const p = PLACES[s.id];
     const state = nodeState(status.facts[s.id]);
     const lines = wrapLabel(nodeText(s.id, status.facts[s.id]), 25);
@@ -201,16 +203,16 @@ export function atlasSvg(status, journeys, { edgeText, nodeText, nodeState, hopS
 <ellipse class="atlas-place__ground" cx="${p.x}" cy="${p.y + 72}" rx="109" ry="19" aria-hidden="true"/>
 <use href="#atlas-building-${p.sprite}" x="${p.x - 107}" y="${p.y - 110}" width="214" height="200" aria-hidden="true"/>
 <a href="#fact-${s.id}" aria-label="${esc(s.name)}: ${esc(nodeText(s.id, status.facts[s.id]))}; view facts">
-<ellipse id="place-${s.id}" tabindex="-1" class="atlas-place__clearing" cx="${p.x}" cy="${p.y + 90 + height / 2}" rx="150" ry="${height / 2}"/>
+<ellipse id="${prefix}place-${s.id}" tabindex="-1" class="atlas-place__clearing" cx="${p.x}" cy="${p.y + 90 + height / 2}" rx="150" ry="${height / 2}"/>
 <text class="atlas-place__name" x="${p.x}" y="${p.y + 117}" text-anchor="middle">${esc(placeName(s.id))}</text>
 <text class="atlas-place__fact" x="${p.x}" y="${p.y + 147}" text-anchor="middle">${lines.map((line, i) => `<tspan x="${p.x}" dy="${i ? 28 : 0}">${esc(line)}</tspan>`).join('')}</text>
 </a></g>`;
   }).join('\n');
-  return `<svg class="atlas-world" viewBox="0 0 ${WORLD.width} ${WORLD.height}" width="${WORLD.width}" height="${WORLD.height}" role="group" aria-labelledby="atlas-title atlas-description">
-<title id="atlas-title">The hops between Jamie’s systems, as they are now</title>
-<desc id="atlas-description">A storybook atlas of the publishing systems. Roads show actual directed hops, with status written on each signpost. Geography and distance are illustrative. Each place links to its facts and each signpost to the hop’s details. Roof colors identify places, not status.</desc>
+  return `<svg class="atlas-world" viewBox="0 0 ${WORLD.width} ${WORLD.height}" width="${WORLD.width}" height="${WORLD.height}" role="group" aria-labelledby="${prefix}atlas-title ${prefix}atlas-description">
+<title id="${prefix}atlas-title">The hops between Jamie’s systems, as they are now</title>
+<desc id="${prefix}atlas-description">A storybook atlas of the publishing systems. Roads show actual directed hops, with status written on each signpost. Geography and distance are illustrative. Each place links to its facts and each signpost to the hop’s details. Roof colors identify places, not status.</desc>
 ${inlineArt ? artDefs() : ''}
-<defs>${['fresh', 'moving', 'late', 'held', 'no-fact', 'unknown'].map((s) => `<marker id="atlas-arrow-${s}" class="hop--${s}" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 1 L 11 6 L 1 11 Z"/></marker>`).join('')}</defs>
+<defs>${['fresh', 'moving', 'late', 'held', 'no-fact', 'unknown'].map((s) => `<marker id="${prefix}atlas-arrow-${s}" class="hop--${s}" viewBox="0 0 12 12" markerWidth="14" markerHeight="14" refX="10" refY="6" orient="auto" markerUnits="userSpaceOnUse"><path d="M 1 1 L 11 6 L 1 11 Z"/></marker>`).join('')}</defs>
 <use href="#atlas-terrain" aria-hidden="true"/>
 ${roads}
 ${places}

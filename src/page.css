@@ -263,3 +263,55 @@ footer { margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--jt-line
   .pocket-scene--landscape { max-height:200px; }
   .pocket-actions { margin-top:0.25rem; }
 }
+
+/* Each current item has a pre-rendered view. Fragment links select it and
+   remain shareable and usable with browser Back, without browser scripts. */
+.follow-view { display:none; outline:none; scroll-margin-top:1rem; }
+.follow-view--default { display:block; }
+.atlas-section--following > .atlas-overview { display:none; }
+.atlas-section--following:has(:where(.follow-view:target,.follow-view :target,.atlas-overview:target,.atlas-overview :target)) .follow-view { display:none; }
+.atlas-section--following .follow-view:target,.atlas-section--following .follow-view:has(:target) { display:block; }
+.atlas-section--following > .atlas-overview:target,.atlas-section--following > .atlas-overview:has(:target) { display:block; }
+.atlas-overview { outline:none; scroll-margin-top:1rem; }
+.follow-picker { display:flex; flex-wrap:wrap; gap:0.5rem; margin:1rem 0 1.5rem; }
+.follow-picker a { display:flex; align-items:center; justify-content:center; gap:0.5rem; min-height:48px; padding:0.5rem 0.8rem; border:1px solid var(--jt-line); border-radius:6px; font-size:var(--jt-size-label); text-decoration:none; color:var(--jt-ink); }
+.follow-picker a:hover { border-color:var(--jt-text-muted); text-decoration:underline; }
+.follow-picker a[aria-current] { background:var(--jt-weekly-soft); border-color:var(--jt-weekly-text); color:var(--jt-weekly-text); font-weight:650; }
+.follow-heading { margin-block:1.5rem; max-width:70ch; }
+.follow-heading .kicker { font-size:var(--jt-size-label); margin-bottom:0.3rem; }
+.follow-heading h3 { font-size:var(--jt-size-h2); margin:0.3rem 0; overflow-wrap:anywhere; }
+.follow-heading > p { margin-block:0.5rem; }
+.follow-heading > .muted { font-size:var(--jt-size-label); }
+.follow-summary { display:grid; grid-template-columns:repeat(auto-fit,minmax(min(100%,15rem),1fr)); gap:1rem; margin-bottom:1.5rem; }
+.follow-group { border-top:3px solid var(--jt-line); padding-top:0.7rem; }
+.follow-group--has { border-color:var(--jt-fresh); }
+.follow-group--behind { border-color:var(--jt-moving); }
+.follow-group--unknown { border-color:var(--jt-held); }
+.follow-group h4 { font:750 var(--jt-size-small) var(--jt-font-body); margin:0 0 0.5rem; }
+.follow-group ul { list-style:none; padding:0; margin:0; }
+.follow-group li { padding:0.5rem 0; border-top:1px solid var(--jt-line); }
+.follow-group li:first-child { border-top:0; }
+.follow-group a { font-weight:600; font-size:var(--jt-size-small); }
+.follow-group li > span { display:block; font-size:var(--jt-size-label); color:var(--jt-text-muted); margin-top:0.25rem; }
+.follow-map-link,.follow-map-back { display:none; }
+.follow-map { outline:none; scroll-margin-top:1rem; }
+.follow-connections { margin:1rem 0; font-size:var(--jt-size-small); }
+.follow-connections summary { cursor:pointer; min-height:48px; padding-block:0.6rem; font-weight:600; }
+.follow-connections ol { list-style:none; padding:0; }
+.follow-connections li { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:0.3rem 1rem; padding:0.75rem 0; border-top:1px solid var(--jt-line); }
+.follow-connections li > span { grid-column:1 / -1; color:var(--jt-text-muted); font-size:var(--jt-size-label); }
+.follow-note { color:var(--jt-text-muted); font-size:var(--jt-size-label); max-width:85ch; }
+@media (max-width:70rem) {
+  .follow-map { display:none; }
+  .follow-map:target,.follow-map:has(:target) { display:block; }
+  .follow-map-link,.follow-map-back { display:flex; align-items:center; min-height:48px; font-size:var(--jt-size-small); }
+  .follow-picker { margin-top:0; }
+}
+@media (max-width:40rem) {
+  .follow-picker { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0.4rem; }
+  .follow-picker a { justify-content:flex-start; padding:0.6rem; }
+  .follow-summary { gap:0.75rem; }
+  .follow-heading { margin-block:1rem; }
+  .follow-heading h3 { font-size:30px; }
+  .follow-connections li { grid-template-columns:minmax(0,1fr); }
+}

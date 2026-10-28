@@ -147,10 +147,16 @@ This exception does not authorize repairs on any other hop, including WT354.
   arrivals from the index, or its archive once outside the last fifty;
   a fallback must not erase a measured lag.
 - `src/page.mjs` — the HTML. No script, `--jt-` colours, Central time. It
-  opens with the atlas, then this week's journey stories, arrival lanes
+  opens with the item-focused atlas, then this week's journey stories, arrival lanes
   and ten finished journeys per kind; the receipts, matrix, hops and facts
   follow (Jamie, 2026-10-26: "visual and interesting. Pipes and flows."). The
   sites strip and story in the title/description wait for Jamie.
+- `src/follow.mjs` — follow the current item of a kind. Native fragment links
+  select its receipt, holders and atlas roads; unrelated kinds cannot mask
+  its state. Matching older upstream/downstream copies never prove the
+  selected item arrived: those roads say waiting upstream, with no invented
+  timer. Issue views include the audio edition. The full atlas remains under
+  All connections. Selection is presentation only; no journal is advanced.
 - `src/stories.mjs` — words from journey data only. An unmeasured arrival
   never gains a lag, and an unknown reader never becomes a missing item.
   The story quotes no schedule it has not recorded.
