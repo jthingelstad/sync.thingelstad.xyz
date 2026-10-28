@@ -104,3 +104,22 @@ The accepted design direction is faithfully implemented with the recorded
 content, density and identity deviations above. No material visual mismatch
 remains. All 109 tests and ten offline scenario previews pass on Node 24;
 new HTML pages participate in the existing health-last publishing contract.
+
+## Deployment
+
+Deployed 2026-10-28 at 12:52 a.m. CDT via the existing cloud-engineer
+plan/apply, [PR #21](https://github.com/jthingelstad/sync.thingelstad.xyz/pull/21).
+The change set updates the two existing functions' shared package and their
+dependent references; no resource or permission is added. Public alias and
+distribution health, and all four HTML pages, identify package
+`2cd72692a4957531cab4952759b89acb8db88ec3ed0f0da75ac822ae947da00c`.
+JSON/archive routes return 200; an unknown path returns the styled 404.
+
+The complete JavaScript-disabled interaction pass also passes against
+`https://sync.thingelstad.xyz/` at 1536, 768, 390 and 320px, including receipt
+disclosures, phone item/whole maps, history selection, evidence links,
+keyboard navigation and legacy bookmarks. Latest live phone and desktop
+screenshots were inspected with `view_image`. Both typefaces load with no
+external request, no page overflows and no console errors. Codex's review
+of the application commit completed with no findings; inline threads were
+also checked.
