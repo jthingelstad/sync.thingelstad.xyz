@@ -319,7 +319,7 @@ footer { margin-top:3rem; padding-top:1.5rem; border-top:1px solid var(--jt-line
   --jt-line:#495446; --jt-soft:#23332a; --folio-paper:#1b2a22;
   --folio-leaf:#c9d8b7; --folio-gold:#9f9372; --folio-sage:#304333;
 } }
-.folio { position:relative; margin:16px; border:3px double var(--folio-gold); min-height:calc(100vh - 32px); font:19px/1.55 var(--jt-font-body); }
+.folio { position:relative; margin:0; border:0; min-height:100vh; font:19px/1.55 var(--jt-font-body); }
 .folio main,.site-header,.site-footer { max-width:var(--jt-frame); margin-inline:auto; padding-inline:var(--jt-gutter); }
 .folio main { padding-top:1.5rem; padding-bottom:1.5rem; }
 h1,h2,h3,h4 { font-optical-sizing:auto; font-variation-settings:'SOFT' 25,'WONK' 1; }
@@ -396,7 +396,7 @@ h3 { font-size:25px; }
 .follow-group a { font:600 18px/1.45 var(--jt-font-body); text-decoration:none; overflow-wrap:anywhere; }
 .follow-group a:hover { text-decoration:underline; }
 .follow-actions { order:4; margin:0.75rem 0; text-align:right; }
-.map { margin-inline:calc(50% - 50vw + 22px); }
+.map { margin-inline:calc(50% - 50vw); }
 .map:has(.atlas-world) { background:#faf7ed; border-block:3px double var(--jt-line); }
 .atlas-world .atlas-place__name,.atlas-world .atlas-sign text,.pocket-place__name,.pocket-sign text { font-family:var(--jt-font-heading); }
 .atlas-world .atlas-place__fact,.pocket-place__fact { font-family:var(--jt-font-body); }
@@ -500,7 +500,6 @@ tr:target { outline-color:var(--folio-gold); }
   .masthead h1 { font-size:48px; }
 }
 @media (max-width:40rem) {
-  .folio { margin:7px; border-width:3px; min-height:calc(100vh - 14px); }
   .folio main,.site-header,.site-footer { padding-inline:16px; }
   .folio main { padding-top:1rem; }
   .site-brand { font-size:15px; }
@@ -537,7 +536,6 @@ tr:target { outline-color:var(--folio-gold); }
   .follow-group li > span { font-size:14px; }
   .follow-actions { text-align:left; margin-top:0.75rem; }
   .follow-actions .primary-link { width:100%; }
-  .map { margin-inline:calc(50% - 50vw + 12px); }
   .attention { display:block; font-size:16px; }
   .attention li { display:block; margin-top:0.5rem; }
   .attention li > span { display:block; }
