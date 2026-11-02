@@ -3,8 +3,18 @@
 import { flows, systemName } from './flows.mjs';
 import { LEGS } from './probe.mjs';
 import { itemLabel } from './stories.mjs';
+import { lastRunText } from './ran.mjs';
 
-function nextStep(connection) {
+// The hop's Dagu job's last run follows its schedule: runner evidence for
+// the next step, never a claim that this item arrived.
+function nextStep(connection, runs = null) {
+  const job = connection?.trigger?.dagu;
+  const how = howItRuns(connection);
+  const ran = job ? lastRunText(job, runs?.jobs?.[job]) : null;
+  return how && ran ? `${how} ${ran}` : how ?? ran;
+}
+
+function howItRuns(connection) {
   if (connection?.status === 'gap') return 'The flows contract records a gap on this connection.';
   if (connection?.status === 'unverified') return 'This connection has not been verified.';
   const trigger = connection?.trigger;
@@ -32,7 +42,7 @@ function downstream(model, system, holders) {
   return waiting;
 }
 
-export function handoffSummary(model, contract = flows) {
+export function handoffSummary(model, contract = flows, runs = null) {
   const holders = new Map(model.holders.map((h) => [h.system, h]));
   const unconfirmed = model.holders.filter((h) => !h.origin && h.state !== 'has');
   if (!unconfirmed.length) return {
@@ -75,7 +85,7 @@ export function handoffSummary(model, contract = flows) {
     }
     if (!unsent && source !== row.from) detail += ` Measured as ${systemName(source)} has it; no source fact yet from ${systemName(row.from)}.`;
     steps.push({ hop: row.id, to: row.to, state, title, detail, waiting,
-      next: ['unknown', 'held'].includes(state) ? null : nextStep(connection) });
+      next: ['unknown', 'held'].includes(state) ? null : nextStep(connection, runs) });
     covered.add(row.to);
     waiting.forEach((id) => covered.add(id));
   }

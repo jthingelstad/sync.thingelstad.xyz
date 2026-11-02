@@ -6,6 +6,7 @@ import { age, central } from './time.mjs';
 import { landmark } from './folio.mjs';
 import { coverageModel, COVERAGE_LABEL, nextAction } from './coverage.mjs';
 import { bookmarkBatchLink } from './bookmark-batch-page.mjs';
+import { lastRunText } from './ran.mjs';
 const esc = (t) => String(t ?? '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 
 const STATUS_LABEL = { fresh: 'fresh', moving: 'moving', late: 'late', held: 'held', 'no-fact': 'no fact yet', unknown: 'unknown' };
@@ -129,6 +130,8 @@ export function connectionActions(hop, status, checks) {
   const timing = trigger?.type === 'clock' && trigger.schedule ? `Recorded schedule: ${trigger.schedule}${zone}.`
     : trigger?.event ? `Recorded trigger: ${trigger.event}.` : trigger?.type === 'live' ? 'Read on demand.' : 'No trigger detail is recorded.';
   const runner = [trigger?.runs_on, trigger?.runner].filter(Boolean).join(' · ');
+  // Runner evidence for the hop's Dagu job, never arrival evidence.
+  const ran = trigger?.dagu ? ` <!-- dagu-run:${hop.id} -->${esc(lastRunText(trigger.dagu, status.runs?.jobs?.[trigger.dagu]))}<!-- /dagu-run -->` : '';
   return `<section class="connection-actions" aria-labelledby="actions-${hop.id}"><h3 id="actions-${hop.id}">What to do next</h3>
 ${checks.map((c) => {
   const action = nextAction(c);
@@ -142,7 +145,7 @@ ${sampledNotes ? `<p class="evidence-note">Sampled note observation checked ${re
 <ul class="check-evidence">${evidencePoint(c.source, c.witness ? 'Source witness' : 'Source', c.kind)}${evidencePoint(c.destination, 'Destination', c.kind)}</ul>
 ${c.row?.reported_at ? `<p class="evidence-note">Arrival reported ${recordedTime(c.row.reported_at)}.</p>` : ''}</article>`;
 }).join('')}
-<dl class="operation-record"><dt>When it runs</dt><dd>${esc(timing)}${runner ? ` Runner: ${esc(runner)}.` : ''}</dd>
+<dl class="operation-record"><dt>When it runs</dt><dd>${esc(timing)}${runner ? ` Runner: ${esc(runner)}.` : ''}${ran}</dd>
 <dt>Recorded operation</dt><dd>${esc(hop.mechanism || 'No operation is recorded.')}</dd>
 <dt>How to verify</dt><dd>${esc(hop.verify || 'No verification contract is recorded.')}</dd>
 ${hop.hold ? `<dt>Recorded hold</dt><dd>${esc(hop.hold)}</dd>` : ''}</dl>
@@ -160,6 +163,8 @@ export function triggerText(t) {
       return `on the ${esc(String(t.minutes))} min follow-up for the ${esc(t.leg)} leg of ${esc(shortItem(t.kind, { id: t.id }))}`;
     case 'received':
       return `on ${esc(systemName(t.system))}'s reported arrival of ${esc(shortItem(t.kind, { id: t.id }))}`;
+    case 'ran':
+      return `on the ran event of Dagu job ${esc(t.job)}`;
     case 'deploy':
       return 'by a deploy';
     case 'manual':

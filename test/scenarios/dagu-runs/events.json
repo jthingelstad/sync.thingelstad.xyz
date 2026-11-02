@@ -1,0 +1,64 @@
+[
+  {
+    "source": "otto-ops",
+    "detail-type": "ran",
+    "time": "2026-10-27T08:12:44Z",
+    "detail": {
+      "job": "build-linking-things-nightly",
+      "run": "019a2416-5c00-7d3e-9a41-0c6f2b8e1d57",
+      "status": "succeeded",
+      "started_at": "2026-10-27T05:30:00Z",
+      "finished_at": "2026-10-27T08:12:44Z"
+    }
+  },
+  {
+    "source": "otto-ops",
+    "detail-type": "ran",
+    "time": "2026-10-27T10:04:31Z",
+    "detail": {
+      "job": "run-librarian-daily-round",
+      "run": "019a24c3-0e40-7b12-8f6d-5a9e3c2b7f10",
+      "status": "failed",
+      "started_at": "2026-10-27T10:00:00Z",
+      "finished_at": "2026-10-27T10:04:31Z",
+      "failed_step": "describe-new-photos"
+    }
+  },
+  {
+    "source": "otto-ops",
+    "detail-type": "ran",
+    "time": "2026-10-27T10:04:31Z",
+    "detail": {
+      "job": "run-librarian-daily-round",
+      "run": "019a24c3-0e40-7b12-8f6d-5a9e3c2b7f10",
+      "status": "failed",
+      "started_at": "2026-10-27T10:00:00Z",
+      "finished_at": "2026-10-27T10:04:31Z",
+      "failed_step": "describe-new-photos"
+    }
+  },
+  {
+    "source": "otto-ops",
+    "detail-type": "ran",
+    "time": "2026-10-26T07:58:10Z",
+    "detail": {
+      "job": "build-linking-things-nightly",
+      "run": "019a1eef-f400-7a90-b3c5-61d7e04a2c88",
+      "status": "succeeded",
+      "started_at": "2026-10-26T05:30:00Z",
+      "finished_at": "2026-10-26T07:58:10Z"
+    }
+  },
+  {
+    "source": "otto-ops",
+    "detail-type": "ran",
+    "time": "2026-10-27T16:30:05Z",
+    "detail": {
+      "job": "check-services-running",
+      "run": "019a2665-7a60-7c44-a0e2-3b5d9f8c1e26",
+      "status": "succeeded",
+      "started_at": "2026-10-27T16:30:00Z",
+      "finished_at": "2026-10-27T16:30:05Z"
+    }
+  }
+]
