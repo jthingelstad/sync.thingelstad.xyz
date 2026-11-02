@@ -27,7 +27,7 @@ test('the first unconfirmed handoff explains the downstream chain without invent
   assert.equal(note.complete, false);
   assert.deepEqual(note.steps.map((s) => s.hop), [5]);
   assert.deepEqual(note.steps[0].waiting, ['librarian', 'thingy']);
-  assert.equal(note.steps[0].next, 'Recorded schedule: 00:30 daily (US Central).');
+  assert.equal(note.steps[0].next, 'Recorded schedule: 00:30 daily (US Central). Dagu build-linking-things-nightly: no run reported yet.');
   assert.deepEqual(note.other, []);
   const html = renderPage(status, journeys);
   const words = pageText(html.match(/<section class="handoff-note[\s\S]*?<\/section>/)[0]);
@@ -44,7 +44,7 @@ test('independent branches get independent first handoffs and readable schedules
   assert.deepEqual(note.steps.map((s) => s.hop), [11, 20]);
   assert.deepEqual(note.steps[0].waiting, ['thingy']);
   assert.deepEqual(note.steps[1].waiting, []);
-  assert.equal(note.steps[0].next, 'Recorded schedule: 05:00 on the Mac (photo descriptions and summaries) and 06:17 on GitHub (the pull; 07:17 in summer) (US Central).');
+  assert.equal(note.steps[0].next, 'Recorded schedule: 05:00 on the Mac (photo descriptions and summaries) and 06:17 on GitHub (the pull; 07:17 in summer) (US Central). Dagu run-librarian-daily-round: no run reported yet.');
   assert.equal(note.steps[1].state, 'late');
   assert.match(note.steps[1].detail, /past its expected wait/);
   assert.equal(note.steps[1].next, 'This connection is read on demand.');
@@ -112,7 +112,7 @@ test('fallback witnesses are named, and a known gap never promises the scheduled
   const contract = structuredClone(flows);
   contract.hops.find((h) => h.id === 6).status = 'gap';
   const note = handoffSummary(model, contract);
-  assert.equal(note.steps.find((s) => s.hop === 6).next, 'The flows contract records a gap on this connection.');
+  assert.equal(note.steps.find((s) => s.hop === 6).next, 'The flows contract records a gap on this connection. Dagu build-linking-things-nightly: no run reported yet.');
   const fallback = following('issue', {
     weekly: { newest: { issue: { id: '355', at: item.at } } },
     librarian: { newest: { issue: { id: '354', at: old.at } } },

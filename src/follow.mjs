@@ -67,8 +67,8 @@ function summary(model) {
   }).join('')}</div>`;
 }
 
-function handoffNote(model) {
-  const note = handoffSummary(model);
+function handoffNote(model, runs = null) {
+  const note = handoffSummary(model, flows, runs);
   const names = (rows) => rows.map((h) => `<a href="#fact-${h.system}">${esc(systemName(h.system))}</a>`).join(', ');
   const unknown = note.unavailable.filter((h) => h.state === 'unknown');
   const missing = note.unavailable.filter((h) => h.state === 'no-fact');
@@ -119,7 +119,7 @@ export function followAtlas(status, journeys, models = followModels(status, jour
   return models.map((model, i) => `<section class="follow-view${i === 0 ? ' follow-view--default' : ''}" id="follow-${model.kind}" tabindex="-1" aria-labelledby="follow-${model.kind}-title">
 ${followPicker(models, model.kind)}
 <header class="follow-heading">${landmark(model.origin, 'follow-art')}<div><p class="kicker">Follow this item · ${esc(KIND_LABEL[model.kind])}</p><h2 id="follow-${model.kind}-title">${esc(itemLabel(model.kind, model.item))}</h2>${model.item.title && ['issue', 'audio'].includes(model.kind) ? `<p>${esc(model.item.title)}</p>` : ''}</div></header>
-${handoffNote(model)}
+${handoffNote(model, status.runs)}
 ${summary(model)}
 ${itemMap(model, status)}
 <p class="follow-actions"><a class="primary-link" href="/journeys/#journey-${model.kind}">View journey &amp; receipts →</a></p>

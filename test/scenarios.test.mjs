@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import { test } from 'node:test';
 import { loadScenario, renderScenario, scenarioNames, scenarioSnapshot } from '../tools/scenarios.mjs';
 
-const names = ['after-send', 'blog-awaiting-event', 'blog-event-arrived', 'friday-hold', 'late-hop', 'quiet-tuesday', 'reader-down', 'received-arrivals', 'send-in-progress', 'superseded'];
+const names = ['after-send', 'blog-awaiting-event', 'blog-event-arrived', 'dagu-runs', 'friday-hold', 'late-hop', 'quiet-tuesday', 'reader-down', 'received-arrivals', 'send-in-progress', 'superseded'];
 
 test('every page scenario is complete and renders without a network request', async () => {
   assert.deepEqual(await scenarioNames(), names);
@@ -41,4 +41,24 @@ test('the scenarios exercise fresh, pending legs, behind builds, late, failed an
   assert.equal(scenarios['blog-event-arrived'].journeys.post.item.id,scenarios['blog-event-arrived'].status.facts.microblog.newest.post.id);
   assert.equal(scenarios['blog-event-arrived'].status.facts.microblog.publication.via,'bus');
   await assert.rejects(loadScenario('../fixtures'), /Unknown scenario/);
+});
+
+test('ran events show each Dagu hop’s last run and never change a hop’s status', async () => {
+  const quiet = renderScenario(await loadScenario('quiet-tuesday'));
+  const ran = renderScenario(await loadScenario('dagu-runs'));
+  // Runner evidence is not arrival evidence: the same facts give the same hops.
+  assert.deepEqual(ran.status.hops, quiet.status.hops);
+  assert.deepEqual(ran.status.summary, quiet.status.summary);
+  assert.deepEqual(ran.journeys, quiet.journeys);
+  // The retry is one run, the late Oct 26 run does not replace Oct 27's, and
+  // the job no hop names is never recorded.
+  assert.deepEqual(Object.keys(ran.runs.jobs).sort(), ['build-linking-things-nightly', 'run-librarian-daily-round']);
+  assert.equal(ran.runs.runs.length, 3);
+  assert.equal(ran.runs.jobs['build-linking-things-nightly'].finished_at, '2026-10-27T08:12:44Z');
+  assert.equal(ran.status.runs.jobs['run-librarian-daily-round'].failed_step, 'describe-new-photos');
+  assert.doesNotMatch(JSON.stringify(ran.status), /019a|check-services-running/);
+  const records = ran.pages['records/index.html'];
+  assert.doesNotMatch(records, /019a|check-services-running/);
+  assert.match(records, /Dagu build-linking-things-nightly: last ran Tue Oct 27, 12:30 a\.m\. CDT to 3:12 a\.m\. CDT, succeeded\./);
+  assert.match(records, /Dagu run-librarian-daily-round: last ran Tue Oct 27, 5:00 a\.m\. CDT to 5:04 a\.m\. CDT, failed at step describe-new-photos\./);
 });
