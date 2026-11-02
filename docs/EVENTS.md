@@ -9,7 +9,10 @@ visitor, a subscriber address or a secret. A new producer or hop changes
 The existing `sync-published` rule runs the probe for `published` and
 `received` from the sources below. The ninety-day archive keeps both types.
 The archive also retains `subscriber`, `pushed` and `activity` signals; those do
-not match the probe rule. `ping` matches neither. The clock and published-event follow-ups still
+not match the probe rule. The `sync-ran` rule runs the probe for `ran` from
+`otto-ops`, only for the Dagu jobs a hop names (see [`ran`](#ran)); the
+archive keeps every otto-ops `ran`, named job or not. `ping` matches no rule
+and is not archived. The clock and published-event follow-ups still
 reconcile the public facts.
 
 Follow-up delays (2, 5, 10, 15, 30, 45 and 60 minutes) start when the probe
@@ -33,6 +36,8 @@ ago. The publication receipt and journey retain the original publication time.
 | `librarian` | `received` | Library round, after its pull advances a source | Sender waits for step 5 |
 | `thingy` | `received` | Deploy, after health confirms the corpus versions it serves | Sender waits for step 5 |
 | `links` | `received` | Join or stats update, after its public result is available | Sender waits for step 5 |
+| `otto-ops` | `ran` | Every otto-ops Dagu job on Otto, as its exit step | Sender in otto-ops; live once this rule is deployed |
+| `otto-ops` | `ping` | The same identity, for a permission rehearsal | No subscriber |
 
 `PublisherUser` (`wt-archive`) has only `events:PutEvents` on this bus from
 this stack's policy, restricted to source `wt-builder` and type `published`
@@ -42,6 +47,15 @@ must allow only this bus, its own source and `received` (plus `ping` for a
 rehearsal). `source` is a declared name; IAM enforces who can declare it.
 AWS lists these request condition keys in
 [custom bus access](https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-custom-bus-access-actions.html).
+
+`otto-ops` is the exception. Its Dagu jobs put `ran` and `ping` as Otto's
+`cloud-engineer` profile (role `ProjectsCloudEngineer`, which holds
+`AdministratorAccess`), so this stack adds no grant for it (Jamie,
+2026-11-02: "Approved: build the Sync ran-event: every otto-ops Dagu job puts
+a ran event on the thingelstad-publishing bus as cloud-engineer, and Sync
+shows each Otto-run connection's last run"). Nothing in IAM narrows which
+source that identity declares; the rule and the validation below decide what
+an otto-ops event can do here.
 
 ## `published`
 
@@ -162,6 +176,76 @@ available for retry. Reserved concurrency of one keeps clock and event
 writes apart. `src/observe.mjs` is the pure round used by Lambda and
 previews; `src/received.mjs` owns validation and folding.
 
+## `ran`
+
+Every otto-ops Dagu job on Otto puts one as its exit step, whatever it does:
+
+```json
+{
+  "source": "otto-ops",
+  "detail-type": "ran",
+  "time": "2026-11-03T09:12:44Z",
+  "detail": {
+    "job": "build-linking-things-nightly",
+    "run": "019a4c1e-7f2b-7c6a-9b1d-2e4f5a6b7c8d",
+    "status": "failed",
+    "started_at": "2026-11-03T06:30:00Z",
+    "finished_at": "2026-11-03T09:12:44Z",
+    "failed_step": "build"
+  }
+}
+```
+
+`job` is the Dagu job name (`^[a-z0-9][a-z0-9-]{0,63}$`), `run` its run id
+(`^[A-Za-z0-9_-]{1,64}$`), and `status` one of `succeeded`, `failed`,
+`aborted`, `partially_succeeded` or `rejected`. `finished_at` is required and
+`started_at` optional; each is an explicit, valid instant with seconds and a
+zone. `finished_at` is no later than processing time, with no allowance for
+skew, and `started_at` is no later than `finished_at`. `failed_step`, a step
+name in the job pattern, appears only when `status` is not `succeeded`. The
+envelope's `time` is `finished_at`; the probe reads the detail. An invalid
+event is logged with fixed reasons and dropped before any reader or storage
+call; the payload is never logged. Unknown fields are discarded.
+
+What it proves: the runner ran, with that status. It is runner evidence,
+never arrival evidence. It never makes a hop fresh, late or moving and never
+measures a lag; a hop's status is the same with or without it. Only a
+destination's own fact or `received` report proves an item arrived.
+
+Only the jobs a hop names in the flows file's `trigger.dagu` matter here. The
+`sync-ran` rule lists exactly those jobs (`build-linking-things-nightly` for
+hops 5 and 6, `run-librarian-daily-round` for hops 11 and 15), derived from
+the vendored flows file at every deploy (`stackTemplate` in
+`tools/package.mjs`; a test keeps `infra/sync.json` equal to it). With no job
+named, the rule lists `(no hop names a Dagu job)`, which no valid job name
+can equal. So the rest of the roughly 150 daily runs never invoke the probe;
+they still land in the archive. A `ran` for an unnamed job that reaches the
+function anyway is dropped with the fixed reason `no hop names this Dagu job`,
+before any read, logging neither the job nor the run.
+
+`facts/otto-ops.json` holds each named job's last run and the twenty most
+recent runs, newest first, each with its run id, status, times, failed step
+and receipt time:
+
+```json
+{ "version": 1, "updated_at": "...", "jobs": { "<job>": { "run": "...", "status": "...", "finished_at": "...", "received_at": "..." } }, "runs": [{ "job": "<job>", "run": "..." }] }
+```
+
+One run id is one run: a delivery retry changes nothing, and a later report
+of the same run (a Dagu retry keeps its id) replaces the earlier one. An
+older `finished_at` never replaces a job's newer last run. A job no hop
+names any more leaves the fact on the next fold. The fact is written before
+the round, and the round then runs as for any event.
+
+The page shows the last run wherever a hop says how it runs: the Records
+page's "When it runs" line, under each coverage check's next step, and the
+"next" line of the map page's handoff note. "Dagu
+build-linking-things-nightly: last ran Tue Nov 3, 12:30 a.m. CST to 3:12
+a.m. CST, failed at step build." in US Central, or "no run reported yet".
+`status.json` carries the same job, times, status and failed step; the run id
+stays in the fact and never reaches the page. `src/ran.mjs` owns validation
+and folding.
+
 ## A verified registry revision
 
 `source xyz`, `detail-type refreshed`, detail `{ id, at, url }`: id is the
@@ -185,7 +269,7 @@ are the rehearsal.
 
 Never put a test `published` on the bus: it is a real send to the probe and
 activity stream. Never put a test `received` there either: it is a real
-arrival. Directly invoke Lambda with the envelope plus `"rehearsal": true`.
+arrival. Nor a test `ran`: it is a real last run on the page. Directly invoke Lambda with the envelope plus `"rehearsal": true`.
 It returns parsing and follow-up times before any reader, state write or
 schedule. A `received` rehearsal needs a past `at`; checked-in scenarios
 deliberately use a fixed future clock.
@@ -195,7 +279,10 @@ matching this rule. Check `FailedEntryCount` and each entry's error, not only
 the HTTP status, as described in the
 [PutEvents reference](https://docs.aws.amazon.com/eventbridge/latest/APIReference/API_PutEvents.html).
 Fixtures and mocked transports are the normal rehearsal here.
-`npm run preview` includes `received-arrivals`, with no network or AWS call.
+`npm run preview` includes `received-arrivals` and `dagu-runs` (a succeeded
+and a failed run, a delivery retry, a late older run and an unnamed job),
+with no network or AWS call. A `ran` rehearsal reports the parsed event and
+whether a hop names its job.
 
 This contract activates no destination sender or subscriber. Hop 6 and the
 WT354 example remain as they are. Steps 5 and 8 carry destination PRs and
