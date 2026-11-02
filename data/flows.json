@@ -1,7 +1,7 @@
 {
   "$comment": "The data flows between Jamie's systems: every hop content takes, who owns each field, and what watches each hop today. This file is the contract; shared/flows.html is rendered from it by `node shared/build-flows.mjs`. A hop is a row here before it is code anywhere. Times are America/Chicago unless a cron says otherwise.",
   "version": 1,
-  "updated": "2026-10-28",
+  "updated": "2026-11-02",
   "kinds": {
     "issue": "a Weekly Thing issue",
     "post": "a blog post on www.thingelstad.com",
@@ -63,7 +63,7 @@
       "repo": "jthingelstad/librarian-thing",
       "runs_on": "mac",
       "fact": "Its run report under tmp/blog-round/<day>.md, and the blog_round events in the library.",
-      "notes": "Codex automation, daily 05:00. Runs the library round on the Mac (the one runner with the Tinylytics key), then files categories, fills alt and proposes Featured."
+      "notes": "Since 2026-11-02, the Tuesday and Thursday morning Claude session (otto-ops look-after-the-systems) files categories, fills alt and proposes Featured. The scripted 05:00 steps (reader numbers, photo descriptions, post summaries, upload) are the Dagu job run-librarian-daily-round. The Codex automation that did both is retired."
     },
     {
       "id": "weekly",
@@ -252,7 +252,7 @@
         "cron": "30 0 * * *",
         "tz": "America/Chicago",
         "runs_on": "mac",
-        "runner": "launchd com.thingelstad.links-nightly"
+        "dagu": "build-linking-things-nightly"
       },
       "expected_lag_hours": 28,
       "verify": "links_stats last_saved is after the bookmark's save time; data/sync.json updated matches Pinboard's posts/update.",
@@ -271,7 +271,8 @@
       "trigger": {
         "type": "clock",
         "schedule": "00:30 daily, inside hop 5",
-        "runs_on": "mac"
+        "runs_on": "mac",
+        "dagu": "build-linking-things-nightly"
       },
       "expected_lag_hours": 28,
       "verify": "The expected issue is present in public issues.json and /issues/<n>/; its saved-link records and wt:<n> search carry the associations. links_stats and sync-fact.json report the joined issue. A destination received event follows verified public readback; Sync then observes the handoff as fresh.",
@@ -364,13 +365,14 @@
         "alt"
       ],
       "moves": "Every post and page, with categories and alt as micro.blog holds them.",
-      "mechanism": "library.py round --only blog, on the Mac (Library Agent, 05:00) and on GitHub (07:17) as the backstop. The round declares a blog-published dispatch, but nothing sends it.",
+      "mechanism": "library.py round --only blog, on GitHub (06:17 CST, 07:17 CDT). On the Mac, the Dagu job run-librarian-daily-round (05:00) describes new photos and summarises new posts, takes both into the library and uploads it; since 2026-11-01 it does not pull the blog. The round declares a blog-published dispatch, but nothing sends it.",
       "trigger": {
         "type": "clock",
-        "schedule": "05:00 and 07:17 daily",
+        "schedule": "05:00 on the Mac (photo descriptions and summaries) and 06:17 on GitHub (the pull; 07:17 in summer)",
         "cron": "17 12 * * * (UTC)",
         "tz": "America/Chicago",
-        "runs_on": "mac+github-actions"
+        "runs_on": "mac+github-actions",
+        "dagu": "run-librarian-daily-round"
       },
       "expected_lag_hours": 26,
       "verify": "latest_content source_kind blog lists the post; the library's blog fingerprint moved.",
@@ -388,8 +390,10 @@
       "mechanism": "library.py round --only another, from the published site. podcast-published is declared but never sent.",
       "trigger": {
         "type": "clock",
-        "schedule": "05:00 and 07:17 daily",
-        "runs_on": "mac+github-actions"
+        "schedule": "06:17 daily (07:17 in summer)",
+        "cron": "17 12 * * * (UTC)",
+        "tz": "America/Chicago",
+        "runs_on": "github-actions"
       },
       "expected_lag_hours": 26,
       "verify": "latest_content source_kind podcast lists the episode.",
@@ -407,8 +411,10 @@
       "mechanism": "library.py round --only things, from the published site. things-published is declared but never sent.",
       "trigger": {
         "type": "clock",
-        "schedule": "05:00 and 07:17 daily",
-        "runs_on": "mac+github-actions"
+        "schedule": "06:17 daily (07:17 in summer)",
+        "cron": "17 12 * * * (UTC)",
+        "tz": "America/Chicago",
+        "runs_on": "github-actions"
       },
       "expected_lag_hours": 26,
       "verify": "Compare things-snapshot-v1 of the normalized public https://thingelstad.xyz/things.json with things-revision-algorithm/things-revision metadata on the current versioned artifacts/library.db HEAD. Metadata is computed from the exact frozen SQLite snapshot uploaded with the existing conditional write. Missing metadata is unobserved; differing revisions do not imply a publication time or lag. Archive storage does not prove corpus or serving freshness.",
@@ -427,8 +433,10 @@
       "mechanism": "library.py round --only links reads Linking Things' published JSON (its nightly snapshot).",
       "trigger": {
         "type": "clock",
-        "schedule": "05:00 and 07:17 daily",
-        "runs_on": "mac+github-actions"
+        "schedule": "06:17 daily (07:17 in summer)",
+        "cron": "17 12 * * * (UTC)",
+        "tz": "America/Chicago",
+        "runs_on": "github-actions"
       },
       "expected_lag_hours": 24,
       "verify": "latest_content source_kind link lists the link.",
@@ -443,11 +451,12 @@
         "readers"
       ],
       "moves": "View counts per post, page and issue.",
-      "mechanism": "library.py round --only readers, Mac only (the GitHub round has no Tinylytics key).",
+      "mechanism": "library.py round --only readers, in the Dagu job run-librarian-daily-round on the Mac (the GitHub round has no Tinylytics key).",
       "trigger": {
         "type": "clock",
         "schedule": "05:00 daily",
-        "runs_on": "mac"
+        "runs_on": "mac",
+        "dagu": "run-librarian-daily-round"
       },
       "expected_lag_hours": 26,
       "verify": "The library's readers table has yesterday's counts.",
@@ -530,9 +539,9 @@
       "mechanism": "make blog-round --write: Micropub update by URL, id-checked (q=source, trust only uid, write, read back). Guards: fill blanks only, 50 category and 20 alt writes a day, never an <img> turned into markdown, WRITES_ON flag.",
       "trigger": {
         "type": "clock",
-        "schedule": "05:00 daily",
+        "schedule": "Tuesday and Thursday mornings",
         "runs_on": "mac",
-        "runner": "Codex automation library-agent"
+        "runner": "Claude session look-after-the-systems (otto-ops, 07:00)"
       },
       "expected_lag_hours": 26,
       "verify": "q=source shows the edit, and the rendered page shows it after micro.blog rebuilds.",
@@ -799,6 +808,18 @@
       ],
       "sees": "Exact public bookmark and Feedbin star identities, durable handoff, published record readback, and received events.",
       "misses": "It does not claim the entire Pinboard account was mirrored or repair the Weekly Thing join."
+    },
+    {
+      "name": "Dagu ran events",
+      "where": "Every otto-ops Dagu job on the Mac puts one ran event on thingelstad-publishing as it ends (source otto-ops); sync shows the last run of each hop's Dagu job. Built 2026-11-02.",
+      "hops": [
+        5,
+        6,
+        11,
+        15
+      ],
+      "sees": "When the hop's job last ran, whether it succeeded, and which step failed.",
+      "misses": "Whether the run moved the newest item, and a run that never started: it sends nothing."
     }
   ]
 }

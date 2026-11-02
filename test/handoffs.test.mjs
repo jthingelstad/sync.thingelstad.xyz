@@ -44,7 +44,7 @@ test('independent branches get independent first handoffs and readable schedules
   assert.deepEqual(note.steps.map((s) => s.hop), [11, 20]);
   assert.deepEqual(note.steps[0].waiting, ['thingy']);
   assert.deepEqual(note.steps[1].waiting, []);
-  assert.equal(note.steps[0].next, 'Recorded schedule: 05:00 and 07:17 daily (US Central).');
+  assert.equal(note.steps[0].next, 'Recorded schedule: 05:00 on the Mac (photo descriptions and summaries) and 06:17 on GitHub (the pull; 07:17 in summer) (US Central).');
   assert.equal(note.steps[1].state, 'late');
   assert.match(note.steps[1].detail, /past its expected wait/);
   assert.equal(note.steps[1].next, 'This connection is read on demand.');

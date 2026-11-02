@@ -80,7 +80,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <body>
 <main>
 <h1>Data flows</h1>
-<p class="lede">Every hop content takes between Jamie's systems, who owns each field, and what watches each hop today. Rendered from <code>shared/flows.json</code>, updated 2026-10-28. A hop is a row in that file before it is code anywhere.</p>
+<p class="lede">Every hop content takes between Jamie's systems, who owns each field, and what watches each hop today. Rendered from <code>shared/flows.json</code>, updated 2026-11-02. A hop is a row in that file before it is code anywhere.</p>
 
 <h2>Open</h2>
 <ul class="open"><li><a href="#hop-19"><span class="pill pill--gap">gap</span> 19. Library Agent → micro.blog</a>: First write round, 2026-10-22: 20 edits accepted by Micropub, 4 missing from the rendered pages after the rebuild. The read-back checks Micropub, not the page, so the round was green. A write needs a receipt: written, rendered, pulled back (hop 11). Sync plan step 6: the sync probe observes the public JSON feed and announces a newly observed post as source microblog, detail-type published, kind post, website leg, on thingelstad-publishing. Existing posts establish a baseline; retries do not manufacture another send. A post journey advances when the bus event is consumed. The captured public feed has tags but no independent numeric Micropub uid or modification time: authenticated q=source stays behind that explicit reader TODO. Hop 19 stays no-fact until an independent source identity and Library Agent write receipt can support a stored/rendered comparison; a destination-only witness never makes it fresh or late.</li>
@@ -89,7 +89,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <h2>Map</h2>
 <div class="scroll">
 <svg class="map" viewBox="0 0 1208 666" width="1208" height="666" role="img" aria-labelledby="map-title">
-<title id="map-title">Data flows between Jamie's systems, 2026-10-28</title>
+<title id="map-title">Data flows between Jamie's systems, 2026-11-02</title>
 <defs>
   <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="context-stroke"/></marker>
 </defs>
@@ -207,9 +207,9 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <g class="badge badge--ok badge--mac"><a href="#hop-9"><circle cx="480" cy="328.5" r="11"/><text x="480" y="332.5" text-anchor="middle">9</text></a></g>
 <g class="badge badge--ok badge--mac"><a href="#hop-10"><circle cx="604" cy="52" r="11"/><text x="604" y="56" text-anchor="middle">10</text></a></g>
 <g class="badge badge--ok badge--mac"><a href="#hop-11"><circle cx="480" cy="68" r="11"/><text x="480" y="72" text-anchor="middle">11</text></a></g>
-<g class="badge badge--ok badge--mac"><a href="#hop-12"><circle cx="728" cy="385.125" r="11"/><text x="728" y="389.125" text-anchor="middle">12</text></a></g>
-<g class="badge badge--ok badge--mac"><a href="#hop-13"><circle cx="728" cy="465.375" r="11"/><text x="728" y="469.375" text-anchor="middle">13</text></a></g>
-<g class="badge badge--ok badge--mac"><a href="#hop-14"><circle cx="728" cy="428.625" r="11"/><text x="728" y="432.625" text-anchor="middle">14</text></a></g>
+<g class="badge badge--ok"><a href="#hop-12"><circle cx="728" cy="385.125" r="11"/><text x="728" y="389.125" text-anchor="middle">12</text></a></g>
+<g class="badge badge--ok"><a href="#hop-13"><circle cx="728" cy="465.375" r="11"/><text x="728" y="469.375" text-anchor="middle">13</text></a></g>
+<g class="badge badge--ok"><a href="#hop-14"><circle cx="728" cy="428.625" r="11"/><text x="728" y="432.625" text-anchor="middle">14</text></a></g>
 <g class="badge badge--ok badge--mac"><a href="#hop-15"><circle cx="480" cy="84" r="11"/><text x="480" y="88" text-anchor="middle">15</text></a></g>
 <g class="badge badge--ok"><a href="#hop-16"><circle cx="976" cy="349.5" r="11"/><text x="976" y="353.5" text-anchor="middle">16</text></a></g>
 <g class="badge badge--ok"><a href="#hop-17"><circle cx="748.1600000000003" cy="358.80000000000007" r="11"/><text x="748.1600000000003" y="362.80000000000007" text-anchor="middle">17</text></a></g>
@@ -276,7 +276,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td class="num">5</td>
   <td><strong>Pinboard</strong> → <strong>Linking Things</strong><br><span class="muted">link, note</span></td>
   <td>Every public bookmark, as the year shards under data/links/.<br><span class="muted">tools/nightly.sh: sync.py (posts/update, then posts/all if the stamp moved), join, enrichment, validate, commit, push. GitHub validates the release and delivers its versioned builder and canonical snapshot to S3; the single AWS publisher builds and deploys it.</span></td>
-  <td>clock, 00:30 daily<br><span class="muted">mac · launchd com.thingelstad.links-nightly</span></td>
+  <td>clock, 00:30 daily<br><span class="muted">mac · Dagu build-linking-things-nightly</span></td>
   <td class="num">28 h</td>
   <td>links_stats last_saved is after the bookmark's save time; data/sync.json updated matches Pinboard's posts/update.</td>
   <td><span class="pill pill--ok">ok</span><br><span class="muted">The run took about three hours on 2026-10-26 (Wayback lookups). A link saved at 01:00 waits until the next night's run, then the run time: about 28 hours at worst. Arrival reporting contract (sync plan step 4): source links, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 5 Linking Things receipt contract: the public build publishes only its imported change stamp and newest joined issue id/time in sync-fact.json. The deploy compares a known earlier public fact with the tested build and a verified public readback, then source links reports received via site-deploy. A local join or stats write alone is not arrival; unknown baselines, unchanged facts and regressions report nothing. The AWS publisher now owns this receipt sender and the separate public bookmark subscriber (hop 23). The nightly full snapshot and WT354 issue join remain in place.</span></td>
@@ -285,7 +285,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td class="num">6</td>
   <td><strong>Weekly Thing (web)</strong> → <strong>Linking Things</strong><br><span class="muted">issue</span></td>
   <td>Which issue carried each link (the /issues/&lt;n&gt;/ pages and wt: search).<br><span class="muted">Inside tools/nightly.sh, join_issues.py fetches Weekly public refs/heads/main into an isolated temporary repository, resolves its full revision once and exports apps/site/archive from that immutable tree. It never reads or switches an active Weekly checkout. Existing main CI delivers the canonical source package to the single AWS publisher, which publishes the generated associations.</span></td>
-  <td>clock, 00:30 daily, inside hop 5<br><span class="muted">mac</span></td>
+  <td>clock, 00:30 daily, inside hop 5<br><span class="muted">mac · Dagu build-linking-things-nightly</span></td>
   <td class="num">28 h</td>
   <td>The expected issue is present in public issues.json and /issues/&lt;n&gt;/; its saved-link records and wt:&lt;n&gt; search carry the associations. links_stats and sync-fact.json report the joined issue. A destination received event follows verified public readback; Sync then observes the handoff as fresh.</td>
   <td><span class="pill pill--ok">ok</span><br><span class="muted">Gap recorded on 2026-10-26: WT354 was published on 2026-10-24, the nightly join ran successfully, and Linking Things still reported 353 because its local Weekly checkout was on a feature branch without 354.md. Jamie lifted the worked-example hold on 2026-10-28: &quot;the hold repair was to use it as a test which we are now ready to do...&quot;. Links PR #32 fixed the default source path and restored only WT354 and its 23 associations; all 354 prior issue entries and bookmark fields were preserved. The bounded repair used Weekly revision 8495f487cdeba183014b30fbf85579363139ef08 and Links main 139ff5989ac5e452c04aeec94899f2ee42572899, released by existing CI run 40695212976. Public issue/search and all 23 record twins passed readback. Links reported received via site-deploy at 2026-10-28T13:25:56Z; Sync observed source/target 354 and fresh at 2026-10-28T13:25:57Z. The full-mirror stamp was unchanged. This was the approved manual bounded test; the next natural 00:30 US Central nightly remains separate acceptance. Source failures leave the derived join unchanged. The guarded bus-join workflow remains off; no subscriber, credential or grant was enabled.</span></td>
@@ -329,8 +329,8 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <tr id="hop-11" class="status--ok">
   <td class="num">11</td>
   <td><strong>micro.blog</strong> → <strong>Librarian</strong><br><span class="muted">post, category, alt</span></td>
-  <td>Every post and page, with categories and alt as micro.blog holds them.<br><span class="muted">library.py round --only blog, on the Mac (Library Agent, 05:00) and on GitHub (07:17) as the backstop. The round declares a blog-published dispatch, but nothing sends it.</span></td>
-  <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
+  <td>Every post and page, with categories and alt as micro.blog holds them.<br><span class="muted">library.py round --only blog, on GitHub (06:17 CST, 07:17 CDT). On the Mac, the Dagu job run-librarian-daily-round (05:00) describes new photos and summarises new posts, takes both into the library and uploads it; since 2026-11-01 it does not pull the blog. The round declares a blog-published dispatch, but nothing sends it.</span></td>
+  <td>clock, 05:00 on the Mac (photo descriptions and summaries) and 06:17 on GitHub (the pull; 07:17 in summer)<br><span class="muted">mac+github-actions · Dagu run-librarian-daily-round</span></td>
   <td class="num">26 h</td>
   <td>latest_content source_kind blog lists the post; the library's blog fingerprint moved.</td>
   <td><span class="pill pill--ok">ok</span><br><span class="muted">Two runners for one round means two answers to 'when did it last run'. blog-published, podcast-published and things-published are declared in library-round.yml and sent by no one (checked 2026-10-26). Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Sync plan step 6: the sync probe observes the public JSON feed and announces a newly observed post as source microblog, detail-type published, kind post, website leg, on thingelstad-publishing. Existing posts establish a baseline; retries do not manufacture another send. A post journey advances when the bus event is consumed. The captured public feed has tags but no independent numeric Micropub uid or modification time: authenticated q=source stays behind that explicit reader TODO. Hop 19 stays no-fact until an independent source identity and Library Agent write receipt can support a stored/rendered comparison; a destination-only witness never makes it fresh or late. Step 5 sender contract: the library round snapshots public source identities before pulling, and reports only a newly held newest identity after the conditional library.db upload succeeds. Source librarian, received, via library-round; metadata edits and unknown baselines are not new arrivals. The proposed sender is off until its PR, the bus grant and the administrator-owned OIDC boundary change are reviewed and activated. No boundary is bypassed.</span></td>
@@ -339,7 +339,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td class="num">12</td>
   <td><strong>Another Thing</strong> → <strong>Librarian</strong><br><span class="muted">episode</span></td>
   <td>Each episode and its transcript, into the podcast corpus.<br><span class="muted">library.py round --only another, from the published site. podcast-published is declared but never sent.</span></td>
-  <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
+  <td>clock, 06:17 daily (07:17 in summer)<br><span class="muted">github-actions</span></td>
   <td class="num">26 h</td>
   <td>latest_content source_kind podcast lists the episode.</td>
   <td><span class="pill pill--ok">ok</span><br><span class="muted">Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 5 sender contract: the library round snapshots public source identities before pulling, and reports only a newly held newest identity after the conditional library.db upload succeeds. Source librarian, received, via library-round; metadata edits and unknown baselines are not new arrivals. The proposed sender is off until its PR, the bus grant and the administrator-owned OIDC boundary change are reviewed and activated. No boundary is bypassed.</span></td>
@@ -348,7 +348,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td class="num">13</td>
   <td><strong>Things I've built</strong> → <strong>Librarian</strong><br><span class="muted">thing</span></td>
   <td>The public registry into the stored library snapshot; the reference corpus consumes that archive separately.<br><span class="muted">library.py round --only things, from the published site. things-published is declared but never sent.</span></td>
-  <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
+  <td>clock, 06:17 daily (07:17 in summer)<br><span class="muted">github-actions</span></td>
   <td class="num">26 h</td>
   <td>Compare things-snapshot-v1 of the normalized public https://thingelstad.xyz/things.json with things-revision-algorithm/things-revision metadata on the current versioned artifacts/library.db HEAD. Metadata is computed from the exact frozen SQLite snapshot uploaded with the existing conditional write. Missing metadata is unobserved; differing revisions do not imply a publication time or lag. Archive storage does not prove corpus or serving freshness.</td>
   <td><span class="pill pill--ok">ok</span><br><span class="muted">Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 7 intake: signed GitHub push deliveries for thingelstad.xyz and the 44 public repository sources listed in https://thingelstad.xyz/things.json become source github, detail-type pushed, with repository/ref/commit id and intake time only. The /github sender is off until Jamie adds github_webhook_signing_key in sync-runtime and enables EnableGitHub. It does not rebuild anything until step 8 adds a subscriber; this hop remains on its existing clock. Step 5 sender contract: the library round snapshots public source identities before pulling, and reports only a newly held newest identity after the conditional library.db upload succeeds. Source librarian, received, via library-round; metadata edits and unknown baselines are not new arrivals. The proposed sender is off until its PR, the bus grant and the administrator-owned OIDC boundary change are reviewed and activated. No boundary is bypassed. Step 8 proposed subscriber: registered public GitHub pushed events may invoke thingelstad.xyz observation collection through an API destination; the existing clock stays until real event acceptance. Connections and real-work rules default off; ping targets dry-run workflows only. Repository-scoped Actions-write tokens live as new keys in sync-runtime, never in a session. Trigger labels remain the deployed clock/nudge until activation. The registry subscriber excludes thingelstad.xyz itself: its normal publication already deploys, and collecting a collector commit again would create a feedback loop. Event refreshes select only the pushed registered repository and its commit evidence; they do not repeat Wayback, screenshots, website or Tinylytics collection. The downstream hop is separate from a source-code push: after byte-verified public things.json publication, source xyz may emit refreshed with the canonical document hash, public URL and verification time only. A separately disabled API destination invokes librarian-thing library-round.yml with only=things. Empty producer bus and publisher-role grant keep it off. A document revision is not an individual thing publication date, and does not invent a journey. Polling observation contract (2026-10-28): things-snapshot-v1 hashes the importer’s site/things/topics/history snapshot, excluding top-level generated and featured. Only the exact files row things/things.json with origin xyz participates; private references and readers never enter the revision. The producer attaches public-revision metadata during an ordinary library upload, with no extra upload, ingestion, embedding or event. Sync reads the public document and existing library HEAD only. This is a whole-registry archive comparison, not newest-thing evidence, a publishing receipt or a serving check; no individual Thing journey or propagation lag is created. Source and destination check times and immutable library version/upload time retain their separate meanings. The event subscribers described above remain off and need their separate activation grants.</span></td>
@@ -357,7 +357,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td class="num">14</td>
   <td><strong>Linking Things</strong> → <strong>Librarian</strong><br><span class="muted">link, note</span></td>
   <td>Every public link, one passage each, into the links corpus.<br><span class="muted">library.py round --only links reads Linking Things' published JSON (its nightly snapshot).</span></td>
-  <td>clock, 05:00 and 07:17 daily<br><span class="muted">mac+github-actions</span></td>
+  <td>clock, 06:17 daily (07:17 in summer)<br><span class="muted">github-actions</span></td>
   <td class="num">24 h</td>
   <td>latest_content source_kind link lists the link.</td>
   <td><span class="pill pill--ok">ok</span><br><span class="muted">Stacks on hop 5: a link saved at 01:00 reaches the Librarian the morning after next, about 52 hours at worst. Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note. Step 5 sender contract: the library round snapshots public source identities before pulling, and reports only a newly held newest identity after the conditional library.db upload succeeds. Source librarian, received, via library-round; metadata edits and unknown baselines are not new arrivals. The proposed sender is off until its PR, the bus grant and the administrator-owned OIDC boundary change are reviewed and activated. No boundary is bypassed. Step 5 Linking Things receipt contract: the public build publishes only its imported change stamp and newest joined issue id/time in sync-fact.json. The deploy compares a known earlier public fact with the tested build and a verified public readback, then source links reports received via site-deploy. A local join or stats write alone is not arrival; unknown baselines, unchanged facts and regressions report nothing. This sender is proposed off, and does not fix the WT354 join or enable a subscriber.</span></td>
@@ -365,8 +365,8 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <tr id="hop-15" class="status--ok">
   <td class="num">15</td>
   <td><strong>Tinylytics</strong> → <strong>Librarian</strong><br><span class="muted">readers</span></td>
-  <td>View counts per post, page and issue.<br><span class="muted">library.py round --only readers, Mac only (the GitHub round has no Tinylytics key).</span></td>
-  <td>clock, 05:00 daily<br><span class="muted">mac</span></td>
+  <td>View counts per post, page and issue.<br><span class="muted">library.py round --only readers, in the Dagu job run-librarian-daily-round on the Mac (the GitHub round has no Tinylytics key).</span></td>
+  <td>clock, 05:00 daily<br><span class="muted">mac · Dagu run-librarian-daily-round</span></td>
   <td class="num">26 h</td>
   <td>The library's readers table has yesterday's counts.</td>
   <td><span class="pill pill--ok">ok</span><br><span class="muted">Stops when the Mac does. Arrival reporting contract (sync plan step 4): source librarian, detail-type received, detail { system, kind, id, at, url, via } on thingelstad-publishing. It observes this hop; it does not trigger or repair it. The destination sender and its scoped permission wait for step 5; none is enabled by this note.</span></td>
@@ -402,7 +402,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td class="num">19</td>
   <td><strong>Library Agent</strong> → <strong>micro.blog</strong><br><span class="muted">category, alt, featured</span></td>
   <td>Categories for unfiled posts, alt for photos without it, and the Featured choice (proposed to Jamie first).<br><span class="muted">make blog-round --write: Micropub update by URL, id-checked (q=source, trust only uid, write, read back). Guards: fill blanks only, 50 category and 20 alt writes a day, never an &lt;img&gt; turned into markdown, WRITES_ON flag.</span></td>
-  <td>clock, 05:00 daily<br><span class="muted">mac · Codex automation library-agent</span></td>
+  <td>clock, Tuesday and Thursday mornings<br><span class="muted">mac · Claude session look-after-the-systems (otto-ops, 07:00)</span></td>
   <td class="num">26 h</td>
   <td>q=source shows the edit, and the rendered page shows it after micro.blog rebuilds.</td>
   <td><span class="pill pill--gap">gap</span><br><span class="muted">First write round, 2026-10-22: 20 edits accepted by Micropub, 4 missing from the rendered pages after the rebuild. The read-back checks Micropub, not the page, so the round was green. A write needs a receipt: written, rendered, pulled back (hop 11). Sync plan step 6: the sync probe observes the public JSON feed and announces a newly observed post as source microblog, detail-type published, kind post, website leg, on thingelstad-publishing. Existing posts establish a baseline; retries do not manufacture another send. A post journey advances when the bus event is consumed. The captured public feed has tags but no independent numeric Micropub uid or modification time: authenticated q=source stays behind that explicit reader TODO. Hop 19 stays no-fact until an independent source identity and Library Agent write receipt can support a stored/rendered comparison; a destination-only witness never makes it fresh or late.</span></td>
@@ -581,6 +581,12 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
   <td>Exact public bookmark and Feedbin star identities, durable handoff, published record readback, and received events.</td>
   <td>It does not claim the entire Pinboard account was mirrored or repair the Weekly Thing join.</td>
 </tr>
+<tr>
+  <td><strong>Dagu ran events</strong><br><span class="muted">Every otto-ops Dagu job on the Mac puts one ran event on thingelstad-publishing as it ends (source otto-ops); sync shows the last run of each hop's Dagu job. Built 2026-11-02.</span></td>
+  <td class="num"><a href="#hop-5">5</a>, <a href="#hop-6">6</a>, <a href="#hop-11">11</a>, <a href="#hop-15">15</a></td>
+  <td>When the hop's job last ran, whether it succeeded, and which step failed.</td>
+  <td>Whether the run moved the newest item, and a run that never started: it sends nothing.</td>
+</tr>
 </tbody>
 </table>
 </div>
@@ -613,7 +619,7 @@ code { font-size: 0.92em; background: var(--soft); padding: 1px 5px; border-radi
 <tr>
   <td><strong>Library Agent</strong><br><span class="muted">agent · mac · jthingelstad/librarian-thing</span></td>
   <td>Its run report under tmp/blog-round/&lt;day&gt;.md, and the blog_round events in the library.</td>
-  <td>Codex automation, daily 05:00. Runs the library round on the Mac (the one runner with the Tinylytics key), then files categories, fills alt and proposes Featured.</td>
+  <td>Since 2026-11-02, the Tuesday and Thursday morning Claude session (otto-ops look-after-the-systems) files categories, fills alt and proposes Featured. The scripted 05:00 steps (reader numbers, photo descriptions, post summaries, upload) are the Dagu job run-librarian-daily-round. The Codex automation that did both is retired.</td>
 </tr>
 <tr>
   <td><strong><a href="https://weekly.thingelstad.com/">Weekly Thing (web)</a></strong><br><span class="muted">site · github-actions · jthingelstad/weekly.thingelstad.com</span></td>
