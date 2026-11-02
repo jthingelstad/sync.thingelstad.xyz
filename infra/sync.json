@@ -401,7 +401,8 @@
             "pushed",
             "activity",
             "refreshed",
-            "bookmarks-ready"
+            "bookmarks-ready",
+            "ran"
           ],
           "source": [
             "wt-builder",
@@ -414,7 +415,8 @@
             "buttondown",
             "github",
             "xyz",
-            "pinboard"
+            "pinboard",
+            "otto-ops"
           ]
         },
         "RetentionDays": 90
@@ -754,6 +756,69 @@
         "SourceArn": {
           "Fn::GetAtt": [
             "PublishedRule",
+            "Arn"
+          ]
+        },
+        "SourceAccount": {
+          "Ref": "AWS::AccountId"
+        }
+      }
+    },
+    "RanRule": {
+      "Type": "AWS::Events::Rule",
+      "Condition": "HasCode",
+      "Properties": {
+        "Name": {
+          "Fn::Sub": "${AWS::StackName}-ran"
+        },
+        "Description": "Ran events from the otto-ops Dagu jobs a hop names run the sync probe",
+        "EventBusName": {
+          "Ref": "PublishingBus"
+        },
+        "EventPattern": {
+          "source": [
+            "otto-ops"
+          ],
+          "detail-type": [
+            "ran"
+          ],
+          "detail": {
+            "job": [
+              "build-linking-things-nightly",
+              "run-librarian-daily-round"
+            ]
+          }
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Id": "probe",
+            "Arn": {
+              "Fn::GetAtt": [
+                "Function",
+                "Arn"
+              ]
+            },
+            "RetryPolicy": {
+              "MaximumRetryAttempts": 3,
+              "MaximumEventAgeInSeconds": 3600
+            }
+          }
+        ]
+      }
+    },
+    "RanInvoke": {
+      "Type": "AWS::Lambda::Permission",
+      "Condition": "HasCode",
+      "Properties": {
+        "Action": "lambda:InvokeFunction",
+        "FunctionName": {
+          "Ref": "Function"
+        },
+        "Principal": "events.amazonaws.com",
+        "SourceArn": {
+          "Fn::GetAtt": [
+            "RanRule",
             "Arn"
           ]
         },

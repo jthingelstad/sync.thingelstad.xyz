@@ -31,7 +31,8 @@ import { GetCallerIdentityCommand, STSClient } from '@aws-sdk/client-sts';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { packageProbe } from './package.mjs';
+import { packageProbe, stackTemplate } from './package.mjs';
+import { flows } from '../src/flows.mjs';
 import { feedbinConfig } from '../src/feedbin.mjs';
 import { renderNotFound } from '../src/page.mjs';
 
@@ -216,7 +217,8 @@ async function apply(execute_) {
   const feedbinRaw = process.env.SYNC_FEEDBIN_CONFIG_FILE ? (await fs.readFile(process.env.SYNC_FEEDBIN_CONFIG_FILE, 'utf8')).trim() : null;
   if (feedbinRaw) feedbinConfig({ FEEDBIN_CONFIG: feedbinRaw });
   const name = deployment.stacks.sync;
-  const template = await fs.readFile(path.join(ROOT, 'infra/sync.json'), 'utf8');
+  // The ran rule's job list comes from the vendored flows file, every deploy.
+  const template = JSON.stringify(stackTemplate(await fs.readFile(path.join(ROOT, 'infra/sync.json'), 'utf8'), flows));
   const manifest = await packageProbe();
   log(`package ${manifest.key} (${manifest.size} bytes)`);
   let stack = await describe(name);

@@ -7,6 +7,9 @@
 // the item is watched as it moves. A received event journals an arrival;
 // the half-hour clock reconciles both. A deploy uses {deploy: true}. An event
 // sent with {rehearsal: true} is parsed and reported but recorded nowhere.
+// A ran event from an otto-ops Dagu job (src/ran.mjs) is folded into
+// facts/otto-ops.json, for the page's runner lines only; a ran event for a
+// job no hop names is dropped before any read.
 import { GetObjectCommand, HeadObjectCommand, PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
 import { followUps, mergePublished, publishedEvent, receivedEvent } from './events.mjs';
 import { collect, PUBLISHER_FACT_KEY } from './facts.mjs';
@@ -16,6 +19,7 @@ import { renderSite } from './page.mjs';
 import { probe } from './probe.mjs';
 import { copyReceived, queueReceived, RECEIVED_KEY, reportedFacts } from './received.mjs';
 import { observe } from './observe.mjs';
+import { mergeRan, RAN_KEY, RAN_UNNAMED, ranEvent, ranJobs } from './ran.mjs';
 import { EventBridgeClient, PutEventsCommand } from '@aws-sdk/client-eventbridge';
 import { acknowledgeBlog, blogPlan, BLOG_PRODUCER_KEY, BLOG_PUBLISHER_KEY } from './blog.mjs';
 import { FEEDBIN_KEY, feedbinConfig, importStars, readFeedbin } from './feedbin.mjs';
@@ -57,16 +61,17 @@ const put = (Bucket, Key, Body, ContentType = 'application/json') =>
   s3.send(new PutObjectCommand({ Bucket, Key, Body, ContentType, CacheControl: CACHE }));
 
 /** What started this run, from the invocation payload. */
-export function triggerOf(event, published, received = null) {
+export function triggerOf(event, published, received = null, ran = null) {
   if (published && !published.error) return { type: 'event', kind: published.kind, id: published.id, leg: published.leg, at: published.at, rehearsal: Boolean(event?.rehearsal) };
   if (received && !received.error) return { type: 'received', kind: received.kind, id: received.id, system: received.system, at: received.at };
+  if (ran && !ran.error) return { type: 'ran', job: ran.job, status: ran.status, finished_at: ran.finished_at };
   if (event?.follow_up) return { type: 'follow-up', ...event.follow_up };
   if (event?.clock) return { type: 'clock' };
   if (event?.deploy) return { type: 'deploy' };
   return { type: 'manual' };
 }
 
-export async function run({ now = stamp(), env = process.env, trigger = { type: 'clock' }, journeys = null, history = null, received = null, microblog = null, context = null, pinboard = null, remaining = () => Infinity } = {}) {
+export async function run({ now = stamp(), env = process.env, trigger = { type: 'clock' }, journeys = null, history = null, received = null, runs = null, microblog = null, context = null, pinboard = null, remaining = () => Infinity } = {}) {
   const ctx = context ?? {
     now,
     env,
@@ -103,7 +108,7 @@ export async function run({ now = stamp(), env = process.env, trigger = { type: 
       (recorded.kinds[receipt.kind] ??= []).push(summarise(archived));
     }
   }
-  const result = observe({ flows, facts, now, code: env.SYNC_CODE ?? null, trigger, journeys, history: recorded, received: queue });
+  const result = observe({ flows, facts, now, code: env.SYNC_CODE ?? null, trigger, journeys, history: recorded, received: queue, runs });
   let commitBookmarkProgress = null;
   const batch = await collectBookmarkBatch(ctx, { remaining, clock: ctx.clock ?? stamp, onProgress: delta => {
     // Keep private keys and outcomes in a closure, outside every public JSON
@@ -196,16 +201,25 @@ export async function handler(event = {}, context = {}) {
   let now = stamp();
   const published = publishedEvent(event);
   const received = receivedEvent(event, now);
+  const ran = ranEvent(event, now);
   if (published?.error) console.error(JSON.stringify({ published_event: 'rejected', why: published.error }));
   if (received?.error) console.error(JSON.stringify({ received_event: 'rejected', why: received.error }));
+  if (ran?.error) console.error(JSON.stringify({ ran_event: 'rejected', why: ran.error }));
+  const named = Boolean(ran && !ran.error && ranJobs().includes(ran.job));
   const rehearsal = Boolean(event?.rehearsal);
   if (rehearsal) {
     const scheduler = await schedulerClient().then(() => 'ok', () => 'missing');
-    const report = { checked_at: now, trigger: triggerOf(event, published, received), rehearsal: { parsed: published, received, would_follow_up: published && !published.error ? followUps(published, now).map((f) => f.at) : [], scheduler, follow_up_env: Boolean(process.env.FOLLOW_UP_GROUP && process.env.SCHEDULER_ROLE_ARN && process.env.PROBE_FUNCTION_ARN) } };
+    const report = { checked_at: now, trigger: triggerOf(event, published, received, ran), rehearsal: { parsed: published, received, ran: ran && !ran.error ? { ...ran, named } : ran, would_follow_up: published && !published.error ? followUps(published, now).map((f) => f.at) : [], scheduler, follow_up_env: Boolean(process.env.FOLLOW_UP_GROUP && process.env.SCHEDULER_ROLE_ARN && process.env.PROBE_FUNCTION_ARN) } };
     console.log(JSON.stringify(report));
     return report;
   }
-  if (published?.error || received?.error) return { checked_at: now, rejected: published?.error ? 'published' : 'received', why: published?.error ?? received.error };
+  if (published?.error || received?.error || ran?.error) return { checked_at: now, rejected: published?.error ? 'published' : received?.error ? 'received' : 'ran', why: published?.error ?? received?.error ?? ran.error };
+  // The sync-ran rule passes only the jobs a hop names; anything else that
+  // arrives is dropped here, before any reader or storage call.
+  if (ran && !named) {
+    console.log(JSON.stringify({ ran_event: 'dropped', why: RAN_UNNAMED }));
+    return { checked_at: now, dropped: 'ran', why: RAN_UNNAMED };
+  }
   let feedbin = null, feedbin_sync = null;
   try { feedbin = feedbinConfig(process.env); }
   catch { feedbin_sync = { error: 'The Feedbin connection configuration is invalid.' }; }
@@ -273,17 +287,23 @@ export async function handler(event = {}, context = {}) {
     await put(bucket, key, JSON.stringify(fact, null, 1));
     console.log(JSON.stringify({ published_event: 'recorded', kind: published.kind, id: published.id, leg: published.leg, at: published.at, event_id: published.event_id }));
   }
-  const trigger = triggerOf(event, published, received);
+  const trigger = triggerOf(event, published, received, ran);
   let reports = await s3Get(bucket, RECEIVED_KEY);
   if (received && !received.error) {
     reports = queueReceived(reports, received, now);
     await put(bucket, RECEIVED_KEY, JSON.stringify(reports, null, 1));
     console.log(JSON.stringify({ received_event: 'queued', system: received.system, kind: received.kind, id: received.id, at: received.at }));
   }
+  let runs = await s3Get(bucket, RAN_KEY);
+  if (ran) {
+    runs = mergeRan(runs, ran, now);
+    await put(bucket, RAN_KEY, JSON.stringify(runs, null, 1));
+    console.log(JSON.stringify({ ran_event: 'recorded', job: ran.job, status: ran.status, finished_at: ran.finished_at }));
+  }
   const journeys = await s3Get(bucket, JOURNEYS_KEY);
   const history = await s3Get(bucket, HISTORY_KEY);
   const microblog = process.env.PUBLISHING_BUS ? { producer: await s3Get(bucket, BLOG_PRODUCER_KEY), publisher: await s3Get(bucket, BLOG_PUBLISHER_KEY) } : null;
-  const result = await run({ now, trigger, journeys, history, received: reports, microblog, pinboard, remaining: () => context.getRemainingTimeInMillis?.() ?? Infinity });
+  const result = await run({ now, trigger, journeys, history, received: reports, runs, microblog, pinboard, remaining: () => context.getRemainingTimeInMillis?.() ?? Infinity });
   for (const rejection of result.rejected_received) console.error(JSON.stringify({ received_event: 'rejected', ...rejection }));
   const blog_events = await announceBlog(bucket, result.blog, now, process.env.PUBLISHING_BUS);
   await publish(bucket, result);

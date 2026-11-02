@@ -12,6 +12,7 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import zlib from 'node:zlib';
+import { ranRulePattern } from '../src/ran.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 export const OUT = path.join(ROOT, '.build');
@@ -84,6 +85,19 @@ export async function vendorPele() {
     { name: 'node_modules/pele/package.json', data: Buffer.from(`${JSON.stringify({ name: pkg.name, version: pkg.version, type: pkg.type, exports: { '.': { import: './dist/pele.js', default: './dist/pele.js' } } })}\n`) },
     { name: 'node_modules/pele/dist/pele.js', data: bundle },
   ];
+}
+
+/**
+ * The stack template as it deploys: the sync-ran rule names exactly the Dagu
+ * jobs the vendored flows file names in trigger.dagu, or a fallback that
+ * matches nothing, so the ~150 daily runs of jobs no hop names never invoke
+ * the probe (reserved concurrency 1). test/ran.test.mjs keeps the checked-in
+ * infra/sync.json equal to this, so the file reads as what deploys.
+ */
+export function stackTemplate(template, contract) {
+  const next = structuredClone(typeof template === 'string' ? JSON.parse(template) : template);
+  next.Resources.RanRule.Properties.EventPattern = ranRulePattern(contract);
+  return next;
 }
 
 export async function packageProbe() {

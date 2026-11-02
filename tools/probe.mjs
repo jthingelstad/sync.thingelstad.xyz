@@ -15,6 +15,7 @@ import { renderNotFound, renderSite } from '../src/page.mjs';
 import { probe } from '../src/probe.mjs';
 import { loadScenario, pageText, renderScenario } from './scenarios.mjs';
 import { REGISTRY_URL } from '../src/registry.mjs';
+import { RAN_KEY, ranStatus } from '../src/ran.mjs';
 
 const ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const OUT = path.join(ROOT, '.build/site');
@@ -96,7 +97,7 @@ async function liveContext() {
   };
 }
 
-export async function writeSite(out, { status, journeys, history = null, retired = [], received, page, pages }) {
+export async function writeSite(out, { status, journeys, history = null, retired = [], received, runs = null, page, pages }) {
   await fs.mkdir(path.join(out, 'receipts'), { recursive: true });
   for (const [key, html] of Object.entries(pages ?? { 'index.html': page })) {
     const file = path.join(out, key);
@@ -112,6 +113,10 @@ export async function writeSite(out, { status, journeys, history = null, retired
   if (received) {
     await fs.mkdir(path.join(out, 'facts'), { recursive: true });
     await fs.writeFile(path.join(out, 'facts/received.json'), `${JSON.stringify(received, null, 1)}\n`);
+  }
+  if (runs) {
+    await fs.mkdir(path.join(out, 'facts'), { recursive: true });
+    await fs.writeFile(path.join(out, RAN_KEY), `${JSON.stringify(runs, null, 1)}\n`);
   }
   for (const r of retired) {
     const file = path.join(out, r.key);
@@ -133,6 +138,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
     const ctx = fixtures ? await fixtureContext() : await liveContext();
     const facts = await collect(ctx, flows.systems.map((s) => s.id));
     const status = probe({ flows, facts, now: ctx.now, code: fixtures ? 'fixtures' : 'local', trigger: { type: 'manual' } });
+    status.runs = ranStatus(await ctx.s3Get(ctx.env.SITE_BUCKET, RAN_KEY), flows);
     const journeys = advanceAll(fixtures ? JSON.parse(await fs.readFile(path.join(ROOT, 'test/fixtures/journeys.json'), 'utf8')) : null, status);
     const kept = historyFor(null, null, journeys, ctx.now);
     const pages = renderSite(status, journeys, kept.index);
