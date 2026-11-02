@@ -5,7 +5,8 @@ each hop runs, a receipt for the newest item of each kind, and the journey
 each item is on. One Lambda probe writes four scriptless HTML pages, `status.json`,
 `receipts/<kind>.json`, `journeys.json` and `facts/wt-builder.json` into a
 private S3 bucket that CloudFront serves. It runs on a half-hour EventBridge
-schedule and on `published` and `received` events. After consuming each
+schedule, on `published` and `received` events, and on `ran` events from the
+otto-ops Dagu jobs a hop names. After consuming each
 published send-leg event it schedules checks for 2, 5, 10, 15, 30, 45 and 60
 minutes later. Those delays start at event consumption, not publication time.
 It makes one-off Scheduler schedules for itself, so an item is watched as it
@@ -52,6 +53,16 @@ rule for `published` and `received` that invokes the probe, and a managed policy
 for `published` or `ping`, and nothing else. Destination senders wait for
 their own PRs; this stack grants them nothing yet. `docs/EVENTS.md` is the
 contract, including the source each existing identity may use.
+
+Every otto-ops Dagu job on Otto puts a `ran` event as its exit step (source
+`otto-ops`, detail `{ job, run, status, started_at?, finished_at,
+failed_step? }`) as the cloud-engineer identity, so this stack grants it
+nothing (Jamie, 2026-11-02). The `sync-ran` rule passes only the jobs a hop
+names in the flows file's `trigger.dagu`, a list `tools/deploy.mjs` derives
+from the vendored flows at every deploy; the archive keeps them all.
+`src/ran.mjs` folds a run into `facts/otto-ops.json`, and the page shows the
+hop's job's last run beside its schedule. It is runner evidence, never
+arrival evidence: no hop's status reads it.
 
 The sender side lives in wt-builder (`src/server/integrations/publishing.ts`):
 each leg announces itself after its send is recorded, and a failure to
@@ -184,6 +195,12 @@ WT354 validation permission below was added on October 28.
   archive too. A day's hash/deadline ledger prevents a retry from restarting
   the hour after cleanup. Public identity and time only, never a payload in
   a log.
+- `src/ran.mjs` — the otto-ops `ran` event: validation, the named jobs and
+  the rule pattern derived from the flows file, the fold into
+  `facts/otto-ops.json` (each named job's last run and twenty recent runs),
+  and the last-run sentence. One run id is one run; an older `finished_at`
+  never replaces a newer run. The run id stays in the fact, never on the
+  page. Pure.
 - `src/observe.mjs` — the pure round shared by Lambda and scenarios: facts,
   current journeys, history and received reports in; status, journals and
   archives out.
