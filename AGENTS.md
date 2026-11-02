@@ -17,7 +17,9 @@ strip. This is a me tool only.").
 CloudFront's access logs go to the CloudWatch log group `/sync/web-access`,
 kept 24 months (731 days; Jamie, 2026-10-28), through the `sync-web-access`
 delivery, the other sites' shape: path, method, status, bytes, range, user
-agent and cache result, never the client IP or the query string.
+agent and cache result, never the client IP or the query string. The
+distribution uses the shared `edge` web ACL (projects-sysadmin `edge-waf`
+stack; rules count only until tuned).
 
 ## The publishing bus
 
