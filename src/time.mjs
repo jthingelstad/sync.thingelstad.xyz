@@ -22,25 +22,32 @@ export function statedInstant(value) {
 
 export const hoursBetween = (from, to) => (Date.parse(to) - Date.parse(from)) / 3_600_000;
 
+const centralParts = (iso) => Object.fromEntries(
+  new Intl.DateTimeFormat('en-US', {
+    timeZone: CENTRAL,
+    weekday: 'short',
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    hour12: true,
+    timeZoneName: 'short',
+  })
+    .formatToParts(new Date(iso))
+    .map((p) => [p.type, p.value]),
+);
+const clock = (parts) => `${parts.hour}:${parts.minute} ${parts.dayPeriod === 'AM' ? 'a.m.' : 'p.m.'} ${parts.timeZoneName}`;
+
 /** "Sat Oct 24, 7:00 a.m. CDT" */
 export function central(iso) {
   if (!iso) return '';
-  const parts = Object.fromEntries(
-    new Intl.DateTimeFormat('en-US', {
-      timeZone: CENTRAL,
-      weekday: 'short',
-      month: 'short',
-      day: 'numeric',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true,
-      timeZoneName: 'short',
-    })
-      .formatToParts(new Date(iso))
-      .map((p) => [p.type, p.value]),
-  );
-  const ampm = parts.dayPeriod === 'AM' ? 'a.m.' : 'p.m.';
-  return `${parts.weekday} ${parts.month} ${parts.day}, ${parts.hour}:${parts.minute} ${ampm} ${parts.timeZoneName}`;
+  const parts = centralParts(iso);
+  return `${parts.weekday} ${parts.month} ${parts.day}, ${clock(parts)}`;
+}
+
+/** "7:00 a.m. CDT": the clock time in Chicago, for a span within one day. */
+export function centralTime(iso) {
+  return iso ? clock(centralParts(iso)) : '';
 }
 
 /** "Oct 25": the day in Chicago, short. */

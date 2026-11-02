@@ -8,6 +8,7 @@ import { summarise } from '../src/journey.mjs';
 import { queueReceived, receivedEvent, RECEIVED_KEY } from '../src/received.mjs';
 import { PUBLISHER_FACT_KEY } from '../src/facts.mjs';
 import { FEEDBIN_KEY } from '../src/feedbin.mjs';
+import { RAN_KEY } from '../src/ran.mjs';
 
 test('the handler keeps a superseded journey before the index and publishes health only after all files', async () => {
   const result = renderScenario(await loadScenario('superseded'));
@@ -205,5 +206,111 @@ test('Feedbin saves run only on the clock; deploys and previews cannot checkpoin
   } finally {
     s3.mock.restore(); network.mock.restore(); log.mock.restore(); error.mock.restore();
     for (const [key, value] of Object.entries(prior)) { if (value == null) delete process.env[key]; else process.env[key] = value; }
+  }
+});
+
+const ranEnvelope = (detail) => ({ source: 'otto-ops', 'detail-type': 'ran', detail });
+const ago = (ms) => new Date(Date.now() - ms).toISOString().replace(/\.\d{3}Z$/, 'Z');
+
+test('a ran rehearsal is parsed and reported, with no reader, read or write', async () => {
+  const prior = process.env.SITE_BUCKET;
+  process.env.SITE_BUCKET = 'fixture-bucket';
+  const s3 = mock.method(S3Client.prototype, 'send', () => { throw new Error('A rehearsal touched S3'); });
+  const network = mock.method(globalThis, 'fetch', () => { throw new Error('A rehearsal used a reader'); });
+  const log = mock.method(console, 'log', () => {});
+  const error = mock.method(console, 'error', () => {});
+  try {
+    const finished = ago(60000);
+    const named = await handler({ rehearsal: true, ...ranEnvelope({ job: 'build-linking-things-nightly', run: 'rehearsal-run', status: 'failed', started_at: ago(120000), finished_at: finished, failed_step: 'build' }) });
+    assert.deepEqual(named.trigger, { type: 'ran', job: 'build-linking-things-nightly', status: 'failed', finished_at: finished });
+    assert.equal(named.rehearsal.ran.named, true);
+    assert.equal(named.rehearsal.ran.failed_step, 'build');
+    assert.equal(named.rehearsal.parsed, null);
+    assert.deepEqual(named.rehearsal.would_follow_up, []);
+    const unnamed = await handler({ rehearsal: true, ...ranEnvelope({ job: 'check-services-running', run: 'rehearsal-run', status: 'succeeded', finished_at: finished }) });
+    assert.equal(unnamed.rehearsal.ran.named, false);
+    const invalid = await handler({ rehearsal: true, ...ranEnvelope({ job: 'build-linking-things-nightly', run: 'rehearsal-run', status: 'done', finished_at: finished }) });
+    assert.match(invalid.rehearsal.ran.error, /status must be one of/);
+    assert.equal(s3.mock.calls.length, 0);
+    assert.equal(network.mock.calls.length, 0);
+  } finally {
+    s3.mock.restore(); network.mock.restore(); log.mock.restore(); error.mock.restore();
+    if (prior == null) delete process.env.SITE_BUCKET; else process.env.SITE_BUCKET = prior;
+  }
+});
+
+test('a malformed ran is rejected, and a job no hop names is dropped, before any reader or storage, logging no payload', async () => {
+  const prior = process.env.SITE_BUCKET;
+  process.env.SITE_BUCKET = 'fixture-bucket';
+  const s3 = mock.method(S3Client.prototype, 'send', () => { throw new Error('A dropped ran touched S3'); });
+  const network = mock.method(globalThis, 'fetch', () => { throw new Error('A dropped ran used a reader'); });
+  const lines = [];
+  const error = mock.method(console, 'error', (line) => lines.push(line));
+  const log = mock.method(console, 'log', (line) => lines.push(line));
+  try {
+    const rejected = await handler(ranEnvelope({ job: 'fixture-private@example.test', run: 'fixture-private', status: 'fixture-private', finished_at: 'fixture-private', failed_step: 'fixture-private' }));
+    assert.equal(rejected.rejected, 'ran');
+    assert.match(rejected.why, /job must be a Dagu job name/);
+    const future = await handler(ranEnvelope({ job: 'build-linking-things-nightly', run: 'fixture-run-2', status: 'succeeded', finished_at: '2099-01-01T00:00:00Z' }));
+    assert.equal(future.rejected, 'ran');
+    const dropped = await handler(ranEnvelope({ job: 'check-services-running', run: 'fixture-run-3', status: 'failed', finished_at: ago(1000), failed_step: 'fixture-step' }));
+    assert.deepEqual(Object.keys(dropped).sort(), ['checked_at', 'dropped', 'why']);
+    assert.equal(dropped.dropped, 'ran');
+    assert.equal(dropped.why, 'no hop names this Dagu job');
+    assert.deepEqual(lines.map((l) => JSON.parse(l)).map((l) => Object.keys(l).sort()), [['ran_event', 'why'], ['ran_event', 'why'], ['ran_event', 'why']]);
+    assert.doesNotMatch(lines.join(' '), /fixture-|example\.test|check-services-running|2099/);
+    assert.equal(s3.mock.calls.length, 0);
+    assert.equal(network.mock.calls.length, 0);
+  } finally {
+    s3.mock.restore(); network.mock.restore(); error.mock.restore(); log.mock.restore();
+    if (prior == null) delete process.env.SITE_BUCKET; else process.env.SITE_BUCKET = prior;
+  }
+});
+
+test('a named ran is recorded before the round, and the page shows its last run with no run id', async () => {
+  const prior = process.env.SITE_BUCKET;
+  process.env.SITE_BUCKET = 'fixture-bucket';
+  const stored = new Map();
+  const writes = [];
+  const s3 = mock.method(S3Client.prototype, 'send', async (command) => {
+    const { Key, Body } = command.input;
+    if (command.constructor.name === 'GetObjectCommand') {
+      if (!stored.has(Key)) throw Object.assign(new Error('fixture object absent'), { name: 'NoSuchKey' });
+      return { Body: { transformToString: async () => stored.get(Key) } };
+    }
+    if (command.constructor.name === 'PutObjectCommand') { writes.push(Key); stored.set(Key, Body); return {}; }
+    throw new Error('fixture poll unavailable');
+  });
+  const network = mock.method(globalThis, 'fetch', () => { throw new Error('fixture reader unavailable'); });
+  const log = mock.method(console, 'log', () => {});
+  const error = mock.method(console, 'error', () => {});
+  try {
+    const event = ranEnvelope({ job: 'run-librarian-daily-round', run: 'fixture-run-id-1', status: 'failed', started_at: ago(600000), finished_at: ago(300000), failed_step: 'describe-new-photos' });
+    await handler(event);
+    assert.equal(writes[0], RAN_KEY, 'the run is durable before collection or public-file writes');
+    assert.equal(writes.at(-1), 'health.json');
+    const fact = JSON.parse(stored.get(RAN_KEY));
+    assert.equal(fact.jobs['run-librarian-daily-round'].run, 'fixture-run-id-1');
+    assert.equal(fact.runs.length, 1);
+    const status = JSON.parse(stored.get('status.json'));
+    assert.equal(status.trigger.type, 'ran');
+    assert.equal(status.runs.jobs['run-librarian-daily-round'].failed_step, 'describe-new-photos');
+    assert.equal(status.runs.jobs['build-linking-things-nightly'], null);
+    for (const key of ['status.json', 'index.html', 'records/index.html', 'journeys.json', 'health.json']) assert.doesNotMatch(stored.get(key), /fixture-run-id-1/, key);
+    const records = stored.get('records/index.html');
+    assert.match(records, /<!-- dagu-run:11 -->Dagu run-librarian-daily-round: last ran [^<]+, failed at step describe-new-photos\.<!-- \/dagu-run -->/);
+    assert.match(records, /<!-- dagu-run:5 -->Dagu build-linking-things-nightly: no run reported yet\.<!-- \/dagu-run -->/);
+    assert.match(stored.get('index.html'), /on the ran event of Dagu job run-librarian-daily-round/);
+    // A delivery retry is the same run; the clock reads the fact back for the page.
+    writes.length = 0;
+    await handler(event);
+    assert.equal(JSON.parse(stored.get(RAN_KEY)).runs.length, 1);
+    writes.length = 0;
+    await handler({ clock: true });
+    assert.ok(!writes.includes(RAN_KEY), 'the clock never writes the run fact');
+    assert.equal(JSON.parse(stored.get('status.json')).runs.jobs['run-librarian-daily-round'].status, 'failed');
+  } finally {
+    s3.mock.restore(); network.mock.restore(); log.mock.restore(); error.mock.restore();
+    if (prior == null) delete process.env.SITE_BUCKET; else process.env.SITE_BUCKET = prior;
   }
 });

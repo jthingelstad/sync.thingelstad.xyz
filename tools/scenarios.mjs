@@ -10,6 +10,7 @@ import { queueReceived } from '../src/received.mjs';
 import { observe } from '../src/observe.mjs';
 import { blogPlan } from '../src/blog.mjs';
 import { parsePublisherFact } from '../src/facts.mjs';
+import { mergeRan, ranEvent, ranJobs } from '../src/ran.mjs';
 
 const ROOT = new URL('../test/scenarios/', import.meta.url);
 
@@ -29,8 +30,15 @@ export async function loadScenario(name) {
 export function renderScenario({ facts, journeys, history = null, events = [], microblog = null, now, trigger = { type: 'clock' } }) {
   facts = structuredClone(facts);
   microblog = structuredClone(microblog);
-  let received = null;
+  let received = null, runs = null;
   for (const raw of events) {
+    const ran = ranEvent(raw, now);
+    if (ran) {
+      if (ran.error) throw new Error('A scenario ran event is invalid');
+      // As in the handler: a job no hop names is dropped, never recorded.
+      if (ranJobs(flows).includes(ran.job)) runs = mergeRan(runs, ran, now, ranJobs(flows));
+      continue;
+    }
     const published = publishedEvent(raw);
     if (published) {
       if(published.error) throw new Error('A scenario published event is invalid');
@@ -46,9 +54,9 @@ export function renderScenario({ facts, journeys, history = null, events = [], m
   }
   const blog=microblog?blogPlan({state:microblog.producer,publisher:microblog.publisher,fact:facts.microblog,current:journeys?.post?.item,now}):null;
   if(blog) facts.microblog=blog.fact;
-  const result = observe({ flows, facts, journeys, history, received, now, code: 'fixtures', trigger });
+  const result = observe({ flows, facts, journeys, history, received, runs, now, code: 'fixtures', trigger });
   const pages = renderSite(result.status, result.journeys, result.history);
-  return { ...result, blog, pages, page: pages['index.html'] };
+  return { ...result, runs, blog, pages, page: pages['index.html'] };
 }
 
 /** Readable rendered text for the snapshots and each PR's send-in-progress page. */
@@ -69,5 +77,8 @@ export function scenarioSnapshot({ status, journeys, pages }) {
   const lanes = extract(pages['journeys/index.html'], 'journey-lanes');
   const stories = extract(pages['journeys/index.html'], 'story:recent');
   const history = extract(pages['history/index.html'], 'history-lanes') || historyLanes(null);
-  return { map: `${mapSource(status, journeys)}\n`, journeys: pageText(lanes), stories: pageText(stories), history: pageText(history) };
+  // Each Dagu hop's runner line, as the Records page shows it.
+  const runs = [...pages['records/index.html'].matchAll(/<!-- dagu-run:(\d+) -->([\s\S]*?)<!-- \/dagu-run -->/g)]
+    .map(([, hop, html]) => `Hop ${hop} · ${pageText(html).trim()}`).join('\n');
+  return { map: `${mapSource(status, journeys)}\n`, journeys: pageText(lanes), stories: pageText(stories), history: pageText(history), runs: `${runs}\n` };
 }
