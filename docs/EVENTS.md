@@ -1,6 +1,6 @@
 # Publishing and arrival events
 
-The sync stack owns `thingelstad-publishing` in account `999153317627`,
+The sync stack owns `thingelstad-publishing` in account `<account>`,
 `us-east-1`. A producer reports a send; a destination reports what it holds.
 The bus carries public ids, times, titles and permalinks, never content, a
 visitor, a subscriber address or a secret. A new producer or hop changes

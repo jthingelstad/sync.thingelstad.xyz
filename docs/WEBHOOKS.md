@@ -54,7 +54,7 @@ subscriber action was manufactured. Protocol sources:
 The initial deploy has `EnableButtondown=false`. Missing new keys are not
 resolved while the sender is off. Routine deploys preserve the flag.
 
-1. In AWS console, choose account 999153317627, US East (N. Virginia),
+1. In AWS console, choose account `<account>`, US East (N. Virginia),
    Secrets Manager, `sync-runtime`, **Retrieve secret value**, then **Edit**.
    Add the key `buttondown_webhook_signing_key` with a new long random
    signing value and save. Jamie handles this in the console; no session
@@ -118,7 +118,7 @@ vector. Sources: [signature validation](https://docs.github.com/en/webhooks/usin
 
 ### Jamie's GitHub activation steps
 
-1. In the AWS console for account 999153317627, us-east-1, open Secrets
+1. In the AWS console for account `<account>`, us-east-1, open Secrets
    Manager, `sync-runtime`, **Retrieve secret value**, **Edit**. Add
    `github_webhook_signing_key` with a new long random value and save.
    Jamie handles values in the console; a session reads none.
