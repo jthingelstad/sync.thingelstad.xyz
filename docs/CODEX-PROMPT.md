@@ -19,7 +19,7 @@ open the PR, ask for a review with `@codex review`, answer every finding,
 merge with a merge commit, pull `main`, then deploy with `npm run plan` and
 `npm run deploy` as the cloud-engineer identity (check it first:
 `aws sts get-caller-identity --profile cloud-engineer` must show account
-999153317627 and `assumed-role/ProjectsCloudEngineer/projects-cloud-engineer`).
+`<account>` and `assumed-role/ProjectsCloudEngineer/projects-cloud-engineer`).
 Read the change set before applying it. If a deploy rolls back or
 `health.json` fails afterwards, stop the night there and write what happened
 in the PR. Then do steps 5 and 8: open their PRs in the destination repos
