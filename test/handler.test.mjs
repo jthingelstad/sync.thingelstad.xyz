@@ -42,6 +42,17 @@ test('run uses the same history calculation with fixture readers and no AWS tran
   assert.equal(result.retired.length, 0);
 });
 
+test('run hands the waits of the last status to the probe, so the published rows carry them on', async () => {
+  const context = await fixtureContext('2026-10-26T22:00:00Z');
+  const earlier = { id: 'fixture-earlier', at: '2026-10-20T12:00:00Z', since: '2026-10-20T12:00:00Z' };
+  const result = await run({ now: context.now, env: {}, context, waits: { '6:issue': [earlier] } });
+  const join = result.status.hops.find((h) => h.id === 6 && h.kind === 'issue');
+  assert.equal(join.status, 'late');
+  assert.deepEqual(join.waiting.map((item) => item.id), ['fixture-earlier', '354']);
+  assert.equal(join.lag_hours, 154);
+  assert.equal((await run({ now: context.now, env: {}, context })).status.hops.find((h) => h.id === 6 && h.kind === 'issue').waiting.length, 1);
+});
+
 test('an item outside the fifty-row index resumes its archived measurements', async () => {
   const context = await fixtureContext();
   const previous = (await loadScenario('superseded')).journeys;

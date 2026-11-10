@@ -113,8 +113,14 @@ WT354 validation permission below was added on October 28.
   of any active checkout; its next natural 00:30 run is separate acceptance.
   `docs/COVERAGE.md` preserves the before/after evidence. The old hold is
   historical; do not recreate a resolved gap.
-- It is not the alarm. Thresholds come after two weeks of observation
-  (step 4 of the plan in `../AGENTS.md`); the page is step 2.
+- It is not the alarm, and it owns no operational matter. Jamie, 2026-11-10:
+  "I saw it more as a way to visualize how my content moves and show it
+  moving. Almost like a cool show and tell. All the actual work is done in
+  projects sysadmin and real things like lag and alerts would be handled by
+  Prometheus , Grafana, dagu, aws." No metric, alarm, threshold or alert
+  route is built in this stack; the alarms step of `docs/PLAN.md` was dropped
+  the same day. The page shows; it does not page. What it shows is published
+  as `status.json` for anything outside that wants to read it.
 
 ## Layout
 
@@ -178,7 +184,10 @@ WT354 validation permission below was added on October 28.
   via a gitignored file with `SYNC_FEEDBIN_CONFIG_FILE`; routine deploys retain
   its previous value. The existing Pinboard token stays a dynamic reference.
 - `src/probe.mjs` — facts in, status out: fresh / moving / late / held /
-  no-fact / unknown per hop and kind; the matrix; the receipts. Pure.
+  no-fact / unknown per hop and kind; the matrix; the receipts. A row that
+  is behind carries `waiting`, the source items its destination has not held
+  yet, oldest first; `waitsOf` reads them back from the last published
+  `status.json`, which is the only memory. Pure.
 - `src/events.mjs` — the published event: validation, the fold into the
   publisher fact, the follow-up times. Retried legs are one send; older
   items never replace a newer number or lend it a title or URL. Pure.
@@ -372,6 +381,20 @@ attempt with a 1.2-second deadline so a failure can ask the provider to retry.
 - A hop with no fact at its own source is measured from the next system down
   and says so ("as Weekly Thing has it"); a hop whose only witness is its own
   destination stays no-fact.
+- A hop that is behind counts its wait from the first item its destination
+  missed, not from the source's newest (2026-11-10; before that a newer item
+  restarted the clock, so a stuck destination read moving for as long as the
+  source kept publishing). The row's Behind says "since" that item when it is
+  not the newest; the map's edge names it; a followed item's own page keeps
+  its own age (`item_lag_hours`). Fresh keeps nothing. A failed reader or a
+  missing fact carries the wait through untouched. A send leg's time
+  replaces the time its issue was first out. An arrival recorded at or
+  after an entry's own time ends the wait for it, including a receipt for
+  an item since superseded, which lands in the journey history and not in
+  the destination's fact. Still open: a destination's
+  time is read as "has everything up to then", so Linking Things' newest
+  saved time, which a star capture moves, hides an older link its nightly
+  mirror has not picked up (hop 5).
 - Hold: the Librarian → Thingy hop is held Friday and Saturday (US Central)
   by the flows file's `hold` text; the probe treats any `hold` as those days.
 - Node 24 is the house runtime; no packages at runtime beyond the AWS SDK the

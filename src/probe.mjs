@@ -1,12 +1,13 @@
 // Turn the facts into sync state: a status for every hop in the flows file,
 // a matrix of what each system holds, and a receipt for the newest item of
-// each kind. Pure: facts and a clock in, status out.
+// each kind. Pure: facts, a clock and what each hop was already waiting for
+// in, status out.
 //
 // A hop's status:
 //   fresh    the destination holds the source's newest item
-//   moving   it does not yet, and the source's item is younger than the hop's
-//            expected lag
-//   late     it does not, and the item is older than the expected lag
+//   moving   it does not yet, and the first item it missed is younger than
+//            the hop's expected lag
+//   late     it does not, and that item is older than the expected lag
 //   held     it does not, and the hop is on hold (the Librarian's Friday-to-
 //            send hold), so waiting is the rule, not a fault
 //   no-fact  one side publishes no fact for this kind, so nothing can be said
@@ -74,7 +75,73 @@ export function holds(have, want) {
   return Date.parse(have.at) >= Date.parse(want.at);
 }
 
-function hopStatus(hop, kind, facts, now) {
+// A hop that is behind remembers every source item its destination has not
+// held yet, oldest first, so the wait is measured from the first item missed
+// and a newer item cannot restart the clock. The rows of the last status are
+// the memory (`waitsOf`); nothing else is stored, and a hop that reads fresh
+// has nothing waiting. An entry is an id and a time: Linking Things keeps one
+// id (the Pinboard stamp it mirrored) while its newest saved time moves on,
+// and each of those times is a link the next system has to pick up. `since`
+// is the time the wait is counted from; `at` stays the item's own time, for
+// `holds`.
+const WAITING_MAX = 20;
+const waitKey = (id, kind) => `${id}:${kind}`;
+const sinceMs = (item) => (item.since ? Date.parse(item.since) : Infinity);
+const oldestFirst = (a, b) => sinceMs(a) - sinceMs(b);
+
+/** What each hop of the last status was waiting for, by hop and kind. */
+export function waitsOf(status) {
+  const waits = {};
+  for (const h of Array.isArray(status?.hops) ? status.hops : []) {
+    const items = Array.isArray(h?.waiting) ? h.waiting.filter((item) => item && typeof item === 'object' && item.id != null) : [];
+    if (items.length) waits[waitKey(h.id, h.kind)] = items;
+  }
+  return waits;
+}
+
+/**
+ * The waits without the items a destination is recorded as having received
+ * at or after the entry's own time. A receipt for an item that has since been superseded lands in the journey
+ * history, not in the destination's fact, so `holds` alone would never see it.
+ */
+export function withoutArrived(waits, flows, journeys, history) {
+  // An id can outlive its snapshot (Linking Things keeps its stamp while its
+  // saved time moves on), so the arrival has to be no earlier than the entry.
+  const covers = (arrival, item) => {
+    const from = item.at ?? item.since;
+    return Boolean(arrival?.at) && (!from || Date.parse(arrival.at) >= Date.parse(from));
+  };
+  const arrived = (kind, item, system) => [journeys?.[kind], ...(history?.kinds?.[kind] ?? [])].some((j) => j && String(j.item?.id) === String(item.id) && covers(j.arrivals?.[system], item));
+  const next = {};
+  for (const [key, items] of Object.entries(waits ?? {})) {
+    const cut = key.indexOf(':');
+    const hop = flows.hops.find((h) => String(h.id) === key.slice(0, cut));
+    const kept = hop ? items.filter((item) => !arrived(key.slice(cut + 1), item, hop.to)) : items;
+    if (kept.length) next[key] = kept;
+  }
+  return next;
+}
+
+/**
+ * The wait a behind row reports: the earlier items the destination has still
+ * not caught up to, then the source's newest, counted from the oldest. A
+ * send leg's time replaces the time its item was first out, so `byLeg` drops
+ * the earlier entry for the same id.
+ */
+function wait(earlier, source, target, now, byLeg = false) {
+  const current = { id: source.id, at: source.at ?? null, since: source.at ?? source.observed_at ?? null, ...(source.url ? { url: source.url } : {}), ...(source.title ? { title: source.title } : {}), ...(source.exact ? { exact: true } : {}) };
+  const same = (item) => String(item.id) === String(current.id) && (byLeg || (item.at ?? null) === current.at);
+  const kept = (earlier ?? []).filter((item) => !same(item) && !holds(target, item)).sort(oldestFirst);
+  const items = [...kept.slice(0, WAITING_MAX - 1), current].sort(oldestFirst);
+  const hours = (item) => (item.since ? hoursBetween(item.since, now) : null);
+  const own = hours(current);
+  return { lag: hours(items[0]), fields: { waiting: items, ...(items.length > 1 ? { item_lag_hours: own == null ? null : Math.round(own * 10) / 10 } : {}) } };
+}
+
+function hopStatus(hop, kind, facts, now, earlier = null) {
+  // A failed reader or a missing fact is neither an arrival nor an absence:
+  // what the hop was waiting for is carried through untouched.
+  const carried = earlier?.length ? { waiting: earlier } : {};
   const fromFact = facts[hop.from];
   const toFact = facts[hop.to];
   let source = newest(facts, hop.from, kind);
@@ -87,10 +154,10 @@ function hopStatus(hop, kind, facts, now) {
     }
   }
   const fromError = errorFor(fromFact, kind, source), toError = errorFor(toFact, kind, source);
-  if (fromError || toError) return { status: 'unknown', why: fromError ? `${hop.from}: ${fromError}` : `${hop.to}: ${toError}` };
+  if (fromError || toError) return { status: 'unknown', why: fromError ? `${hop.from}: ${fromError}` : `${hop.to}: ${toError}`, ...carried };
   const target = newest(facts, hop.to, kind);
-  if (!source) return { status: 'no-fact', why: `${hop.from} publishes no fact for ${kind}` };
-  if (!target && String(toFact?.absent?.[kind]?.id) !== String(source.id)) return { status: 'no-fact', why: `${hop.to} publishes no fact for ${kind}`, source, measured_from: measuredFrom };
+  if (!source) return { status: 'no-fact', why: `${hop.from} publishes no fact for ${kind}`, ...carried };
+  if (!target && String(toFact?.absent?.[kind]?.id) !== String(source.id)) return { status: 'no-fact', why: `${hop.to} publishes no fact for ${kind}`, source, measured_from: measuredFrom, ...carried };
   const report = toFact?.reported?.[kind];
   if (report && String(report.id) === String(source.id) && holds(target, source)) return { status: 'fresh', source, target, measured_from: measuredFrom, lag_hours: 0, reported_at: report.at, why: `reported via ${report.via} at ${report.at}` };
   const leg = measuredFrom === hop.from && source.legs ? LEGS[hop.to] : null;
@@ -99,21 +166,21 @@ function hopStatus(hop, kind, facts, now) {
     if (!sent) {
       // The item is out somewhere, and this leg has not gone: moving from
       // the first leg's time until the hop's expected lag has passed.
-      const lag = source.at ? hoursBetween(source.at, now) : null;
+      const { lag, fields } = wait(earlier, { ...source, observed_at: null }, target, now, true);
       const status = lag != null && lag > hop.expected_lag_hours ? 'late' : 'moving';
-      return { status, source, target, measured_from: measuredFrom, lag_hours: lag == null ? null : Math.round(lag * 10) / 10, leg, why: `the ${leg} leg has not sent` };
+      return { status, source, target, measured_from: measuredFrom, lag_hours: lag == null ? null : Math.round(lag * 10) / 10, leg, why: `the ${leg} leg has not sent`, ...fields };
     }
     source = { ...source, at: sent.at, leg };
   }
   if (holds(target, source)) return { status: 'fresh', source, target, measured_from: measuredFrom, lag_hours: 0, ...(leg ? { leg } : {}) };
-  const lag = source.at || source.observed_at ? hoursBetween(source.at ?? source.observed_at, now) : null;
-  if (onHold(hop, now)) return { status: 'held', source, target, measured_from: measuredFrom, lag_hours: lag, why: hop.hold, ...(leg ? { leg } : {}) };
-  if (lag === null) return { status: 'late', source, target, measured_from: measuredFrom, lag_hours: null, why: 'the ids differ and the source item has no time', ...(leg ? { leg } : {}) };
+  const { lag, fields } = wait(earlier, source, target, now, Boolean(leg));
+  if (onHold(hop, now)) return { status: 'held', source, target, measured_from: measuredFrom, lag_hours: lag, why: hop.hold, ...(leg ? { leg } : {}), ...fields };
+  if (lag === null) return { status: 'late', source, target, measured_from: measuredFrom, lag_hours: null, why: 'the ids differ and the source item has no time', ...(leg ? { leg } : {}), ...fields };
   const status = lag > hop.expected_lag_hours ? 'late' : 'moving';
-  return { status, source, target, measured_from: measuredFrom, lag_hours: Math.round(lag * 10) / 10, ...(leg ? { leg } : {}) };
+  return { status, source, target, measured_from: measuredFrom, lag_hours: Math.round(lag * 10) / 10, ...(leg ? { leg } : {}), ...fields };
 }
 
-export function probe({ flows, facts, now, code = null, trigger = { type: 'clock' } }) {
+export function probe({ flows, facts, now, code = null, trigger = { type: 'clock' }, waits = null }) {
   const systems = flows.systems.map((s) => s.id);
 
   const hops = [];
@@ -127,7 +194,7 @@ export function probe({ flows, facts, now, code = null, trigger = { type: 'clock
         hops.push({ id: hop.id, from: hop.from, to: hop.to, kind, status: 'no-fact', why: hop.id===19 && facts.microblog?.source_receipt ? facts.microblog.source_receipt.why : `no system publishes a fact for ${kind} yet`, expected_lag_hours: hop.expected_lag_hours });
         continue;
       }
-      hops.push({ id: hop.id, from: hop.from, to: hop.to, kind, expected_lag_hours: hop.expected_lag_hours, ...hopStatus(hop, kind, facts, now) });
+      hops.push({ id: hop.id, from: hop.from, to: hop.to, kind, expected_lag_hours: hop.expected_lag_hours, ...hopStatus(hop, kind, facts, now, waits?.[waitKey(hop.id, kind)] ?? null) });
     }
   }
 

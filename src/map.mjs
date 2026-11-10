@@ -59,7 +59,9 @@ export function edgeText(status, journeys, id) {
   const { status: worst, row } = hopSummary(status.hops, id);
   if (!row) return String(id);
   if (row.comparison_scope === 'public-registry-snapshot') return `${id} · registry · ${row.comparison ?? (worst === 'unknown' ? 'unavailable' : 'unobserved')}`;
-  const item = row.source ?? null;
+  // A hop that is behind names the first item its destination missed, the
+  // one its wait is counted from; otherwise the source's newest.
+  const item = (['moving', 'late'].includes(worst) && row.waiting?.length > 1 ? row.waiting[0] : null) ?? row.source ?? null;
   const what = item ? shortItem(row.kind, item) : row.kind;
   switch (worst) {
     case 'fresh': {

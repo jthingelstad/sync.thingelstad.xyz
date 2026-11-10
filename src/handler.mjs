@@ -16,7 +16,7 @@ import { collect, PUBLISHER_FACT_KEY } from './facts.mjs';
 import { flows } from './flows.mjs';
 import { archiveKey, copyHistory, summarise } from './journey.mjs';
 import { renderSite } from './page.mjs';
-import { probe } from './probe.mjs';
+import { probe, waitsOf } from './probe.mjs';
 import { copyReceived, queueReceived, RECEIVED_KEY, reportedFacts } from './received.mjs';
 import { observe } from './observe.mjs';
 import { mergeRan, RAN_KEY, RAN_UNNAMED, ranEvent, ranJobs } from './ran.mjs';
@@ -71,7 +71,7 @@ export function triggerOf(event, published, received = null, ran = null) {
   return { type: 'manual' };
 }
 
-export async function run({ now = stamp(), env = process.env, trigger = { type: 'clock' }, journeys = null, history = null, received = null, runs = null, microblog = null, context = null, pinboard = null, remaining = () => Infinity } = {}) {
+export async function run({ now = stamp(), env = process.env, trigger = { type: 'clock' }, journeys = null, history = null, received = null, runs = null, waits = null, microblog = null, context = null, pinboard = null, remaining = () => Infinity } = {}) {
   const ctx = context ?? {
     now,
     env,
@@ -108,7 +108,7 @@ export async function run({ now = stamp(), env = process.env, trigger = { type: 
       (recorded.kinds[receipt.kind] ??= []).push(summarise(archived));
     }
   }
-  const result = observe({ flows, facts, now, code: env.SYNC_CODE ?? null, trigger, journeys, history: recorded, received: queue, runs });
+  const result = observe({ flows, facts, now, code: env.SYNC_CODE ?? null, trigger, journeys, history: recorded, received: queue, runs, waits });
   let commitBookmarkProgress = null;
   const batch = await collectBookmarkBatch(ctx, { remaining, clock: ctx.clock ?? stamp, onProgress: delta => {
     // Keep private keys and outcomes in a closure, outside every public JSON
@@ -302,8 +302,11 @@ export async function handler(event = {}, context = {}) {
   }
   const journeys = await s3Get(bucket, JOURNEYS_KEY);
   const history = await s3Get(bucket, HISTORY_KEY);
+  // The last published status is the memory of what each behind hop was
+  // waiting for, so a newer source item cannot restart a hop's clock.
+  const waits = waitsOf(await s3Get(bucket, 'status.json'));
   const microblog = process.env.PUBLISHING_BUS ? { producer: await s3Get(bucket, BLOG_PRODUCER_KEY), publisher: await s3Get(bucket, BLOG_PUBLISHER_KEY) } : null;
-  const result = await run({ now, trigger, journeys, history, received: reports, runs, microblog, pinboard, remaining: () => context.getRemainingTimeInMillis?.() ?? Infinity });
+  const result = await run({ now, trigger, journeys, history, received: reports, runs, waits, microblog, pinboard, remaining: () => context.getRemainingTimeInMillis?.() ?? Infinity });
   for (const rejection of result.rejected_received) console.error(JSON.stringify({ received_event: 'rejected', ...rejection }));
   const blog_events = await announceBlog(bucket, result.blog, now, process.env.PUBLISHING_BUS);
   await publish(bucket, result);

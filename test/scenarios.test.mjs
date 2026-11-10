@@ -1,9 +1,11 @@
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import { test } from 'node:test';
-import { loadScenario, renderScenario, scenarioNames, scenarioSnapshot } from '../tools/scenarios.mjs';
+import { loadScenario, pageText, renderScenario, scenarioNames, scenarioSnapshot } from '../tools/scenarios.mjs';
+import { followModels } from '../src/follow.mjs';
+import { waitsOf } from '../src/probe.mjs';
 
-const names = ['after-send', 'blog-awaiting-event', 'blog-event-arrived', 'dagu-runs', 'friday-hold', 'late-hop', 'quiet-tuesday', 'reader-down', 'received-arrivals', 'send-in-progress', 'superseded'];
+const names = ['after-send', 'blog-awaiting-event', 'blog-event-arrived', 'dagu-runs', 'friday-hold', 'late-hop', 'quiet-tuesday', 'reader-down', 'received-arrivals', 'send-in-progress', 'stuck-destination', 'superseded'];
 
 test('every page scenario is complete and renders without a network request', async () => {
   assert.deepEqual(await scenarioNames(), names);
@@ -61,4 +63,27 @@ test('ran events show each Dagu hop’s last run and never change a hop’s stat
   assert.doesNotMatch(records, /019a|check-services-running/);
   assert.match(records, /Dagu build-linking-things-nightly: last ran Tue Oct 27, 12:30 a\.m\. CDT to 3:12 a\.m\. CDT, succeeded\./);
   assert.match(records, /Dagu run-librarian-daily-round: last ran Tue Oct 27, 5:00 a\.m\. CDT to 5:04 a\.m\. CDT, failed at step describe-new-photos\./);
+});
+
+test('a stuck destination reads late from the first post it missed, though a newer post is six hours old', async () => {
+  const input = await loadScenario('stuck-destination');
+  const result = renderScenario(input);
+  const row = result.status.hops.find((h) => h.id === 11 && h.kind === 'post');
+  assert.equal(row.status, 'late');
+  assert.equal(row.lag_hours, 46);
+  assert.equal(row.item_lag_hours, 6);
+  assert.match(row.source.id, /notes-from-the-workshop/, 'the source column still shows the newest post');
+  assert.deepEqual(row.waiting.map((item) => item.title), ['A walk by the lake', 'Notes from the workshop']);
+  assert.equal(result.status.summary.late, 1);
+  // The row is the memory the next run reads.
+  assert.deepEqual(waitsOf(result.status), { '11:post': row.waiting });
+  // Without the memory the newer post restarts the clock: the reading this replaces.
+  const forgetful = renderScenario({ ...input, waits: null }).status.hops.find((h) => h.id === 11 && h.kind === 'post');
+  assert.equal(forgetful.status, 'moving');
+  assert.equal(forgetful.lag_hours, 6);
+  // The table says what the wait is counted from; the newest post's own page keeps its own age.
+  assert.match(pageText(result.pages['records/index.html']), /46 h\s+of 26 h\s+since A walk by the lake/);
+  const own = followModels(result.status, result.journeys).find((m) => m.kind === 'post').hops.find((h) => h.id === 11 && h.kind === 'post');
+  assert.equal(own.status, 'moving');
+  assert.equal(own.lag_hours, 6);
 });
