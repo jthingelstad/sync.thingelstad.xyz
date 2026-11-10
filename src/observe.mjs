@@ -4,7 +4,7 @@
 // of the last status was still waiting for (`waitsOf`); the new status's rows
 // carry it on.
 import { advanceAll, copyHistory, historyFor } from './journey.mjs';
-import { probe } from './probe.mjs';
+import { probe, withoutArrived } from './probe.mjs';
 import { copyReceived, foldReceived, reportedFacts } from './received.mjs';
 import { ranStatus } from './ran.mjs';
 
@@ -13,7 +13,8 @@ export function observe({ flows, facts, journeys = null, history = null, receive
   const initial = probe({ flows, facts: reportedFacts(facts, journeys), now, code, trigger, waits });
   const seeded = advanceAll(journeys, initial, recorded);
   const folded = foldReceived(seeded, recorded, copyReceived(received), now);
-  const status = probe({ flows, facts: reportedFacts(facts, folded.journeys), now, code, trigger, waits });
+  // A receipt for a superseded item is in the history only: it ends that item's wait.
+  const status = probe({ flows, facts: reportedFacts(facts, folded.journeys), now, code, trigger, waits: withoutArrived(waits, flows, folded.journeys, folded.history) });
   status.runs = ranStatus(runs, flows);
   const next = advanceAll(folded.journeys, status, folded.history);
   const kept = historyFor(folded.history, journeys, next, now);

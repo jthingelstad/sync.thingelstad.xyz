@@ -388,7 +388,9 @@ attempt with a 1.2-second deadline so a failure can ask the provider to retry.
   not the newest; the map's edge names it; a followed item's own page keeps
   its own age (`item_lag_hours`). Fresh keeps nothing. A failed reader or a
   missing fact carries the wait through untouched. A send leg's time
-  replaces the time its issue was first out. Still open: a destination's
+  replaces the time its issue was first out. A recorded arrival ends the
+  wait for its item, including a receipt for an item since superseded,
+  which lands in the journey history and not in the destination's fact. Still open: a destination's
   time is read as "has everything up to then", so Linking Things' newest
   saved time, which a star capture moves, hides an older link its nightly
   mirror has not picked up (hop 5).

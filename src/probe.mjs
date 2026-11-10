@@ -100,6 +100,23 @@ export function waitsOf(status) {
 }
 
 /**
+ * The waits without the items a destination is recorded as having received.
+ * A receipt for an item that has since been superseded lands in the journey
+ * history, not in the destination's fact, so `holds` alone would never see it.
+ */
+export function withoutArrived(waits, flows, journeys, history) {
+  const arrived = (kind, id, system) => [journeys?.[kind], ...(history?.kinds?.[kind] ?? [])].some((j) => j && String(j.item?.id) === String(id) && j.arrivals?.[system]);
+  const next = {};
+  for (const [key, items] of Object.entries(waits ?? {})) {
+    const cut = key.indexOf(':');
+    const hop = flows.hops.find((h) => String(h.id) === key.slice(0, cut));
+    const kept = hop ? items.filter((item) => !arrived(key.slice(cut + 1), item.id, hop.to)) : items;
+    if (kept.length) next[key] = kept;
+  }
+  return next;
+}
+
+/**
  * The wait a behind row reports: the earlier items the destination has still
  * not caught up to, then the source's newest, counted from the oldest. A
  * send leg's time replaces the time its item was first out, so `byLeg` drops

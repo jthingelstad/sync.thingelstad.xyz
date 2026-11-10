@@ -5,6 +5,9 @@ import { flows } from '../src/flows.mjs';
 import { renderPage } from '../src/page.mjs';
 import { holds, probe, waitsOf } from '../src/probe.mjs';
 import { fixtureContext } from '../tools/probe.mjs';
+import { observe } from '../src/observe.mjs';
+import { summarise } from '../src/journey.mjs';
+import { queueReceived, receivedEvent } from '../src/received.mjs';
 
 const systems = flows.systems.map((s) => s.id);
 const hop = (status, from, to, kind) => status.hops.find((h) => h.from === from && h.to === to && h.kind === kind);
@@ -275,4 +278,25 @@ test('a send leg replaces the time its issue was first out, never adds a second 
   assert.equal(run.row.status, 'moving', 'fifteen minutes after its own leg, not forty after the first');
   assert.equal(run.row.waiting.length, 1);
   assert.equal(run.row.waiting[0].at, '2026-10-31T12:25:00Z');
+});
+
+test('a receipt for a superseded item ends the wait for it, though the poll of the destination is still older', () => {
+  // WT354 was never seen at the Librarian; WT355 superseded it and its archive leg went 18 minutes ago.
+  const now = '2026-10-31T12:20:00Z';
+  const wt354 = { id: '354', at: '2026-10-24T12:00:00Z', url: 'https://weekly.thingelstad.com/archive/354/', title: 'WT354' };
+  const wt355 = { id: '355', at: '2026-10-31T12:00:00Z', url: 'https://weekly.thingelstad.com/archive/355/', title: 'WT355' };
+  const facts = { 'wt-builder': { newest: { issue: { ...wt355, legs: { website: { at: wt355.at }, archive: { at: '2026-10-31T12:02:00Z' } } } } }, librarian: { newest: { issue: { id: '353', at: '2026-10-17T12:00:00Z' } } } };
+  const journey = (item, at) => ({ kind: 'issue', item, origin: 'wt-builder', started_at: at, updated_at: at, arrivals: {}, observations: {} });
+  const journeys = { issue: journey(wt355, wt355.at) };
+  const history = { version: 1, kinds: { issue: [summarise(journeys.issue, { active: true }), summarise(journey(wt354, wt354.at))] } };
+  const waits = { '10:issue': [{ id: '354', at: '2026-10-24T12:00:30Z', since: '2026-10-24T12:00:30Z' }] };
+  const row = (result) => result.status.hops.find((h) => h.id === 10 && h.kind === 'issue');
+  const before = row(observe({ flows, facts, journeys, history, waits, now }));
+  assert.equal(before.status, 'late');
+  assert.deepEqual(before.waiting.map((item) => item.id), ['354', '355']);
+  const receipt = receivedEvent({ source: 'librarian', 'detail-type': 'received', detail: { system: 'librarian', kind: 'issue', id: '354', at: '2026-10-31T12:10:00Z', via: 'library-round' } }, now);
+  const after = row(observe({ flows, facts, journeys, history, waits, received: queueReceived(null, receipt, now), now }));
+  assert.equal(after.status, 'moving');
+  assert.equal(after.lag_hours, 0.3);
+  assert.deepEqual(after.waiting.map((item) => item.id), ['355']);
 });
