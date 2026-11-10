@@ -42,6 +42,12 @@ export function followModels(status, journeys) {
       }
       if (!sameItem) return { ...row, status: 'moving', lag_hours: null,
         why: 'The destination has not confirmed this item; no hop timing is recorded for it.' };
+      // The hop counts its wait from the first item the destination missed;
+      // the selected item's own wait is its own age.
+      if ('item_lag_hours' in row && ['moving', 'late'].includes(row.status)) {
+        const lag = row.item_lag_hours;
+        return { ...row, lag_hours: lag, status: lag == null || lag > row.expected_lag_hours ? 'late' : 'moving' };
+      }
       return { ...row };
     });
     return { ...receipt, journey, holders, hops };

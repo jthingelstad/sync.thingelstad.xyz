@@ -278,16 +278,17 @@ Acceptance: a `ping` through the rule reaches a dry-run workflow; the
 first real send shows the destination's `received` within the expected
 lag; the flows row's trigger type changes from `nudge`/`clock` to `event`.
 
-### 9. Alarms (held until two weeks of history: not before 2026-11-09)
+### 9. Alarms (dropped 2026-11-10)
 
-From step 2's `typicalLag`, per-hop thresholds in `shared/flows.json`
-(`alert_after_hours`, replacing the hand-set `expected_lag_hours` where the
-data disagrees), and one CloudWatch alarm per hop kind that is late past it,
-named `sync-<hop>-<kind>`, routed through the projects-sysadmin activity
-Lambda (its `alarm_route` table gains one `sync-` row) to the Discord
-channel Jamie picks. The page is still the record; the alarm is the nudge.
-Acceptance: a scenario late past the threshold raises the alarm in a
-dry run; a held hop does not.
+Not built, and not to be built here. Jamie, 2026-11-10: "I saw it more as a
+way to visualize how my content moves and show it moving. Almost like a cool
+show and tell. All the actual work is done in projects sysadmin and real
+things like lag and alerts would be handled by Prometheus , Grafana, dagu,
+aws." This stack gets no metric, alarm, threshold or alert route. What the
+review of that day did find is a display fault, fixed as one: a hop's wait
+was counted from the source's newest item, so a newer item restarted the
+clock and a stuck destination read moving. It is now counted from the first
+item the destination missed (`waiting` on the row; `src/probe.mjs`).
 
 ### 10. WT Builder's own receipts
 
@@ -327,3 +328,6 @@ missing event.
 - 2026-10-27: hobby-scale fold. Six receiver parameters and policies became
   one list and one policy; the dormant subscriber scaffolding came out. The
   stack went from 24 parameters and 57 resources to 8 and 27.
+- 2026-11-10: step 9 dropped at Jamie's word: the page is a show and tell and
+  owns no alarm. The same day's display fix counts a hop's wait from the
+  first item its destination missed.

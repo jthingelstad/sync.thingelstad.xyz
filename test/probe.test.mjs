@@ -3,7 +3,7 @@ import { test } from 'node:test';
 import { collect } from '../src/facts.mjs';
 import { flows } from '../src/flows.mjs';
 import { renderPage } from '../src/page.mjs';
-import { holds, probe } from '../src/probe.mjs';
+import { holds, probe, waitsOf } from '../src/probe.mjs';
 import { fixtureContext } from '../tools/probe.mjs';
 
 const systems = flows.systems.map((s) => s.id);
@@ -184,4 +184,95 @@ test('the page names the newest issue and carries no script', async () => {
   assert.match(page, /Linking Things/);
   assert.doesNotMatch(page, /<script/);
   assert.match(page, /CDT|CST/);
+});
+
+// Hop 11, micro.blog to the Librarian: 26 hours expected.
+const post = (day, hour) => ({ id: `https://example.test/2026/10/${day}/${hour}.html`, at: `2026-10-${day}T${hour}:00:00Z`, url: `https://example.test/2026/10/${day}/${hour}.html`, title: `Post of the ${day}th` });
+const blogRun = (now, newest, librarian, waits = null) => {
+  const result = probe({ flows, facts: { microblog: { newest: { post: newest } }, librarian }, now, waits });
+  return { row: result.hops.find((h) => h.id === 11 && h.kind === 'post'), waits: waitsOf(result) };
+};
+const has = (item) => ({ newest: { post: item } });
+
+test('a hop that is behind counts its wait from the first item its destination missed', () => {
+  const old = post(25, 20), a = post(27, 12), b = post(28, 16), c = post(29, 10);
+  let run = blogRun('2026-10-27T18:00:00Z', a, has(old));
+  assert.equal(run.row.status, 'moving');
+  assert.equal(run.row.lag_hours, 6);
+  assert.equal('item_lag_hours' in run.row, false, 'one item waiting: its age is the wait');
+  // A newer post does not restart the clock.
+  run = blogRun('2026-10-28T18:00:00Z', b, has(old), run.waits);
+  assert.equal(run.row.status, 'late');
+  assert.equal(run.row.lag_hours, 30);
+  assert.equal(run.row.item_lag_hours, 2);
+  assert.equal(run.row.source.id, b.id);
+  assert.deepEqual(run.row.waiting.map((item) => item.id), [a.id, b.id]);
+  // A failed reader is neither an arrival nor an absence: the wait is carried untouched.
+  const failed = blogRun('2026-10-28T18:30:00Z', b, { error: 'HTTP 503' }, run.waits);
+  assert.equal(failed.row.status, 'unknown');
+  assert.deepEqual(failed.waits, run.waits);
+  // So is a destination with no fact.
+  const silent = blogRun('2026-10-28T18:30:00Z', b, { none: 'no fact yet' }, run.waits);
+  assert.equal(silent.row.status, 'no-fact');
+  assert.deepEqual(silent.waits, run.waits);
+  // The destination catches up to the first post: the wait is counted from the next one it lacks.
+  run = blogRun('2026-10-28T19:00:00Z', b, has(a), failed.waits);
+  assert.equal(run.row.status, 'moving');
+  assert.equal(run.row.lag_hours, 3);
+  assert.deepEqual(run.row.waiting.map((item) => item.id), [b.id]);
+  // Fresh keeps nothing, so the next miss starts its own clock.
+  run = blogRun('2026-10-28T20:00:00Z', b, has(b), run.waits);
+  assert.equal(run.row.status, 'fresh');
+  assert.deepEqual(run.waits, {});
+  run = blogRun('2026-10-29T12:00:00Z', c, has(b), run.waits);
+  assert.equal(run.row.status, 'moving');
+  assert.equal(run.row.lag_hours, 2);
+});
+
+test('the wait keeps the oldest items when the list is full, and ignores a memory it cannot read', () => {
+  const old = post(25, 20);
+  let waits = null, run;
+  for (let hour = 0; hour < 24; hour++) {
+    const item = { ...post(27, String(hour).padStart(2, '0')) };
+    run = blogRun('2026-10-27T23:30:00Z', item, has(old), waits);
+    waits = run.waits;
+  }
+  assert.equal(run.row.waiting.length, 20);
+  assert.equal(run.row.waiting[0].at, '2026-10-27T00:00:00Z');
+  assert.equal(run.row.waiting.at(-1).at, '2026-10-27T23:00:00Z');
+  assert.equal(run.row.lag_hours, 23.5);
+  assert.deepEqual(waitsOf(null), {});
+  assert.deepEqual(waitsOf({ hops: 'none' }), {});
+  assert.deepEqual(waitsOf({ hops: [{ id: 11, kind: 'post', waiting: [null, 'x', {}] }, { id: 5, kind: 'link', waiting: 'x' }] }), {});
+});
+
+test('Linking Things keeps one id while its newest saved time moves: each time is its own wait', () => {
+  // Hop 14, Linking Things to the Librarian: 24 hours expected.
+  const link = (at) => ({ id: '2026-10-26T02:21:57Z', at, url: 'https://links.thingelstad.xyz/newest/' });
+  const linksRun = (now, at, waits = null) => {
+    const result = probe({ flows, facts: { links: { newest: { link: link(at) } }, librarian: { newest: { link: { id: 'abc', at: '2026-10-26T02:00:00Z' } } } }, now, waits });
+    return { row: result.hops.find((h) => h.id === 14 && h.kind === 'link'), waits: waitsOf(result) };
+  };
+  let run = linksRun('2026-10-27T03:00:00Z', '2026-10-26T15:00:00Z');
+  assert.equal(run.row.status, 'moving');
+  run = linksRun('2026-10-27T18:00:00Z', '2026-10-27T17:00:00Z', run.waits);
+  assert.equal(run.row.status, 'late');
+  assert.equal(run.row.lag_hours, 27);
+  assert.equal(run.row.item_lag_hours, 1);
+});
+
+test('a send leg replaces the time its issue was first out, never adds a second wait', () => {
+  // Hop 10, WT Builder to the Librarian: half an hour expected.
+  const issue = (legs) => ({ id: '355', at: '2026-10-31T12:00:00Z', url: 'https://weekly.thingelstad.com/archive/355/', title: 'WT355', legs });
+  const sendRun = (now, legs, waits = null) => {
+    const result = probe({ flows, facts: { 'wt-builder': { newest: { issue: issue(legs) } }, librarian: { newest: { issue: { id: '354', at: '2026-10-24T12:00:00Z' } } } }, now, waits });
+    return { row: result.hops.find((h) => h.id === 10 && h.kind === 'issue'), waits: waitsOf(result) };
+  };
+  let run = sendRun('2026-10-31T12:10:00Z', { website: { at: '2026-10-31T12:00:00Z' } });
+  assert.equal(run.row.status, 'moving');
+  assert.match(run.row.why, /archive leg has not sent/);
+  run = sendRun('2026-10-31T12:40:00Z', { website: { at: '2026-10-31T12:00:00Z' }, archive: { at: '2026-10-31T12:25:00Z' } }, run.waits);
+  assert.equal(run.row.status, 'moving', 'fifteen minutes after its own leg, not forty after the first');
+  assert.equal(run.row.waiting.length, 1);
+  assert.equal(run.row.waiting[0].at, '2026-10-31T12:25:00Z');
 });

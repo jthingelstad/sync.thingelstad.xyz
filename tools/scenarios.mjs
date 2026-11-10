@@ -24,10 +24,12 @@ export async function loadScenario(name) {
   const history = await read('history').catch((error) => { if (error.code === 'ENOENT') return null; throw error; });
   const events = await read('events').catch((error) => { if (error.code === 'ENOENT') return []; throw error; });
   const microblog = await read('microblog').catch((error) => { if (error.code === 'ENOENT') return null; throw error; });
-  return { ...(await read('clock')), facts: await read('facts'), journeys: await read('journeys'), history, events, microblog };
+  // What each hop was already waiting for, as the last status's rows held it.
+  const waits = await read('waits').catch((error) => { if (error.code === 'ENOENT') return null; throw error; });
+  return { ...(await read('clock')), facts: await read('facts'), journeys: await read('journeys'), history, events, microblog, waits };
 }
 
-export function renderScenario({ facts, journeys, history = null, events = [], microblog = null, now, trigger = { type: 'clock' } }) {
+export function renderScenario({ facts, journeys, history = null, events = [], microblog = null, waits = null, now, trigger = { type: 'clock' } }) {
   facts = structuredClone(facts);
   microblog = structuredClone(microblog);
   let received = null, runs = null;
@@ -54,7 +56,7 @@ export function renderScenario({ facts, journeys, history = null, events = [], m
   }
   const blog=microblog?blogPlan({state:microblog.producer,publisher:microblog.publisher,fact:facts.microblog,current:journeys?.post?.item,now}):null;
   if(blog) facts.microblog=blog.fact;
-  const result = observe({ flows, facts, journeys, history, received, runs, now, code: 'fixtures', trigger });
+  const result = observe({ flows, facts, journeys, history, received, runs, waits, now, code: 'fixtures', trigger });
   const pages = renderSite(result.status, result.journeys, result.history);
   return { ...result, runs, blog, pages, page: pages['index.html'] };
 }
