@@ -100,17 +100,23 @@ export function waitsOf(status) {
 }
 
 /**
- * The waits without the items a destination is recorded as having received.
- * A receipt for an item that has since been superseded lands in the journey
+ * The waits without the items a destination is recorded as having received
+ * at or after the entry's own time. A receipt for an item that has since been superseded lands in the journey
  * history, not in the destination's fact, so `holds` alone would never see it.
  */
 export function withoutArrived(waits, flows, journeys, history) {
-  const arrived = (kind, id, system) => [journeys?.[kind], ...(history?.kinds?.[kind] ?? [])].some((j) => j && String(j.item?.id) === String(id) && j.arrivals?.[system]);
+  // An id can outlive its snapshot (Linking Things keeps its stamp while its
+  // saved time moves on), so the arrival has to be no earlier than the entry.
+  const covers = (arrival, item) => {
+    const from = item.at ?? item.since;
+    return Boolean(arrival?.at) && (!from || Date.parse(arrival.at) >= Date.parse(from));
+  };
+  const arrived = (kind, item, system) => [journeys?.[kind], ...(history?.kinds?.[kind] ?? [])].some((j) => j && String(j.item?.id) === String(item.id) && covers(j.arrivals?.[system], item));
   const next = {};
   for (const [key, items] of Object.entries(waits ?? {})) {
     const cut = key.indexOf(':');
     const hop = flows.hops.find((h) => String(h.id) === key.slice(0, cut));
-    const kept = hop ? items.filter((item) => !arrived(key.slice(cut + 1), item.id, hop.to)) : items;
+    const kept = hop ? items.filter((item) => !arrived(key.slice(cut + 1), item, hop.to)) : items;
     if (kept.length) next[key] = kept;
   }
   return next;

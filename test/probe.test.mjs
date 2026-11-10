@@ -300,3 +300,16 @@ test('a receipt for a superseded item ends the wait for it, though the poll of t
   assert.equal(after.lag_hours, 0.3);
   assert.deepEqual(after.waiting.map((item) => item.id), ['355']);
 });
+
+test('an arrival recorded for an id does not end the wait for a later snapshot that reuses the id', () => {
+  // Hop 14. The Librarian held what Linking Things had on the morning of the 26th; two links saved since.
+  const stamp = '2026-10-26T02:21:57Z';
+  const now = '2026-10-27T18:00:00Z';
+  const facts = { links: { newest: { link: { id: stamp, at: '2026-10-27T17:00:00Z', url: 'https://links.thingelstad.xyz/newest/' } } }, librarian: { newest: { link: { id: 'abc', at: '2026-10-26T02:00:00Z' } } } };
+  const journeys = { link: { kind: 'link', item: { id: stamp, at: '2026-10-26T02:00:00Z', url: null, title: null }, origin: 'links', started_at: '2026-10-26T03:00:00Z', updated_at: '2026-10-27T03:00:00Z', arrivals: { librarian: { at: '2026-10-26T03:00:00Z', observed: false } }, observations: {} } };
+  const waits = { '14:link': [{ id: stamp, at: '2026-10-26T15:00:00Z', since: '2026-10-26T15:00:00Z' }] };
+  const row = observe({ flows, facts, journeys, waits, now }).status.hops.find((h) => h.id === 14 && h.kind === 'link');
+  assert.equal(row.status, 'late');
+  assert.equal(row.lag_hours, 27);
+  assert.deepEqual(row.waiting.map((item) => item.at), ['2026-10-26T15:00:00Z', '2026-10-27T17:00:00Z']);
+});
