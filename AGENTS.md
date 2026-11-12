@@ -121,6 +121,12 @@ WT354 validation permission below was added on October 28.
   route is built in this stack; the alarms step of `docs/PLAN.md` was dropped
   the same day. The page shows; it does not page. What it shows is published
   as `status.json` for anything outside that wants to read it.
+`status.json` alone is served with CORS (any origin, GET and HEAD, no
+credentials) through its own cache behaviour and the managed
+CORS-and-SecurityHeaders policy, so thingelstad.xyz's Sync gadget can read it
+in a visitor's browser (2026-11-12, Jamie of the xyz gadgets: "I love them
+all… do all 6"); every other path keeps the security headers only, and
+`test/cors.test.mjs` pins that scope.
 
 ## Layout
 
