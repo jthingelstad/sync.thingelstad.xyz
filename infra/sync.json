@@ -1011,7 +1011,7 @@
           "Name": {
             "Fn::Sub": "${AWS::StackName}-status-json-headers"
           },
-          "Comment": "status.json only: the managed security headers, and CORS any browser can read (Allow-Headers * because Chrome sends a priority header)",
+          "Comment": "status.json only: managed security headers, and CORS with Allow-Headers * (Chrome sends priority)",
           "CorsConfig": {
             "AccessControlAllowCredentials": false,
             "AccessControlAllowHeaders": {
