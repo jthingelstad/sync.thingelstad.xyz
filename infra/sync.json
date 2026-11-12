@@ -1063,6 +1063,26 @@
               }
             }
           ],
+          "CacheBehaviors": [
+            {
+              "PathPattern": "status.json",
+              "TargetOriginId": "site",
+              "ViewerProtocolPolicy": "redirect-to-https",
+              "AllowedMethods": [
+                "GET",
+                "HEAD"
+              ],
+              "CachedMethods": [
+                "GET",
+                "HEAD"
+              ],
+              "Compress": true,
+              "CachePolicyId": {
+                "Ref": "CachePolicy"
+              },
+              "ResponseHeadersPolicyId": "e61eb60c-9c35-4d20-a928-2b84e02af89c"
+            }
+          ],
           "DefaultCacheBehavior": {
             "TargetOriginId": "site",
             "ViewerProtocolPolicy": "redirect-to-https",
