@@ -30,4 +30,6 @@ test('status.json answers browsers: any origin, any request header, GET and HEAD
   assert.deepEqual(cors.AccessControlAllowMethods.Items, ['GET', 'HEAD']);
   assert.equal(cors.AccessControlAllowCredentials, false);
   assert.ok(security.ContentTypeOptions && security.FrameOptions && security.StrictTransportSecurity);
+  // CloudFront refuses a policy comment over 128 characters (the first deploy of this policy rolled back on it).
+  assert.ok(policy.Properties.ResponseHeadersPolicyConfig.Comment.length <= 128);
 });
