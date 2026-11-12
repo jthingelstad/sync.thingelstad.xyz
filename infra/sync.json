@@ -1004,6 +1004,59 @@
         "FunctionCode": "function handler(event) {\n  var request = event.request;\n  var uri = request.uri;\n  if (uri.endsWith('/')) {\n    request.uri = uri + 'index.html';\n  } else if (!uri.includes('.')) {\n    request.uri = uri + '/index.html';\n  }\n  return request;\n}\n"
       }
     },
+    "StatusHeaders": {
+      "Type": "AWS::CloudFront::ResponseHeadersPolicy",
+      "Properties": {
+        "ResponseHeadersPolicyConfig": {
+          "Name": {
+            "Fn::Sub": "${AWS::StackName}-status-json-headers"
+          },
+          "Comment": "status.json only: the managed security headers, and CORS any browser can read (Allow-Headers * because Chrome sends a priority header)",
+          "CorsConfig": {
+            "AccessControlAllowCredentials": false,
+            "AccessControlAllowHeaders": {
+              "Items": [
+                "*"
+              ]
+            },
+            "AccessControlAllowMethods": {
+              "Items": [
+                "GET",
+                "HEAD"
+              ]
+            },
+            "AccessControlAllowOrigins": {
+              "Items": [
+                "*"
+              ]
+            },
+            "OriginOverride": false
+          },
+          "SecurityHeadersConfig": {
+            "ContentTypeOptions": {
+              "Override": true
+            },
+            "FrameOptions": {
+              "FrameOption": "SAMEORIGIN",
+              "Override": false
+            },
+            "ReferrerPolicy": {
+              "ReferrerPolicy": "strict-origin-when-cross-origin",
+              "Override": false
+            },
+            "StrictTransportSecurity": {
+              "AccessControlMaxAgeSec": 31536000,
+              "Override": false
+            },
+            "XSSProtection": {
+              "Protection": true,
+              "ModeBlock": true,
+              "Override": false
+            }
+          }
+        }
+      }
+    },
     "Distribution": {
       "Type": "AWS::CloudFront::Distribution",
       "Properties": {
@@ -1080,7 +1133,9 @@
               "CachePolicyId": {
                 "Ref": "CachePolicy"
               },
-              "ResponseHeadersPolicyId": "e61eb60c-9c35-4d20-a928-2b84e02af89c"
+              "ResponseHeadersPolicyId": {
+                "Ref": "StatusHeaders"
+              }
             }
           ],
           "DefaultCacheBehavior": {

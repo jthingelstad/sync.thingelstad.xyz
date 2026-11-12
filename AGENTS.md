@@ -122,11 +122,17 @@ WT354 validation permission below was added on October 28.
   the same day. The page shows; it does not page. What it shows is published
   as `status.json` for anything outside that wants to read it.
 `status.json` alone is served with CORS (any origin, GET and HEAD, no
-credentials) through its own cache behaviour and the managed
-CORS-and-SecurityHeaders policy, so thingelstad.xyz's Sync gadget can read it
-in a visitor's browser (2026-11-12, Jamie of the xyz gadgets: "I love them
-all… do all 6"); every other path keeps the security headers only, and
-`test/cors.test.mjs` pins that scope.
+credentials) through its own cache behaviour and the stack's
+`StatusHeaders` policy, so thingelstad.xyz's Sync gadget can read it in a
+visitor's browser (2026-11-12, Jamie of the xyz gadgets: "I love them all… do
+all 6"); every other path keeps the security headers only, and
+`test/cors.test.mjs` pins that scope. `StatusHeaders` is the managed security
+headers plus CORS with Allow-Headers `*`, as Linking Things has it. The managed
+CORS policies leave Allow-Headers empty, and CloudFront then adds no
+Allow-Origin to a request carrying any header outside the CORS safelist. Chrome
+sends `priority` on every fetch, so curl saw the header and browsers did not.
+Check with that header: `curl -sI -H 'Origin: https://thingelstad.xyz' -H
+'priority: u=1, i' https://sync.thingelstad.xyz/status.json`.
 
 ## Layout
 
